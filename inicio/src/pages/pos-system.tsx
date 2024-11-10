@@ -7,7 +7,6 @@ import { Label } from "../components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table"
 import { RadioGroup, RadioGroupItem } from "../components/ui/radio-group"
 import { CreditCard, Printer, X, Plus, Minus, ArrowLeft, Search, AlertTriangle } from "lucide-react"
-import Image from "next/image"
 import { toast } from "../components/ui/use-toast"
 
 const initialInventory = [
@@ -357,13 +356,35 @@ export default function Component() {
               <CardContent className="flex-grow overflow-auto">
                 {selectedProduct ? (
                   <div className="flex flex-col items-center space-y-4">
-                    <Image
-                      src={selectedProduct.image}
-                      alt={selectedProduct.name}
-                      width={150}
-                      height={150}
-                      className="rounded-md w-[150px] h-[150px] lg:w-[200px] lg:h-[200px] object-cover"
-                    />
+                    <Card className="w-full flex-grow xl:h-[calc(50vh-1rem)] flex flex-col">
+                      <CardHeader>
+                        <CardTitle>Detalles del Producto</CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex-grow overflow-auto">
+                        {selectedProduct ? (
+                          <div className="flex flex-col items-center space-y-4">
+                            <img
+                              src={selectedProduct.image}
+                              alt={selectedProduct.name}
+                              width={150}
+                              height={150}
+                              className="rounded-md w-[150px] h-[150px] lg:w-[200px] lg:h-[200px] object-cover"
+                            />
+                            <div className="text-center">
+                              <h3 className="text-lg font-semibold">{selectedProduct.name}</h3>
+                              <p className="text-sm text-gray-500">Precio: ${selectedProduct.price.toFixed(2)}</p>
+                              <p className="text-sm text-gray-500">Stock: {selectedProduct.stock}</p>
+                              <p className="mt-2">{selectedProduct.description}</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center h-full text-center text-gray-500">
+                            <p>Selecciona un producto para ver sus detalles</p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+
                     <div className="text-center">
                       <h3 className="text-lg font-semibold">{selectedProduct.name}</h3>
                       <p className="text-sm text-gray-500">Precio: ${selectedProduct.price.toFixed(2)}</p>
