@@ -24,6 +24,11 @@ function App() {
 
 	const router = createBrowserRouter([
 		{
+			path: "/",
+			element: <h1>Bienvenido a Barriofarma Dev</h1>,			
+			
+		},
+		{
 			path: "/inicio",
 			element: <HomePage />, // Agrega la ruta para HomePage
 		},
