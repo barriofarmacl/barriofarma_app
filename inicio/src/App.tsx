@@ -11,8 +11,6 @@ import LoginPage from './pages/login-page'; // Importa LoginPage
 import POSSystem from './pages/pos-system'; // Importa POSSystem
 import DashboardFarmacia from "./pages/dashboard";
 import HomePage from "./pages/home";
-import DashboardFarmacia from "./pages/dashboard";
-import HomePage from "./pages/home";
 
 function App() {
 	const getSiteName = () => {
