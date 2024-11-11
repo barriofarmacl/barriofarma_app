@@ -11,6 +11,8 @@ import LoginPage from './pages/login-page'; // Importa LoginPage
 import POSSystem from './pages/pos-system'; // Importa POSSystem
 import DashboardFarmacia from "./pages/dashboard";
 import HomePage from "./pages/home";
+import DashboardFarmacia from "./pages/dashboard";
+import HomePage from "./pages/home";
 
 function App() {
 	const getSiteName = () => {
@@ -23,11 +25,6 @@ function App() {
 	}
 
 	const router = createBrowserRouter([
-		{
-			path: "/",
-			element: <h1>Bienvenido a Barriofarma Dev</h1>,			
-			
-		},
 		{
 			path: "/inicio",
 			element: <HomePage />, // Agrega la ruta para HomePage
