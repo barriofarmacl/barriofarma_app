@@ -9,6 +9,8 @@ import { FrappeProvider } from 'frappe-react-sdk'
 import './index.css'
 import LoginPage from './pages/login-page'; // Importa LoginPage
 import POSSystem from './pages/pos-system'; // Importa POSSystem
+import DashboardFarmacia from "./pages/dashboard";
+import HomePage from "./pages/home";
 
 function App() {
 	const getSiteName = () => {
@@ -23,9 +25,7 @@ function App() {
 	const router = createBrowserRouter([
 		{
 			path: "/",
-			element: (
-				<h1 className="text-3xl font-bold underline">¡Bienvenido a Barriofarma!</h1>
-			),
+			element: <HomePage />, // Agrega la ruta para HomePage
 		},
 		{
 			path: "/login",
@@ -34,6 +34,10 @@ function App() {
 		{
 			path: "/pos",
 			element: <POSSystem />, // Agrega la ruta para POSSystem
+		},
+		{
+			path: "/dashboard",
+			element: <DashboardFarmacia />, // Agrega la ruta para POSSystem
 		},
 	]);
 

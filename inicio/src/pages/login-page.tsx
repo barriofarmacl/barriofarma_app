@@ -14,13 +14,13 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center text-violet-600">Barriofarma</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center text-purple-700">Barriofarma</CardTitle>
           <CardDescription className="text-center text-gray-600">Cerca de tí</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Correo electrónico</Label>
-            <Input id="email" type="email" placeholder="tu@ejemplo.com" required />
+            <Input id="email" type="email" placeholder="tu@barriofarma.cl" required />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Contraseña</Label>
@@ -46,13 +46,13 @@ export default function LoginPage() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <Button className="w-full bg-violet-600 hover:bg-violet-700 text-white">
+          <Button className="w-full bg-purple-700 hover:bg-purple-800 text-white">
             Iniciar sesión
           </Button>
           <div className="text-sm text-center text-gray-600">
-            ¿No tienes una cuenta?{" "}
-            <a href="#" className="text-violet-600 hover:underline">
-              Regístrate
+            ¿No recuerdas tu Contraseña?{" "}
+            <a href="#" className="text-purple-700 hover:underline">
+              Recuperar
             </a>
           </div>
         </CardFooter>
