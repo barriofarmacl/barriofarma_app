@@ -24,6 +24,10 @@ function App() {
 
 	const router = createBrowserRouter([
 		{
+			path: "/",
+			element: <HomePage />, // Agrega la ruta para HomePage
+		},
+		{
 			path: "/inicio",
 			element: <HomePage />, // Agrega la ruta para HomePage
 		},
