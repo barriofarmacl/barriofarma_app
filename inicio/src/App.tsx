@@ -1,6 +1,4 @@
 // App.tsx
-import * as React from "react";
-import * as ReactDOM from "react-dom/client";
 import {
 	createBrowserRouter,
 	RouterProvider,
@@ -11,6 +9,7 @@ import LoginPage from './pages/login-page'; // Importa LoginPage
 import POSSystem from './pages/pos-system'; // Importa POSSystem
 import DashboardFarmacia from "./pages/dashboard";
 import HomePage from "./pages/home";
+import WebProductsPage from "./pages/web-products";
 
 function App() {
 	const getSiteName = () => {
@@ -42,6 +41,10 @@ function App() {
 		{
 			path: "/inicio/dashboard",
 			element: <DashboardFarmacia />, // Agrega la ruta para POSSystem
+		},
+		{
+			path: "/inicio/products",
+			element: <WebProductsPage />, // Agrega la ruta para POSSystem
 		},
 	]);
 

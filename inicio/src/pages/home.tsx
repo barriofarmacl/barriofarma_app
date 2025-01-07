@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { ChevronRight, MapPin, Phone, Mail, Clock, Menu, X } from 'lucide-react'
 
 export default function HomePage() {
@@ -30,7 +31,7 @@ export default function HomePage() {
               <a href="#" className="px-4 py-2 hover:bg-purple-700 md:hover:bg-transparent md:hover:text-white">
                 Inicio
               </a>
-              <a href="#" className="px-4 py-2 hover:bg-purple-700 md:hover:bg-transparent md:hover:text-white">
+              <a href="/inicio/productos" className="px-4 py-2 hover:bg-purple-700 md:hover:bg-transparent md:hover:text-white">
                 Productos
               </a>
               <a href="#" className="px-4 py-2 hover:bg-purple-700 md:hover:bg-transparent md:hover:text-white">
@@ -54,10 +55,12 @@ export default function HomePage() {
                 <p className="text-lg mb-6">
                   Encuentra todos los productos farmacéuticos que necesitas con el mejor servicio y asesoría profesional
                 </p>
-                <button className="bg-white text-purple-700 hover:bg-gray-100 px-6 py-2 rounded-md flex items-center">
+                <Link to="/inicio/productos">
+                  <button className="bg-white text-purple-700 hover:bg-gray-100 px-6 py-2 rounded-md flex items-center">
                   Ver Productos
                   <ChevronRight className="ml-2 h-4 w-4" />
-                </button>
+                  </button>
+                </Link>
               </div>
               <div className="hidden md:block">
                 <img
@@ -187,7 +190,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="border-t border-purple-700 mt-8 pt-8 text-center text-gray-200">
-            <p>&copy; 2024 Barriofarma. Todos los derechos reservados.</p>
+            <p>&copy; 2025 Barriofarma Dev. Todos los derechos reservados.</p>
           </div>
         </div>
       </footer>
