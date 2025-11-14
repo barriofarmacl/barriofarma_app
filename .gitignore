@@ -10,3 +10,7 @@ __pycache__
 barriofarma_app/public/inicio
 barriofarma_app/public/node_modules
 barriofarma_app/www/inicio.html
+
+# Backup files
+*.bak
+*.backup
