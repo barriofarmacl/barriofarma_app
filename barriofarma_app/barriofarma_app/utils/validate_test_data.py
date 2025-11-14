@@ -106,6 +106,24 @@ def check_validation_errors():
     return validation_errors
 
 
+def check_test_prescriptions():
+    """
+    Verifica si existen recetas de prueba en la base de datos
+    Retorna lista de recetas encontradas
+    """
+    test_prescriptions = frappe.db.sql("""
+        SELECT name, patient_name, doctor_name, status, doctor_license, creation
+        FROM `tabPrescription`
+        WHERE patient_name LIKE 'Paciente Test%'
+           OR patient_name LIKE '%Test%'
+           OR doctor_name LIKE 'Dr. Test%'
+           OR doctor_license LIKE 'TEST-LIC%'
+        ORDER BY creation DESC
+    """, as_dict=True)
+    
+    return test_prescriptions
+
+
 def print_validation_report():
     """
     Imprime un reporte completo de validación
@@ -126,9 +144,21 @@ def print_validation_report():
     else:
         print("   ✅ No se encontraron items de prueba")
     
-    # 2. Items incompletos
+    # 2. Recetas de prueba
+    test_prescriptions = check_test_prescriptions()
+    print(f"\n2. Recetas de Prueba: {len(test_prescriptions)}")
+    if test_prescriptions:
+        print("   ⚠️  ENCONTRADAS:")
+        for prescription in test_prescriptions[:10]:  # Mostrar solo las primeras 10
+            print(f"      - {prescription.name}: {prescription.patient_name} - {prescription.doctor_name} ({prescription.status})")
+        if len(test_prescriptions) > 10:
+            print(f"      ... y {len(test_prescriptions) - 10} más")
+    else:
+        print("   ✅ No se encontraron recetas de prueba")
+    
+    # 3. Items incompletos
     incomplete_items = check_incomplete_items()
-    print(f"\n2. Items con Campos Custom Incompletos: {len(incomplete_items)}")
+    print(f"\n3. Items con Campos Custom Incompletos: {len(incomplete_items)}")
     if incomplete_items:
         print("   ⚠️  ENCONTRADOS:")
         for item in incomplete_items[:10]:
@@ -140,9 +170,9 @@ def print_validation_report():
     else:
         print("   ✅ No se encontraron items incompletos")
     
-    # 3. Errores de validación
+    # 4. Errores de validación
     validation_errors = check_validation_errors()
-    print(f"\n3. Errores de Validación (Invariantes DDD): {len(validation_errors)}")
+    print(f"\n4. Errores de Validación (Invariantes DDD): {len(validation_errors)}")
     if validation_errors:
         print("   ⚠️  ENCONTRADOS:")
         for error_group in validation_errors:
@@ -155,11 +185,12 @@ def print_validation_report():
         print("   ✅ No se encontraron errores de validación")
     
     print("\n" + "="*70)
-    print(f"RESUMEN: {len(test_items)} items de prueba, {len(incomplete_items)} incompletos, {len(validation_errors)} tipos de errores")
+    print(f"RESUMEN: {len(test_items)} items de prueba, {len(test_prescriptions)} recetas de prueba, {len(incomplete_items)} incompletos, {len(validation_errors)} tipos de errores")
     print("="*70 + "\n")
     
     return {
         'test_items': len(test_items),
+        'test_prescriptions': len(test_prescriptions),
         'incomplete_items': len(incomplete_items),
         'validation_errors': len(validation_errors)
     }
@@ -190,6 +221,75 @@ def cleanup_test_items(confirm=False):
     
     frappe.db.commit()
     print(f"\n✅ Limpieza completada. {len(test_items)} items eliminados.")
+
+
+def cleanup_test_prescriptions(confirm=False):
+    """
+    Limpia recetas de prueba de la base de datos
+    """
+    if not confirm:
+        print("⚠️  Esta función requiere confirmación explícita")
+        return
+    
+    test_prescriptions = check_test_prescriptions()
+    
+    if not test_prescriptions:
+        print("✅ No hay recetas de prueba para limpiar")
+        return
+    
+    print(f"\n🗑️  Limpiando {len(test_prescriptions)} recetas de prueba...")
+    
+    for prescription in test_prescriptions:
+        try:
+            frappe.delete_doc("Prescription", prescription.name, force=1, ignore_permissions=True)
+            print(f"   ✓ Eliminado: {prescription.name} ({prescription.patient_name})")
+        except Exception as e:
+            print(f"   ✗ Error al eliminar {prescription.name}: {str(e)}")
+    
+    frappe.db.commit()
+    print(f"\n✅ Limpieza completada. {len(test_prescriptions)} recetas eliminadas.")
+
+
+def cleanup_all_test_data():
+    """
+    Limpia todos los datos de prueba (items y recetas) de la base de datos
+    """
+    print("\n🗑️  INICIANDO LIMPIEZA DE DATOS DE PRUEBA...")
+    print("="*70)
+    
+    # Limpiar items
+    test_items = check_test_items()
+    if test_items:
+        print(f"\n🗑️  Limpiando {len(test_items)} items de prueba...")
+        for item in test_items:
+            try:
+                frappe.delete_doc("Item", item.name, force=1, ignore_permissions=True)
+                print(f"   ✓ Eliminado: {item.item_code}")
+            except Exception as e:
+                print(f"   ✗ Error al eliminar {item.item_code}: {str(e)}")
+        frappe.db.commit()
+        print(f"✅ {len(test_items)} items eliminados.")
+    else:
+        print("\n✅ No hay items de prueba para limpiar")
+    
+    # Limpiar recetas
+    test_prescriptions = check_test_prescriptions()
+    if test_prescriptions:
+        print(f"\n🗑️  Limpiando {len(test_prescriptions)} recetas de prueba...")
+        for prescription in test_prescriptions:
+            try:
+                frappe.delete_doc("Prescription", prescription.name, force=1, ignore_permissions=True)
+                print(f"   ✓ Eliminado: {prescription.name} ({prescription.patient_name})")
+            except Exception as e:
+                print(f"   ✗ Error al eliminar {prescription.name}: {str(e)}")
+        frappe.db.commit()
+        print(f"✅ {len(test_prescriptions)} recetas eliminadas.")
+    else:
+        print("\n✅ No hay recetas de prueba para limpiar")
+    
+    print("\n" + "="*70)
+    print("✅ Limpieza completa de datos de prueba finalizada.")
+    print("="*70 + "\n")
 
 
 if __name__ == "__main__":

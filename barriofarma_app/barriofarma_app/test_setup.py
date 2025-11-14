@@ -66,6 +66,41 @@ def get_or_create_root_territory():
     return territory_name
 
 
+def create_test_customer(customer_name, customer_type="Individual", **kwargs):
+    """
+    Función auxiliar para crear Customer de prueba
+    
+    Args:
+        customer_name: Nombre del cliente
+        customer_type: Tipo de cliente (Individual/Company)
+        **kwargs: Campos adicionales del Customer
+    
+    Returns:
+        Customer document creado
+    """
+    if frappe.db.exists("Customer", customer_name):
+        return frappe.get_doc("Customer", customer_name)
+    
+    customer_group = get_or_create_root_customer_group()
+    territory = get_or_create_root_territory()
+    
+    defaults = {
+        "doctype": "Customer",
+        "customer_name": customer_name,
+        "customer_type": customer_type,
+        "customer_group": customer_group,
+        "territory": territory,
+    }
+    
+    defaults.update(kwargs)
+    
+    customer = frappe.get_doc(defaults)
+    customer.insert(ignore_permissions=True)
+    frappe.db.commit()
+    
+    return customer
+
+
 def create_test_item(**kwargs):
     """
     Función auxiliar para crear Item de prueba
