@@ -101,6 +101,53 @@ def create_test_customer(customer_name, customer_type="Individual", **kwargs):
     return customer
 
 
+def get_or_create_item_group(item_group_name="Products"):
+    """
+    Obtiene o crea un Item Group
+    
+    Args:
+        item_group_name: Nombre del Item Group
+    
+    Returns:
+        Nombre del Item Group
+    """
+    if frappe.db.exists("Item Group", item_group_name):
+        return item_group_name
+    
+    item_group = frappe.get_doc({
+        "doctype": "Item Group",
+        "item_group_name": item_group_name,
+        "is_group": 0
+    })
+    item_group.insert(ignore_permissions=True)
+    frappe.db.commit()
+    
+    return item_group_name
+
+
+def get_or_create_uom(uom_name="Nos"):
+    """
+    Obtiene o crea una UOM (Unidad de Medida)
+    
+    Args:
+        uom_name: Nombre de la UOM
+    
+    Returns:
+        Nombre de la UOM
+    """
+    if frappe.db.exists("UOM", uom_name):
+        return uom_name
+    
+    uom = frappe.get_doc({
+        "doctype": "UOM",
+        "uom_name": uom_name
+    })
+    uom.insert(ignore_permissions=True)
+    frappe.db.commit()
+    
+    return uom_name
+
+
 def create_test_item(**kwargs):
     """
     Función auxiliar para crear Item de prueba
