@@ -1,0 +1,53 @@
+[
+	{
+		"doctype": "Custom Field",
+		"name": "Purchase Receipt Item-custom_qc_status",
+		"dt": "Purchase Receipt Item",
+		"fieldname": "custom_qc_status",
+		"label": "Estado QC",
+		"fieldtype": "Select",
+		"options": "Aceptado\nCuarentena\nRechazado",
+		"default": "Aceptado",
+		"insert_after": "batch_no",
+		"reqd": 0,
+		"description": "Estado de Control de Calidad para este sublote. Aceptado: disponible para venta. Cuarentena: pendiente de revisión. Rechazado: no disponible."
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Purchase Receipt Item-custom_qc_rejection_reason",
+		"dt": "Purchase Receipt Item",
+		"fieldname": "custom_qc_rejection_reason",
+		"label": "Causa de Rechazo/Cuarentena",
+		"fieldtype": "Select",
+		"options": "Vencimiento corto\nSin evidencia de cadena de frío\nEmpaque dañado\nDocumentación incompleta\nSobrante no autorizado\nOtro",
+		"insert_after": "custom_qc_status",
+		"reqd": 0,
+		"depends_on": "eval:doc.custom_qc_status == 'Rechazado' || doc.custom_qc_status == 'Cuarentena'",
+		"description": "Razón específica del rechazo o cuarentena. Obligatorio si estado QC es Rechazado o Cuarentena."
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Purchase Receipt Item-custom_is_excess",
+		"dt": "Purchase Receipt Item",
+		"fieldname": "custom_is_excess",
+		"label": "Es Sobrante No Autorizado",
+		"fieldtype": "Check",
+		"default": 0,
+		"insert_after": "custom_qc_rejection_reason",
+		"reqd": 0,
+		"description": "Marca si esta cantidad es sobrante no autorizado respecto a la Purchase Order. No disponible para venta hasta decisión administrativa."
+	},
+	{
+		"doctype": "Custom Field",
+		"name": "Purchase Receipt-custom_minimum_expiry_months",
+		"dt": "Purchase Receipt",
+		"fieldname": "custom_minimum_expiry_months",
+		"label": "Umbral Mínimo Vencimiento (meses)",
+		"fieldtype": "Int",
+		"default": 6,
+		"insert_after": "set_warehouse",
+		"reqd": 0,
+		"description": "Umbral mínimo de meses hasta vencimiento para productos farmacéuticos. Productos con menos meses quedan en Cuarentena o Rechazados automáticamente."
+	}
+]
+

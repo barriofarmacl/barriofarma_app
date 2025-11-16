@@ -181,3 +181,169 @@ def create_test_item(**kwargs):
     
     return item
 
+
+def create_test_supplier(supplier_name, **kwargs):
+    """
+    Función auxiliar para crear Supplier de prueba
+    
+    Args:
+        supplier_name: Nombre del proveedor
+        **kwargs: Campos adicionales del Supplier
+    
+    Returns:
+        Supplier document creado
+    """
+    if frappe.db.exists("Supplier", supplier_name):
+        return frappe.get_doc("Supplier", supplier_name)
+    
+    defaults = {
+        "doctype": "Supplier",
+        "supplier_name": supplier_name,
+        "supplier_type": kwargs.get("supplier_type", "Company"),
+    }
+    
+    defaults.update(kwargs)
+    
+    supplier = frappe.get_doc(defaults)
+    supplier.insert(ignore_permissions=True)
+    frappe.db.commit()
+    
+    return supplier
+
+
+def create_test_warehouse(warehouse_name, **kwargs):
+    """
+    Función auxiliar para crear Warehouse de prueba
+    
+    Args:
+        warehouse_name: Nombre del warehouse
+        **kwargs: Campos adicionales del Warehouse
+    
+    Returns:
+        Warehouse document creado
+    """
+    if frappe.db.exists("Warehouse", warehouse_name):
+        return frappe.get_doc("Warehouse", warehouse_name)
+    
+    # Obtener o crear Company por defecto
+    company = kwargs.get("company")
+    if not company:
+        company = frappe.db.get_value("Company", {"name": ("!=", "")}, "name")
+        if not company:
+            # Crear company básica si no existe
+            company = frappe.get_doc({
+                "doctype": "Company",
+                "company_name": "Test Company",
+                "abbr": "TC",
+                "default_currency": "USD"
+            })
+            company.insert(ignore_permissions=True)
+            frappe.db.commit()
+            company = company.name
+    
+    defaults = {
+        "doctype": "Warehouse",
+        "warehouse_name": warehouse_name,
+        "company": company,
+    }
+    
+    defaults.update(kwargs)
+    
+    warehouse = frappe.get_doc(defaults)
+    warehouse.insert(ignore_permissions=True)
+    frappe.db.commit()
+    
+    return warehouse
+
+
+def create_test_purchase_order(item_code, qty, supplier_name=None, **kwargs):
+    """
+    Función auxiliar para crear Purchase Order de prueba
+    
+    Args:
+        item_code: Código del ítem a comprar
+        qty: Cantidad a comprar
+        supplier_name: Nombre del proveedor (se crea si no existe)
+        **kwargs: Campos adicionales del Purchase Order
+    
+    Returns:
+        Purchase Order document creado
+    """
+    # Crear supplier si no existe
+    if not supplier_name:
+        supplier_name = f"TEST-SUPPLIER-{frappe.generate_hash(length=6)}"
+    
+    supplier = create_test_supplier(supplier_name)
+    
+    # Obtener company
+    company = kwargs.get("company")
+    if not company:
+        company = frappe.db.get_value("Company", {"name": ("!=", "")}, "name")
+    
+    # Obtener item
+    if not frappe.db.exists("Item", item_code):
+        raise ValueError(f"Item {item_code} no existe. Crear primero con create_test_item.")
+    
+    item = frappe.get_doc("Item", item_code)
+    
+    defaults = {
+        "doctype": "Purchase Order",
+        "supplier": supplier.name,
+        "company": company,
+        "transaction_date": kwargs.get("transaction_date", frappe.utils.today()),
+        "schedule_date": kwargs.get("schedule_date", frappe.utils.add_days(frappe.utils.today(), 7)),
+        "items": [{
+            "item_code": item_code,
+            "qty": qty,
+            "uom": item.stock_uom,
+            "rate": kwargs.get("rate", 100),
+            "schedule_date": kwargs.get("schedule_date", frappe.utils.add_days(frappe.utils.today(), 7)),
+        }]
+    }
+    
+    defaults.update({k: v for k, v in kwargs.items() if k not in ["company", "transaction_date", "rate"]})
+    
+    po = frappe.get_doc(defaults)
+    po.insert(ignore_permissions=True)
+    po.submit()
+    frappe.db.commit()
+    
+    return po
+
+
+def create_test_batch(item_code, batch_id, expiry_date, **kwargs):
+    """
+    Función auxiliar para crear Batch de prueba
+    
+    Args:
+        item_code: Código del ítem
+        batch_id: ID del lote
+        expiry_date: Fecha de vencimiento (YYYY-MM-DD)
+        **kwargs: Campos adicionales del Batch
+    
+    Returns:
+        Batch document creado
+    """
+    if frappe.db.exists("Batch", batch_id):
+        return frappe.get_doc("Batch", batch_id)
+    
+    # Validar que el item requiere batch
+    item = frappe.get_doc("Item", item_code)
+    if not item.has_batch_no:
+        raise ValueError(f"Item {item_code} no requiere gestión por lote (has_batch_no=0)")
+    
+    defaults = {
+        "doctype": "Batch",
+        "batch_id": batch_id,
+        "item": item_code,
+        "expiry_date": expiry_date,
+    }
+    
+    defaults.update(kwargs)
+    
+    batch = frappe.get_doc(defaults)
+    batch.insert(ignore_permissions=True)
+    frappe.db.commit()
+    
+    return batch
+
