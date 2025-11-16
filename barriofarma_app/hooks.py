@@ -124,7 +124,8 @@ fixtures = ["Custom Field"]
 # Override standard doctype classes
 
 override_doctype_class = {
-	"Item": "barriofarma_app.barriofarma_app.overrides.item.Item"
+	"Item": "barriofarma_app.barriofarma_app.overrides.item.Item",
+	"Purchase Receipt": "barriofarma_app.barriofarma_app.overrides.purchase_receipt.PurchaseReceipt"
 }
 
 # Document Events
@@ -167,7 +168,6 @@ override_doctype_class = {
 
 # Overriding Methods
 # ------------------------------
-#
 # override_whitelisted_methods = {
 # 	"frappe.desk.doctype.event.event.get_events": "barriofarma_app.event.get_events"
 # }
