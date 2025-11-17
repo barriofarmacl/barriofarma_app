@@ -17,41 +17,44 @@ def cleanup_test_data():
     print("=== Limpiando datos de prueba residuales ===\n")
     
     # Limpiar Purchase Invoices de prueba
+    # Buscar por suppliers de prueba (incluso si el supplier ya no existe)
     print("Limpiando Purchase Invoices...")
-    pis = frappe.get_all("Purchase Invoice", filters={"name": ("like", "PI-%")}, fields=["name", "docstatus"])
+    pis = frappe.get_all("Purchase Invoice", filters={"supplier": ("like", "TEST-%")}, fields=["name", "supplier", "docstatus"])
     for pi in pis:
         try:
             pi_doc = frappe.get_doc("Purchase Invoice", pi.name)
             if pi_doc.docstatus == 1:
                 pi_doc.cancel()
             frappe.delete_doc("Purchase Invoice", pi.name, force=True, ignore_permissions=True)
-            print(f"  ✓ Eliminado: {pi.name}")
+            print(f"  ✓ Eliminado: {pi.name} (supplier: {pi.supplier})")
         except Exception as e:
             print(f"  ✗ Error eliminando {pi.name}: {e}")
     
     # Limpiar Purchase Receipts de prueba
+    # Buscar por suppliers de prueba (incluso si el supplier ya no existe)
     print("\nLimpiando Purchase Receipts...")
-    prs = frappe.get_all("Purchase Receipt", filters={"name": ("like", "PR-%")}, fields=["name", "docstatus"])
+    prs = frappe.get_all("Purchase Receipt", filters={"supplier": ("like", "TEST-%")}, fields=["name", "supplier", "docstatus"])
     for pr in prs:
         try:
             pr_doc = frappe.get_doc("Purchase Receipt", pr.name)
             if pr_doc.docstatus == 1:
                 pr_doc.cancel()
             frappe.delete_doc("Purchase Receipt", pr.name, force=True, ignore_permissions=True)
-            print(f"  ✓ Eliminado: {pr.name}")
+            print(f"  ✓ Eliminado: {pr.name} (supplier: {pr.supplier})")
         except Exception as e:
             print(f"  ✗ Error eliminando {pr.name}: {e}")
     
     # Limpiar Purchase Orders de prueba
+    # Buscar por suppliers de prueba (incluso si el supplier ya no existe)
     print("\nLimpiando Purchase Orders...")
-    pos = frappe.get_all("Purchase Order", filters={"name": ("like", "PO-%")}, fields=["name", "docstatus"])
+    pos = frappe.get_all("Purchase Order", filters={"supplier": ("like", "TEST-%")}, fields=["name", "supplier", "docstatus"])
     for po in pos:
         try:
             po_doc = frappe.get_doc("Purchase Order", po.name)
             if po_doc.docstatus == 1:
                 po_doc.cancel()
             frappe.delete_doc("Purchase Order", po.name, force=True, ignore_permissions=True)
-            print(f"  ✓ Eliminado: {po.name}")
+            print(f"  ✓ Eliminado: {po.name} (supplier: {po.supplier})")
         except Exception as e:
             print(f"  ✗ Error eliminando {po.name}: {e}")
     
@@ -160,40 +163,32 @@ def check_test_data():
         if len(test_batches) > 10:
             print(f"  ... y {len(test_batches) - 10} más")
     
-    # Purchase Orders de prueba
-    test_pos = frappe.get_all("Purchase Order", filters={"name": ("like", "PO-%")}, fields=["name", "creation"])
+    # Purchase Orders de prueba (buscar por suppliers de prueba, incluso si el supplier ya no existe)
+    test_pos = frappe.get_all("Purchase Order", filters={"supplier": ("like", "TEST-%")}, fields=["name", "supplier", "creation"])
     print(f"\nPurchase Orders de prueba encontrados: {len(test_pos)}")
     if test_pos:
         for po in test_pos[:10]:
-            print(f"  - {po.name} (creado: {po.creation})")
+            print(f"  - {po.name} (supplier: {po.supplier}, creado: {po.creation})")
         if len(test_pos) > 10:
             print(f"  ... y {len(test_pos) - 10} más")
     
-    # Purchase Receipts de prueba (buscar por suppliers de prueba)
-    if test_suppliers:
-        supplier_names = [s.name for s in test_suppliers]
-        test_prs = frappe.get_all("Purchase Receipt", filters={"supplier": ("in", supplier_names)}, fields=["name", "supplier", "creation"])
-        print(f"\nPurchase Receipts de prueba encontrados: {len(test_prs)}")
-        if test_prs:
-            for pr in test_prs[:10]:
-                print(f"  - {pr.name} (supplier: {pr.supplier}, creado: {pr.creation})")
-            if len(test_prs) > 10:
-                print(f"  ... y {len(test_prs) - 10} más")
-    else:
-        print("\nPurchase Receipts de prueba encontrados: 0")
+    # Purchase Receipts de prueba (buscar por suppliers de prueba, incluso si el supplier ya no existe)
+    test_prs = frappe.get_all("Purchase Receipt", filters={"supplier": ("like", "TEST-%")}, fields=["name", "supplier", "creation"])
+    print(f"\nPurchase Receipts de prueba encontrados: {len(test_prs)}")
+    if test_prs:
+        for pr in test_prs[:10]:
+            print(f"  - {pr.name} (supplier: {pr.supplier}, creado: {pr.creation})")
+        if len(test_prs) > 10:
+            print(f"  ... y {len(test_prs) - 10} más")
     
-    # Purchase Invoices de prueba (buscar por suppliers de prueba)
-    if test_suppliers:
-        supplier_names = [s.name for s in test_suppliers]
-        test_pis = frappe.get_all("Purchase Invoice", filters={"supplier": ("in", supplier_names)}, fields=["name", "supplier", "creation"])
-        print(f"\nPurchase Invoices de prueba encontrados: {len(test_pis)}")
-        if test_pis:
-            for pi in test_pis[:10]:
-                print(f"  - {pi.name} (supplier: {pi.supplier}, creado: {pi.creation})")
-            if len(test_pis) > 10:
-                print(f"  ... y {len(test_pis) - 10} más")
-    else:
-        print("\nPurchase Invoices de prueba encontrados: 0")
+    # Purchase Invoices de prueba (buscar por suppliers de prueba, incluso si el supplier ya no existe)
+    test_pis = frappe.get_all("Purchase Invoice", filters={"supplier": ("like", "TEST-%")}, fields=["name", "supplier", "creation"])
+    print(f"\nPurchase Invoices de prueba encontrados: {len(test_pis)}")
+    if test_pis:
+        for pi in test_pis[:10]:
+            print(f"  - {pi.name} (supplier: {pi.supplier}, creado: {pi.creation})")
+        if len(test_pis) > 10:
+            print(f"  ... y {len(test_pis) - 10} más")
     
     print("\n=== Resumen ===")
     print(f"Total Items: {len(test_items)}")
@@ -201,8 +196,8 @@ def check_test_data():
     print(f"Total Warehouses: {len(test_warehouses)}")
     print(f"Total Batches: {len(test_batches)}")
     print(f"Total Purchase Orders: {len(test_pos)}")
-    print(f"Total Purchase Receipts: {len(test_prs) if test_suppliers else 0}")
-    print(f"Total Purchase Invoices: {len(test_pis) if test_suppliers else 0}")
+    print(f"Total Purchase Receipts: {len(test_prs)}")
+    print(f"Total Purchase Invoices: {len(test_pis)}")
 
 
 if __name__ == "__main__":
