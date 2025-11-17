@@ -168,9 +168,9 @@ override_doctype_class = {
 
 # Overriding Methods
 # ------------------------------
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "barriofarma_app.event.get_events"
-# }
+override_whitelisted_methods = {
+	"erpnext.stock.doctype.purchase_receipt.purchase_receipt.make_purchase_invoice": "barriofarma_app.barriofarma_app.overrides.purchase_receipt.make_purchase_invoice"
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
