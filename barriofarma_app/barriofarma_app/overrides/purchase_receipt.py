@@ -111,6 +111,53 @@ class PurchaseReceipt(ERPNextPurchaseReceipt):
                     title=_("Causa de Rechazo/Cuarentena Requerida")
                 )
     
+    def get_minimum_expiry_months(self, item_code=None):
+        """
+        Obtener umbral mínimo de vencimiento configurado.
+        Prioridad: Item Group > Company > Purchase Receipt > Default (6 meses)
+        
+        Args:
+            item_code: Código del item para obtener umbral desde Item Group
+        
+        Returns:
+            int: Umbral mínimo en meses
+        """
+        # 1. Si hay umbral configurado directamente en Purchase Receipt, usarlo
+        # Nota: Si el valor es el default (6), no lo consideramos como "configurado"
+        # para permitir que Item Group/Company tengan prioridad
+        pr_threshold = self.get("custom_minimum_expiry_months")
+        if pr_threshold and pr_threshold != 6:  # Solo usar si es diferente del default
+            return pr_threshold
+        
+        # 2. Si hay item_code, intentar obtener umbral desde Item Group
+        if item_code:
+            try:
+                item_doc = frappe.get_doc("Item", item_code)
+                item_group = item_doc.get("item_group")
+                
+                if item_group:
+                    item_group_doc = frappe.get_doc("Item Group", item_group)
+                    item_group_threshold = item_group_doc.get("custom_minimum_expiry_months")
+                    # Verificar si el umbral es None o 0 (ambos indican que no está configurado)
+                    if item_group_threshold is not None and item_group_threshold != 0:
+                        return item_group_threshold
+            except (frappe.DoesNotExistError, Exception):
+                pass
+        
+        # 3. Obtener umbral desde Company
+        company = self.get("company")
+        if company:
+            try:
+                company_doc = frappe.get_doc("Company", company)
+                company_threshold = company_doc.get("custom_minimum_expiry_months")
+                if company_threshold:
+                    return company_threshold
+            except frappe.DoesNotExistError:
+                pass
+        
+        # 4. Default: 6 meses
+        return 6
+    
     def validate_umbral_vencimiento(self):
         """
         Validar umbral de vencimiento configurable.
@@ -120,12 +167,12 @@ class PurchaseReceipt(ERPNextPurchaseReceipt):
         if not self.get("items"):
             return
         
-        # Obtener umbral configurado (default: 6 meses)
-        minimum_months = self.get("custom_minimum_expiry_months") or 6
-        
         for item in self.items:
             if not item.get("batch_no"):
                 continue
+            
+            # Obtener umbral para este item específico (puede variar por Item Group)
+            minimum_months = self.get_minimum_expiry_months(item.get("item_code"))
             
             try:
                 batch = frappe.get_doc("Batch", item.batch_no)
@@ -147,6 +194,12 @@ class PurchaseReceipt(ERPNextPurchaseReceipt):
                         item.custom_qc_status = "Cuarentena"
                         if not item.get("custom_qc_rejection_reason"):
                             item.custom_qc_rejection_reason = "Vencimiento corto"
+                else:
+                    # Si el vencimiento es mayor o igual al umbral y está en Aceptado,
+                    # asegurar que no tenga causa de "Vencimiento corto" (limpiar si fue establecida previamente)
+                    current_status = item.get("custom_qc_status") or "Aceptado"
+                    if current_status == "Aceptado" and item.get("custom_qc_rejection_reason") == "Vencimiento corto":
+                        item.custom_qc_rejection_reason = None
             except frappe.DoesNotExistError:
                 # Batch no existe aún, se validará después
                 pass
