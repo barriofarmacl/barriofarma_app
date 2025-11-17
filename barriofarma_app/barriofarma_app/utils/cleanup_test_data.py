@@ -119,6 +119,60 @@ def cleanup_test_data():
         except Exception as e:
             print(f"  ✗ Error eliminando {item.item_code}: {e}")
     
+    # Limpiar Prescriptions de prueba
+    print("\nLimpiando Prescriptions...")
+    # Usar SQL directo porque los filtros OR complejos no funcionan bien con get_all
+    prescriptions = frappe.db.sql("""
+        SELECT name, patient_name, doctor_name, status
+        FROM `tabPrescription`
+        WHERE patient_name LIKE 'Paciente Test%'
+           OR patient_name LIKE 'Test%'
+           OR doctor_name LIKE 'Dr. Test%'
+           OR doctor_name LIKE 'TEST-%'
+    """, as_dict=True)
+    for presc in prescriptions:
+        try:
+            frappe.delete_doc("Prescription", presc.name, force=True, ignore_permissions=True)
+            print(f"  ✓ Eliminado: {presc.name} (patient: {presc.patient_name}, doctor: {presc.doctor_name})")
+        except Exception as e:
+            print(f"  ✗ Error eliminando {presc.name}: {e}")
+    
+    # Limpiar Prescriptions con referencias rotas (doctor que no existe)
+    print("\nLimpiando Prescriptions con referencias rotas...")
+    broken_prescriptions = frappe.db.sql("""
+        SELECT name, doctor, doctor_name, patient_name
+        FROM `tabPrescription`
+        WHERE doctor NOT IN (SELECT name FROM `tabDoctor`)
+          AND doctor IS NOT NULL
+          AND doctor != ''
+          AND (patient_name LIKE 'Paciente Test%' 
+               OR patient_name LIKE 'Test%'
+               OR doctor_name LIKE 'Dr. Test%'
+               OR doctor_name LIKE 'TEST-%')
+    """, as_dict=True)
+    for presc in broken_prescriptions:
+        try:
+            frappe.delete_doc("Prescription", presc.name, force=True, ignore_permissions=True)
+            print(f"  ✓ Eliminado (referencia rota): {presc.name} (doctor: {presc.doctor})")
+        except Exception as e:
+            print(f"  ✗ Error eliminando {presc.name}: {e}")
+    
+    # Limpiar Doctors de prueba
+    print("\nLimpiando Doctors...")
+    doctors = frappe.db.sql("""
+        SELECT name, doctor_name, license_number
+        FROM `tabDoctor`
+        WHERE doctor_name LIKE 'Dr. Test%'
+           OR doctor_name LIKE 'TEST-%'
+           OR license_number LIKE 'TEST-LIC%'
+    """, as_dict=True)
+    for doctor in doctors:
+        try:
+            frappe.delete_doc("Doctor", doctor.name, force=True, ignore_permissions=True)
+            print(f"  ✓ Eliminado: {doctor.doctor_name} (licencia: {doctor.license_number})")
+        except Exception as e:
+            print(f"  ✗ Error eliminando {doctor.doctor_name}: {e}")
+    
     frappe.db.commit()
     print("\n=== Limpieza completada ===")
 
@@ -190,6 +244,52 @@ def check_test_data():
         if len(test_pis) > 10:
             print(f"  ... y {len(test_pis) - 10} más")
     
+    # Prescriptions de prueba
+    test_prescriptions = frappe.db.sql("""
+        SELECT name, patient_name, doctor_name, creation
+        FROM `tabPrescription`
+        WHERE patient_name LIKE 'Paciente Test%'
+           OR patient_name LIKE 'Test%'
+           OR doctor_name LIKE 'Dr. Test%'
+           OR doctor_name LIKE 'TEST-%'
+    """, as_dict=True)
+    print(f"\nPrescriptions de prueba encontradas: {len(test_prescriptions)}")
+    if test_prescriptions:
+        for presc in test_prescriptions[:10]:
+            print(f"  - {presc.name} (patient: {presc.patient_name}, doctor: {presc.doctor_name}, creado: {presc.creation})")
+        if len(test_prescriptions) > 10:
+            print(f"  ... y {len(test_prescriptions) - 10} más")
+    
+    # Prescriptions con referencias rotas
+    broken_prescriptions = frappe.db.sql("""
+        SELECT name, doctor, doctor_name, patient_name, creation
+        FROM `tabPrescription`
+        WHERE doctor NOT IN (SELECT name FROM `tabDoctor`)
+          AND doctor IS NOT NULL
+          AND doctor != ''
+    """, as_dict=True)
+    print(f"\nPrescriptions con referencias rotas (doctor no existe): {len(broken_prescriptions)}")
+    if broken_prescriptions:
+        for presc in broken_prescriptions[:10]:
+            print(f"  - {presc.name} (doctor: {presc.doctor}, patient: {presc.patient_name}, creado: {presc.creation})")
+        if len(broken_prescriptions) > 10:
+            print(f"  ... y {len(broken_prescriptions) - 10} más")
+    
+    # Doctors de prueba
+    test_doctors = frappe.db.sql("""
+        SELECT name, doctor_name, license_number, creation
+        FROM `tabDoctor`
+        WHERE doctor_name LIKE 'Dr. Test%'
+           OR doctor_name LIKE 'TEST-%'
+           OR license_number LIKE 'TEST-LIC%'
+    """, as_dict=True)
+    print(f"\nDoctors de prueba encontrados: {len(test_doctors)}")
+    if test_doctors:
+        for doctor in test_doctors[:10]:
+            print(f"  - {doctor.doctor_name} (licencia: {doctor.license_number}, creado: {doctor.creation})")
+        if len(test_doctors) > 10:
+            print(f"  ... y {len(test_doctors) - 10} más")
+    
     print("\n=== Resumen ===")
     print(f"Total Items: {len(test_items)}")
     print(f"Total Suppliers: {len(test_suppliers)}")
@@ -198,6 +298,9 @@ def check_test_data():
     print(f"Total Purchase Orders: {len(test_pos)}")
     print(f"Total Purchase Receipts: {len(test_prs)}")
     print(f"Total Purchase Invoices: {len(test_pis)}")
+    print(f"Total Prescriptions: {len(test_prescriptions)}")
+    print(f"Total Prescriptions con referencias rotas: {len(broken_prescriptions)}")
+    print(f"Total Doctors: {len(test_doctors)}")
 
 
 if __name__ == "__main__":

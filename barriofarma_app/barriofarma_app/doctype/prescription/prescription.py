@@ -46,10 +46,17 @@ class Prescription(Document):
 		"""
 		Invariante: Una receta debe estar asociada a un paciente específico
 		"""
-		if not self.get("patient") or not self.get("patient").strip():
+		if not self.get("patient"):
 			frappe.throw(
 				_("El paciente (patient) es obligatorio"),
 				title=_("Paciente Requerido")
+			)
+		
+		# Verificar que el Patient existe
+		if not frappe.db.exists("Patient", self.patient):
+			frappe.throw(
+				_("El paciente '{0}' no existe").format(self.patient),
+				title=_("Paciente Inválido")
 			)
 
 		if not self.get("patient_name") or not self.get("patient_name").strip():

@@ -17,7 +17,9 @@ from barriofarma_app.barriofarma_app.test_setup import (
     create_test_item,
     get_or_create_root_customer_group,
     get_or_create_root_territory,
-    create_test_customer
+    create_test_customer,
+    create_test_doctor,
+    create_test_patient
 )
 
 
@@ -31,6 +33,8 @@ class TestPrescriptionDDD(unittest.TestCase):
         self.test_prescriptions = []
         self.test_items = []
         self.test_customers = []
+        self.test_doctors = []
+        self.test_patients = []
 
     def tearDown(self):
         """Limpiar datos de prueba después de cada test"""
@@ -60,6 +64,30 @@ class TestPrescriptionDDD(unittest.TestCase):
             except Exception:
                 pass
         
+        # Limpiar doctors
+        for doctor_name in self.test_doctors:
+            try:
+                if frappe.db.exists("Doctor", doctor_name):
+                    frappe.delete_doc("Doctor", doctor_name, force=True, ignore_permissions=True)
+            except Exception:
+                pass
+        
+        # Limpiar patients
+        for patient_name in self.test_patients:
+            try:
+                if frappe.db.exists("Patient", patient_name):
+                    patient = frappe.get_doc("Patient", patient_name)
+                    # Eliminar Customer asociado si existe
+                    if patient.customer:
+                        try:
+                            if frappe.db.exists("Customer", patient.customer):
+                                frappe.delete_doc("Customer", patient.customer, force=True, ignore_permissions=True)
+                        except Exception:
+                            pass
+                    frappe.delete_doc("Patient", patient_name, force=True, ignore_permissions=True)
+            except Exception:
+                pass
+        
         frappe.db.commit()
 
     def create_test_customer(self, customer_name, customer_type="Individual"):
@@ -67,6 +95,18 @@ class TestPrescriptionDDD(unittest.TestCase):
         customer = create_test_customer(customer_name, customer_type)
         self.test_customers.append(customer.name)
         return customer
+    
+    def create_test_doctor_helper(self, doctor_name="Dr. Test Médico", license_number=None):
+        """Helper para crear Doctor de prueba"""
+        doctor = create_test_doctor(doctor_name=doctor_name, license_number=license_number)
+        self.test_doctors.append(doctor.name)
+        return doctor
+    
+    def create_test_patient_helper(self, patient_name="Paciente Test", rut_dni=None):
+        """Helper para crear Patient de prueba"""
+        patient = create_test_patient(patient_name=patient_name, rut_dni=rut_dni)
+        self.test_patients.append(patient.name)
+        return patient
 
     def create_test_prescription(self, **kwargs):
         """
@@ -84,8 +124,8 @@ class TestPrescriptionDDD(unittest.TestCase):
             "doctor": kwargs.get("doctor"),
             "doctor_name": kwargs.get("doctor_name", "Dr. Test"),
             "doctor_license": kwargs.get("doctor_license", "TEST-LIC-12345"),
-            "patient": kwargs.get("patient", "Paciente de Prueba"),
-            "patient_name": kwargs.get("patient_name", "Paciente de Prueba"),
+            "patient": kwargs.get("patient"),
+            "patient_name": kwargs.get("patient_name"),
             "prescription_date": kwargs.get("prescription_date", today()),
             "valid_till": kwargs.get("valid_till", add_days(today(), 30)),
             "status": kwargs.get("status", "Nueva"),
@@ -108,17 +148,18 @@ class TestPrescriptionDDD(unittest.TestCase):
         """
         Invariante: Una receta debe tener al menos un medicamento prescrito
         """
-        doctor = self.create_test_customer("Dr. Test Médico")
+        doctor = self.create_test_doctor_helper()
+        patient = self.create_test_patient_helper()
         
         # Intentar crear receta sin items
         with self.assertRaises(frappe.ValidationError) as cm:
             prescription = frappe.get_doc({
                 "doctype": "Prescription",
                 "doctor": doctor.name,
-                "doctor_name": doctor.customer_name,
-                "doctor_license": "TEST-LIC-12345",
-                "patient": "Paciente Test",
-                "patient_name": "Paciente Test",
+                "doctor_name": doctor.doctor_name,
+                "doctor_license": doctor.license_number,
+                "patient": patient.name,
+                "patient_name": patient.patient_name,
                 "prescription_date": today(),
                 "valid_till": add_days(today(), 30),
                 "status": "Nueva",
@@ -131,38 +172,60 @@ class TestPrescriptionDDD(unittest.TestCase):
     def test_invariante_doctor_requiere_licencia_valida(self):
         """
         Invariante: Una receta debe estar asociada a un médico con licencia válida
+        Nota: Como doctor_license tiene fetch_from, se auto-completa desde el doctor.
+        La validación se hace al nivel del Doctor, no de la Prescription.
+        Este test valida que un doctor sin licencia no puede ser creado.
         """
-        doctor = self.create_test_customer("Dr. Test Médico")
-        
-        # Intentar crear receta sin licencia
+        # Intentar crear doctor sin licencia
         with self.assertRaises(frappe.ValidationError) as cm:
-            prescription = frappe.get_doc({
-                "doctype": "Prescription",
-                "doctor": doctor.name,
-                "doctor_name": doctor.customer_name,
-                "doctor_license": "",  # Licencia vacía
-                "patient": "Paciente Test",
-                "patient_name": "Paciente Test",
-                "prescription_date": today(),
-                "valid_till": add_days(today(), 30),
-                "status": "Nueva",
-                "items": [{
-                    "item": "TEST-ITEM-001",
-                    "item_name": "Medicamento Test",
-                    "quantity": 10,
-                    "dosage": "1 tableta",
-                    "frequency": "cada 8 horas"
-                }]
+            doctor = frappe.get_doc({
+                "doctype": "Doctor",
+                "doctor_name": "Dr. Test Sin Licencia",
+                "license_number": ""  # Licencia vacía
             })
-            prescription.insert(ignore_permissions=True)
+            doctor.insert(ignore_permissions=True)
         
-        self.assertIn("licencia", str(cm.exception).lower() or "doctor_license" in str(cm.exception))
+        self.assertIn("licencia", str(cm.exception).lower())
+        
+        # Verificar que con un doctor válido, la receta se crea correctamente
+        doctor = self.create_test_doctor_helper()
+        patient = self.create_test_patient_helper()
+        item = create_test_item(
+            item_code="TEST-MED-LIC",
+            item_name="Medicamento Test",
+            custom_dispensing_type="Venta con Receta Retenida",
+            has_batch_no=1,
+            has_expiry_date=1,
+            custom_prescription_storage_required=1,
+            custom_sanitary_registration="TEST-REG-001",
+            custom_active_principle="Principio Activo Test",
+            custom_concentration="500mg"
+        )
+        self.test_items.append(item.name)
+        
+        prescription = self.create_test_prescription(
+            doctor=doctor.name,
+            doctor_name=doctor.doctor_name,
+            doctor_license=doctor.license_number,
+            patient=patient.name,
+            patient_name=patient.patient_name,
+            items=[{
+                "item": item.name,
+                "item_name": item.item_name,
+                "quantity": 10,
+                "dosage": "1 tableta",
+                "frequency": "cada 8 horas"
+            }]
+        )
+        
+        # Verificar que la receta se creó correctamente con la licencia del doctor
+        self.assertEqual(prescription.doctor_license, doctor.license_number)
 
     def test_invariante_paciente_obligatorio(self):
         """
         Invariante: Una receta debe estar asociada a un paciente específico
         """
-        doctor = self.create_test_customer("Dr. Test Médico")
+        doctor = self.create_test_doctor_helper()
         item = create_test_item(
             item_code="TEST-MED-001",
             item_name="Medicamento Test",
@@ -181,9 +244,9 @@ class TestPrescriptionDDD(unittest.TestCase):
             prescription = frappe.get_doc({
                 "doctype": "Prescription",
                 "doctor": doctor.name,
-                "doctor_name": doctor.customer_name,
-                "doctor_license": "TEST-LIC-12345",
-                "patient": "",  # Paciente vacío
+                "doctor_name": doctor.doctor_name,
+                "doctor_license": doctor.license_number,
+                "patient": None,  # Paciente vacío
                 "patient_name": "",  # Nombre de paciente vacío
                 "prescription_date": today(),
                 "valid_till": add_days(today(), 30),
@@ -208,7 +271,8 @@ class TestPrescriptionDDD(unittest.TestCase):
         """
         Invariante: Una receta solo puede dispensarse dentro de su periodo de validez
         """
-        doctor = self.create_test_customer("Dr. Test Médico")
+        doctor = self.create_test_doctor_helper()
+        patient = self.create_test_patient_helper()
         item = create_test_item(
             item_code="TEST-MED-002",
             item_name="Medicamento Test",
@@ -225,10 +289,10 @@ class TestPrescriptionDDD(unittest.TestCase):
         # Crear receta válida
         prescription = self.create_test_prescription(
             doctor=doctor.name,
-            doctor_name=doctor.customer_name,
-            doctor_license="TEST-LIC-12345",
-            patient="Paciente Test",
-            patient_name="Paciente Test",
+            doctor_name=doctor.doctor_name,
+            doctor_license=doctor.license_number,
+            patient=patient.name,
+            patient_name=patient.patient_name,
             prescription_date=today(),
             valid_till=add_days(today(), 30),
             items=[{
@@ -248,14 +312,15 @@ class TestPrescriptionDDD(unittest.TestCase):
         )
         
         # Intentar crear receta con valid_till anterior a prescription_date
+        patient2 = self.create_test_patient_helper(patient_name="Paciente Test 2")
         with self.assertRaises(frappe.ValidationError) as cm:
             prescription_invalid = frappe.get_doc({
                 "doctype": "Prescription",
                 "doctor": doctor.name,
-                "doctor_name": doctor.customer_name,
-                "doctor_license": "TEST-LIC-12345",
-                "patient": "Paciente Test 2",
-                "patient_name": "Paciente Test 2",
+                "doctor_name": doctor.doctor_name,
+                "doctor_license": doctor.license_number,
+                "patient": patient2.name,
+                "patient_name": patient2.patient_name,
                 "prescription_date": today(),
                 "valid_till": add_days(today(), -1),  # Fecha pasada
                 "status": "Nueva",
@@ -280,7 +345,8 @@ class TestPrescriptionDDD(unittest.TestCase):
         """
         Invariante: No se puede exceder el número máximo de dispensaciones especificado
         """
-        doctor = self.create_test_customer("Dr. Test Médico")
+        doctor = self.create_test_doctor_helper()
+        patient = self.create_test_patient_helper()
         item = create_test_item(
             item_code="TEST-MED-003",
             item_name="Medicamento Test",
@@ -297,10 +363,10 @@ class TestPrescriptionDDD(unittest.TestCase):
         # Crear receta con max_dispensations = 1
         prescription = self.create_test_prescription(
             doctor=doctor.name,
-            doctor_name=doctor.customer_name,
-            doctor_license="TEST-LIC-12345",
-            patient="Paciente Test",
-            patient_name="Paciente Test",
+            doctor_name=doctor.doctor_name,
+            doctor_license=doctor.license_number,
+            patient=patient.name,
+            patient_name=patient.patient_name,
             max_dispensations=1,
             dispensation_count=0,
             items=[{
@@ -329,7 +395,8 @@ class TestPrescriptionDDD(unittest.TestCase):
         """
         Invariante: La cantidad dispensada no puede exceder la cantidad prescrita por ítem
         """
-        doctor = self.create_test_customer("Dr. Test Médico")
+        doctor = self.create_test_doctor_helper()
+        patient = self.create_test_patient_helper()
         item = create_test_item(
             item_code="TEST-MED-004",
             item_name="Medicamento Test",
@@ -345,10 +412,10 @@ class TestPrescriptionDDD(unittest.TestCase):
         
         prescription = self.create_test_prescription(
             doctor=doctor.name,
-            doctor_name=doctor.customer_name,
-            doctor_license="TEST-LIC-12345",
-            patient="Paciente Test",
-            patient_name="Paciente Test",
+            doctor_name=doctor.doctor_name,
+            doctor_license=doctor.license_number,
+            patient=patient.name,
+            patient_name=patient.patient_name,
             items=[{
                 "item": item.name,
                 "item_name": item.item_name,
@@ -376,7 +443,8 @@ class TestPrescriptionDDD(unittest.TestCase):
         """
         Invariante: El estado de la receta debe actualizarse automáticamente según las dispensaciones
         """
-        doctor = self.create_test_customer("Dr. Test Médico")
+        doctor = self.create_test_doctor_helper()
+        patient = self.create_test_patient_helper()
         item = create_test_item(
             item_code="TEST-MED-005",
             item_name="Medicamento Test",
@@ -393,10 +461,10 @@ class TestPrescriptionDDD(unittest.TestCase):
         # Crear receta nueva
         prescription = self.create_test_prescription(
             doctor=doctor.name,
-            doctor_name=doctor.customer_name,
-            doctor_license="TEST-LIC-12345",
-            patient="Paciente Test",
-            patient_name="Paciente Test",
+            doctor_name=doctor.doctor_name,
+            doctor_license=doctor.license_number,
+            patient=patient.name,
+            patient_name=patient.patient_name,
             status="Nueva",
             items=[{
                 "item": item.name,
@@ -424,7 +492,8 @@ class TestPrescriptionDDD(unittest.TestCase):
         """
         Regla de Negocio: Una receta vencida no puede ser utilizada para dispensación
         """
-        doctor = self.create_test_customer("Dr. Test Médico")
+        doctor = self.create_test_doctor_helper()
+        patient = self.create_test_patient_helper()
         item = create_test_item(
             item_code="TEST-MED-006",
             item_name="Medicamento Test",
@@ -441,10 +510,10 @@ class TestPrescriptionDDD(unittest.TestCase):
         # Crear receta vencida
         prescription = self.create_test_prescription(
             doctor=doctor.name,
-            doctor_name=doctor.customer_name,
-            doctor_license="TEST-LIC-12345",
-            patient="Paciente Test",
-            patient_name="Paciente Test",
+            doctor_name=doctor.doctor_name,
+            doctor_license=doctor.license_number,
+            patient=patient.name,
+            patient_name=patient.patient_name,
             prescription_date=add_days(today(), -60),
             valid_till=add_days(today(), -30),  # Vencida hace 30 días
             status="Vencida",
