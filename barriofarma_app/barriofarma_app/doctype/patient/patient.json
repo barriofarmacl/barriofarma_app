@@ -1,0 +1,141 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:patient_name",
+ "creation": "2025-11-17 20:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "patient_name",
+  "rut_dni",
+  "date_of_birth",
+  "gender",
+  "col_break1",
+  "customer",
+  "contact_section",
+  "address",
+  "phone",
+  "email",
+  "col_break2",
+  "medical_section",
+  "blood_group",
+  "allergies",
+  "medical_conditions"
+ ],
+ "fields": [
+  {
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "label": "Nombre Completo",
+   "reqd": 1
+  },
+  {
+   "fieldname": "rut_dni",
+   "fieldtype": "Data",
+   "label": "RUT/DNI",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "date_of_birth",
+   "fieldtype": "Date",
+   "label": "Fecha de Nacimiento"
+  },
+  {
+   "fieldname": "gender",
+   "fieldtype": "Select",
+   "label": "Género",
+   "options": "Masculino\nFemenino\nOtro"
+  },
+  {
+   "fieldname": "col_break1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Cliente Asociado",
+   "options": "Customer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "contact_section",
+   "fieldtype": "Section Break",
+   "label": "Información de Contacto"
+  },
+  {
+   "fieldname": "address",
+   "fieldtype": "Small Text",
+   "label": "Dirección"
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Teléfono"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email"
+  },
+  {
+   "fieldname": "col_break2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "medical_section",
+   "fieldtype": "Section Break",
+   "label": "Información Médica"
+  },
+  {
+   "fieldname": "blood_group",
+   "fieldtype": "Data",
+   "label": "Grupo Sanguíneo"
+  },
+  {
+   "fieldname": "allergies",
+   "fieldtype": "Small Text",
+   "label": "Alergias Conocidas"
+  },
+  {
+   "fieldname": "medical_conditions",
+   "fieldtype": "Small Text",
+   "label": "Condiciones Médicas"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-11-17 20:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Barriofarma App",
+ "name": "Patient",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Farmacéutico",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "All"
+  }
+ ],
+ "search_fields": "patient_name,rut_dni,phone,email",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "patient_name",
+ "track_changes": 1
+}
+

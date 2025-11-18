@@ -51,23 +51,25 @@
    "fieldname": "doctor",
    "fieldtype": "Link",
    "label": "Médico",
-   "options": "Customer",
+   "options": "Doctor",
    "reqd": 1
   },
   {
-   "fetch_from": "doctor.customer_name",
+   "fetch_from": "doctor.doctor_name",
    "fieldname": "doctor_name",
    "fieldtype": "Data",
    "label": "Nombre del Médico",
    "reqd": 1
   },
   {
+   "fetch_from": "doctor.license_number",
    "fieldname": "doctor_license",
    "fieldtype": "Data",
    "label": "Número de Licencia Médica",
    "reqd": 1
   },
   {
+   "fetch_from": "doctor.specialty",
    "fieldname": "doctor_specialty",
    "fieldtype": "Data",
    "label": "Especialidad"
@@ -83,11 +85,13 @@
   },
   {
    "fieldname": "patient",
-   "fieldtype": "Data",
-   "label": "Datos mínimos del paciente (nombre, RUT, etc.)",
+   "fieldtype": "Link",
+   "label": "Paciente",
+   "options": "Patient",
    "reqd": 1
   },
   {
+   "fetch_from": "patient.patient_name",
    "fieldname": "patient_name",
    "fieldtype": "Data",
    "label": "Nombre del Paciente",

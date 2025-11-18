@@ -312,38 +312,128 @@ def create_test_purchase_order(item_code, qty, supplier_name=None, **kwargs):
 
 
 def create_test_batch(item_code, batch_id, expiry_date, **kwargs):
-    """
-    Función auxiliar para crear Batch de prueba
-    
-    Args:
-        item_code: Código del ítem
-        batch_id: ID del lote
-        expiry_date: Fecha de vencimiento (YYYY-MM-DD)
-        **kwargs: Campos adicionales del Batch
-    
-    Returns:
-        Batch document creado
-    """
-    if frappe.db.exists("Batch", batch_id):
-        return frappe.get_doc("Batch", batch_id)
-    
-    # Validar que el item requiere batch
-    item = frappe.get_doc("Item", item_code)
-    if not item.has_batch_no:
-        raise ValueError(f"Item {item_code} no requiere gestión por lote (has_batch_no=0)")
-    
-    defaults = {
-        "doctype": "Batch",
-        "batch_id": batch_id,
-        "item": item_code,
-        "expiry_date": expiry_date,
-    }
-    
-    defaults.update(kwargs)
-    
-    batch = frappe.get_doc(defaults)
-    batch.insert(ignore_permissions=True)
-    frappe.db.commit()
-    
-    return batch
+	"""
+	Función auxiliar para crear Batch de prueba
+	
+	Args:
+		item_code: Código del ítem
+		batch_id: ID del lote
+		expiry_date: Fecha de vencimiento (YYYY-MM-DD)
+		**kwargs: Campos adicionales del Batch
+	
+	Returns:
+		Batch document creado
+	"""
+	if frappe.db.exists("Batch", batch_id):
+		return frappe.get_doc("Batch", batch_id)
+	
+	# Validar que el item requiere batch
+	item = frappe.get_doc("Item", item_code)
+	if not item.has_batch_no:
+		raise ValueError(f"Item {item_code} no requiere gestión por lote (has_batch_no=0)")
+	
+	defaults = {
+		"doctype": "Batch",
+		"batch_id": batch_id,
+		"item": item_code,
+		"expiry_date": expiry_date,
+	}
+	
+	defaults.update(kwargs)
+	
+	batch = frappe.get_doc(defaults)
+	batch.insert(ignore_permissions=True)
+	frappe.db.commit()
+	
+	return batch
+
+
+def create_test_doctor(doctor_name=None, license_number=None, **kwargs):
+	"""
+	Función auxiliar para crear Doctor de prueba
+	
+	Args:
+		doctor_name: Nombre completo del médico (si no se proporciona, se genera uno)
+		license_number: Número de licencia médica (si no se proporciona, se genera uno único)
+		**kwargs: Campos adicionales del Doctor (specialty, contact_info, etc.)
+	
+	Returns:
+		Doctor document creado
+	"""
+	# Generar valores por defecto si no se proporcionan
+	if not doctor_name:
+		doctor_name = f"Dr. Test Médico {frappe.generate_hash(length=6)}"
+	
+	if not license_number:
+		license_number = f"TEST-LIC-{frappe.generate_hash(length=8)}"
+	
+	# Verificar si ya existe un doctor con esta licencia
+	existing_doctor = frappe.db.get_value("Doctor", {"license_number": license_number}, "name")
+	if existing_doctor:
+		return frappe.get_doc("Doctor", existing_doctor)
+	
+	defaults = {
+		"doctype": "Doctor",
+		"doctor_name": doctor_name,
+		"license_number": license_number,
+		"specialty": kwargs.get("specialty"),
+		"contact_info": kwargs.get("contact_info"),
+	}
+	
+	# Remover None values
+	defaults = {k: v for k, v in defaults.items() if v is not None}
+	
+	doctor = frappe.get_doc(defaults)
+	doctor.insert(ignore_permissions=True)
+	frappe.db.commit()
+	
+	return doctor
+
+
+def create_test_patient(patient_name=None, rut_dni=None, **kwargs):
+	"""
+	Función auxiliar para crear Patient de prueba
+	
+	Args:
+		patient_name: Nombre completo del paciente (si no se proporciona, se genera uno)
+		rut_dni: RUT/DNI del paciente (si no se proporciona, se genera uno único)
+		**kwargs: Campos adicionales del Patient (date_of_birth, gender, etc.)
+	
+	Returns:
+		Patient document creado
+	"""
+	# Generar valores por defecto si no se proporcionan
+	if not patient_name:
+		patient_name = f"Paciente Test {frappe.generate_hash(length=6)}"
+	
+	if not rut_dni:
+		rut_dni = f"TEST-RUT-{frappe.generate_hash(length=8)}"
+	
+	# Verificar si ya existe un paciente con este RUT
+	existing_patient = frappe.db.get_value("Patient", {"rut_dni": rut_dni}, "name")
+	if existing_patient:
+		return frappe.get_doc("Patient", existing_patient)
+	
+	defaults = {
+		"doctype": "Patient",
+		"patient_name": patient_name,
+		"rut_dni": rut_dni,
+		"date_of_birth": kwargs.get("date_of_birth"),
+		"gender": kwargs.get("gender"),
+		"address": kwargs.get("address"),
+		"phone": kwargs.get("phone"),
+		"email": kwargs.get("email"),
+		"blood_group": kwargs.get("blood_group"),
+		"allergies": kwargs.get("allergies"),
+		"medical_conditions": kwargs.get("medical_conditions"),
+	}
+	
+	# Remover None values
+	defaults = {k: v for k, v in defaults.items() if v is not None}
+	
+	patient = frappe.get_doc(defaults)
+	patient.insert(ignore_permissions=True)
+	frappe.db.commit()
+	
+	return patient
 
