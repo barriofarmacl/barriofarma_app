@@ -18,6 +18,7 @@ from barriofarma_app.barriofarma_app.test_setup import (
     create_test_warehouse,
     create_test_purchase_order,
     create_test_batch,
+    get_test_company,
 )
 
 
@@ -109,7 +110,7 @@ class TestBF008UmbralVencimiento(unittest.TestCase):
           Then el sublote queda automáticamente en Cuarentena
         """
         # Setup
-        company_name = frappe.db.get_value("Company", {"name": ("!=", "")}, "name")
+        company_name = get_test_company()
         
         # Given: Item Group con umbral de 6 meses
         item_group = frappe.get_doc({
@@ -189,7 +190,7 @@ class TestBF008UmbralVencimiento(unittest.TestCase):
           Then el sublote queda Aceptado
         """
         # Setup
-        company_name = frappe.db.get_value("Company", {"name": ("!=", "")}, "name")
+        company_name = get_test_company()
         
         # Given: Item Group con umbral de 6 meses
         item_group = frappe.get_doc({
@@ -274,7 +275,7 @@ class TestBF008UmbralVencimiento(unittest.TestCase):
           Then el sublote corto queda en Cuarentena y el largo queda Aceptado
         """
         # Setup
-        company_name = frappe.db.get_value("Company", {"name": ("!=", "")}, "name")
+        company_name = get_test_company()
         
         # Given: Item Group con umbral de 6 meses
         item_group = frappe.get_doc({

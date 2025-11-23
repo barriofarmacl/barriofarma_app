@@ -18,6 +18,7 @@ from barriofarma_app.barriofarma_app.test_setup import (
     create_test_warehouse,
     create_test_purchase_order,
     create_test_batch,
+    get_test_company,
 )
 
 
@@ -104,7 +105,7 @@ class TestPurchaseReceiptExpiryThresholdDDD(unittest.TestCase):
         Invariante DDD: Items con vencimiento bajo umbral quedan automáticamente en Cuarentena
         """
         # Setup
-        company_name = frappe.db.get_value("Company", {"name": ("!=", "")}, "name")
+        company_name = get_test_company()
         
         # Crear Item Group con umbral de 6 meses
         item_group = frappe.get_doc({
@@ -181,7 +182,7 @@ class TestPurchaseReceiptExpiryThresholdDDD(unittest.TestCase):
         Invariante DDD: Si un item ya está rechazado manualmente, no se sobrescribe a Cuarentena
         """
         # Setup
-        company_name = frappe.db.get_value("Company", {"name": ("!=", "")}, "name")
+        company_name = get_test_company()
         
         item = create_test_item(
             item_code=f"TEST-ITEM-{frappe.generate_hash(length=6)}",
@@ -244,7 +245,7 @@ class TestPurchaseReceiptExpiryThresholdDDD(unittest.TestCase):
         Invariante DDD: El umbral configurado en Item Group tiene prioridad sobre Company
         """
         # Setup
-        company_name = frappe.db.get_value("Company", {"name": ("!=", "")}, "name")
+        company_name = get_test_company()
         
         # Configurar Company con umbral de 12 meses
         frappe.db.set_value("Company", company_name, "custom_minimum_expiry_months", 12)
