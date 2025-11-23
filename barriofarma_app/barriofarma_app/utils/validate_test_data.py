@@ -124,6 +124,82 @@ def check_test_prescriptions():
     return test_prescriptions
 
 
+def check_test_companies():
+    """
+    Verifica si existen companies de prueba en la base de datos
+    Retorna lista de companies encontradas (excepto Barriofarma que es la real)
+    """
+    test_companies = frappe.db.sql("""
+        SELECT name, abbr, default_currency, country, creation
+        FROM `tabCompany`
+        WHERE (name LIKE '_Test%' OR name LIKE 'TEST-%' OR name LIKE '%Test Company%')
+          AND name != 'Barriofarma'
+        ORDER BY creation DESC
+    """, as_dict=True)
+    
+    return test_companies
+
+
+def check_test_warehouses():
+    """
+    Verifica si existen warehouses de prueba en la base de datos
+    Retorna lista de warehouses encontrados
+    """
+    test_warehouses = frappe.db.sql("""
+        SELECT name, warehouse_name, company, creation
+        FROM `tabWarehouse`
+        WHERE name LIKE 'TEST-WH%' OR warehouse_name LIKE 'TEST-%'
+        ORDER BY creation DESC
+    """, as_dict=True)
+    
+    return test_warehouses
+
+
+def check_test_suppliers():
+    """
+    Verifica si existen suppliers de prueba en la base de datos
+    Retorna lista de suppliers encontrados
+    """
+    test_suppliers = frappe.db.sql("""
+        SELECT name, supplier_name, supplier_type, creation
+        FROM `tabSupplier`
+        WHERE supplier_name LIKE 'TEST-SUPPLIER%' OR name LIKE 'TEST-%'
+        ORDER BY creation DESC
+    """, as_dict=True)
+    
+    return test_suppliers
+
+
+def check_test_patients():
+    """
+    Verifica si existen patients de prueba en la base de datos
+    Retorna lista de patients encontrados
+    """
+    test_patients = frappe.db.sql("""
+        SELECT name, patient_name, rut_dni, creation
+        FROM `tabPatient`
+        WHERE patient_name LIKE '%Test%' OR rut_dni LIKE 'TEST-%'
+        ORDER BY creation DESC
+    """, as_dict=True)
+    
+    return test_patients
+
+
+def check_test_doctors():
+    """
+    Verifica si existen doctors de prueba en la base de datos
+    Retorna lista de doctors encontrados
+    """
+    test_doctors = frappe.db.sql("""
+        SELECT name, doctor_name, license_number, creation
+        FROM `tabDoctor`
+        WHERE doctor_name LIKE '%Test%' OR license_number LIKE 'TEST-LIC%'
+        ORDER BY creation DESC
+    """, as_dict=True)
+    
+    return test_doctors
+
+
 def print_validation_report():
     """
     Imprime un reporte completo de validación
@@ -156,9 +232,69 @@ def print_validation_report():
     else:
         print("   ✅ No se encontraron recetas de prueba")
     
-    # 3. Items incompletos
+    # 3. Companies de prueba
+    test_companies = check_test_companies()
+    print(f"\n3. Companies de Prueba (_Test*, TEST-*): {len(test_companies)}")
+    if test_companies:
+        print("   ⚠️  ENCONTRADAS:")
+        for company in test_companies[:10]:
+            print(f"      - {company.name} ({company.abbr}): {company.default_currency} - {company.country}")
+        if len(test_companies) > 10:
+            print(f"      ... y {len(test_companies) - 10} más")
+    else:
+        print("   ✅ No se encontraron companies de prueba")
+    
+    # 4. Warehouses de prueba
+    test_warehouses = check_test_warehouses()
+    print(f"\n4. Warehouses de Prueba (TEST-WH*): {len(test_warehouses)}")
+    if test_warehouses:
+        print("   ⚠️  ENCONTRADOS:")
+        for warehouse in test_warehouses[:10]:
+            print(f"      - {warehouse.name}: {warehouse.company}")
+        if len(test_warehouses) > 10:
+            print(f"      ... y {len(test_warehouses) - 10} más")
+    else:
+        print("   ✅ No se encontraron warehouses de prueba")
+    
+    # 5. Suppliers de prueba
+    test_suppliers = check_test_suppliers()
+    print(f"\n5. Suppliers de Prueba (TEST-SUPPLIER*): {len(test_suppliers)}")
+    if test_suppliers:
+        print("   ⚠️  ENCONTRADOS:")
+        for supplier in test_suppliers[:10]:
+            print(f"      - {supplier.name}: {supplier.supplier_name}")
+        if len(test_suppliers) > 10:
+            print(f"      ... y {len(test_suppliers) - 10} más")
+    else:
+        print("   ✅ No se encontraron suppliers de prueba")
+    
+    # 6. Patients de prueba
+    test_patients = check_test_patients()
+    print(f"\n6. Patients de Prueba: {len(test_patients)}")
+    if test_patients:
+        print("   ⚠️  ENCONTRADOS:")
+        for patient in test_patients[:10]:
+            print(f"      - {patient.name}: {patient.patient_name} ({patient.rut_dni})")
+        if len(test_patients) > 10:
+            print(f"      ... y {len(test_patients) - 10} más")
+    else:
+        print("   ✅ No se encontraron patients de prueba")
+    
+    # 7. Doctors de prueba
+    test_doctors = check_test_doctors()
+    print(f"\n7. Doctors de Prueba: {len(test_doctors)}")
+    if test_doctors:
+        print("   ⚠️  ENCONTRADOS:")
+        for doctor in test_doctors[:10]:
+            print(f"      - {doctor.name}: {doctor.doctor_name} ({doctor.license_number})")
+        if len(test_doctors) > 10:
+            print(f"      ... y {len(test_doctors) - 10} más")
+    else:
+        print("   ✅ No se encontraron doctors de prueba")
+    
+    # 8. Items incompletos
     incomplete_items = check_incomplete_items()
-    print(f"\n3. Items con Campos Custom Incompletos: {len(incomplete_items)}")
+    print(f"\n8. Items con Campos Custom Incompletos: {len(incomplete_items)}")
     if incomplete_items:
         print("   ⚠️  ENCONTRADOS:")
         for item in incomplete_items[:10]:
@@ -170,9 +306,9 @@ def print_validation_report():
     else:
         print("   ✅ No se encontraron items incompletos")
     
-    # 4. Errores de validación
+    # 9. Errores de validación
     validation_errors = check_validation_errors()
-    print(f"\n4. Errores de Validación (Invariantes DDD): {len(validation_errors)}")
+    print(f"\n9. Errores de Validación (Invariantes DDD): {len(validation_errors)}")
     if validation_errors:
         print("   ⚠️  ENCONTRADOS:")
         for error_group in validation_errors:
@@ -185,12 +321,19 @@ def print_validation_report():
         print("   ✅ No se encontraron errores de validación")
     
     print("\n" + "="*70)
-    print(f"RESUMEN: {len(test_items)} items de prueba, {len(test_prescriptions)} recetas de prueba, {len(incomplete_items)} incompletos, {len(validation_errors)} tipos de errores")
+    print(f"RESUMEN: {len(test_items)} items, {len(test_prescriptions)} recetas, {len(test_companies)} companies, " +
+          f"{len(test_warehouses)} warehouses, {len(test_suppliers)} suppliers, {len(test_patients)} patients, " +
+          f"{len(test_doctors)} doctors de prueba")
     print("="*70 + "\n")
     
     return {
         'test_items': len(test_items),
         'test_prescriptions': len(test_prescriptions),
+        'test_companies': len(test_companies),
+        'test_warehouses': len(test_warehouses),
+        'test_suppliers': len(test_suppliers),
+        'test_patients': len(test_patients),
+        'test_doctors': len(test_doctors),
         'incomplete_items': len(incomplete_items),
         'validation_errors': len(validation_errors)
     }
@@ -252,12 +395,28 @@ def cleanup_test_prescriptions(confirm=False):
 
 def cleanup_all_test_data():
     """
-    Limpia todos los datos de prueba (items y recetas) de la base de datos
+    Limpia todos los datos de prueba de la base de datos en orden correcto
+    (dependencias primero, luego los documentos principales)
     """
     print("\n🗑️  INICIANDO LIMPIEZA DE DATOS DE PRUEBA...")
     print("="*70)
     
-    # Limpiar items
+    # 1. Limpiar recetas (dependen de patients y doctors)
+    test_prescriptions = check_test_prescriptions()
+    if test_prescriptions:
+        print(f"\n🗑️  Limpiando {len(test_prescriptions)} recetas de prueba...")
+        for prescription in test_prescriptions:
+            try:
+                frappe.delete_doc("Prescription", prescription.name, force=1, ignore_permissions=True)
+                print(f"   ✓ Eliminado: {prescription.name} ({prescription.patient_name})")
+            except Exception as e:
+                print(f"   ✗ Error al eliminar {prescription.name}: {str(e)}")
+        frappe.db.commit()
+        print(f"✅ {len(test_prescriptions)} recetas eliminadas.")
+    else:
+        print("\n✅ No hay recetas de prueba para limpiar")
+    
+    # 2. Limpiar items
     test_items = check_test_items()
     if test_items:
         print(f"\n🗑️  Limpiando {len(test_items)} items de prueba...")
@@ -272,20 +431,80 @@ def cleanup_all_test_data():
     else:
         print("\n✅ No hay items de prueba para limpiar")
     
-    # Limpiar recetas
-    test_prescriptions = check_test_prescriptions()
-    if test_prescriptions:
-        print(f"\n🗑️  Limpiando {len(test_prescriptions)} recetas de prueba...")
-        for prescription in test_prescriptions:
+    # 3. Limpiar patients
+    test_patients = check_test_patients()
+    if test_patients:
+        print(f"\n🗑️  Limpiando {len(test_patients)} patients de prueba...")
+        for patient in test_patients:
             try:
-                frappe.delete_doc("Prescription", prescription.name, force=1, ignore_permissions=True)
-                print(f"   ✓ Eliminado: {prescription.name} ({prescription.patient_name})")
+                frappe.delete_doc("Patient", patient.name, force=1, ignore_permissions=True)
+                print(f"   ✓ Eliminado: {patient.patient_name}")
             except Exception as e:
-                print(f"   ✗ Error al eliminar {prescription.name}: {str(e)}")
+                print(f"   ✗ Error al eliminar {patient.name}: {str(e)}")
         frappe.db.commit()
-        print(f"✅ {len(test_prescriptions)} recetas eliminadas.")
+        print(f"✅ {len(test_patients)} patients eliminados.")
     else:
-        print("\n✅ No hay recetas de prueba para limpiar")
+        print("\n✅ No hay patients de prueba para limpiar")
+    
+    # 4. Limpiar doctors
+    test_doctors = check_test_doctors()
+    if test_doctors:
+        print(f"\n🗑️  Limpiando {len(test_doctors)} doctors de prueba...")
+        for doctor in test_doctors:
+            try:
+                frappe.delete_doc("Doctor", doctor.name, force=1, ignore_permissions=True)
+                print(f"   ✓ Eliminado: {doctor.doctor_name}")
+            except Exception as e:
+                print(f"   ✗ Error al eliminar {doctor.name}: {str(e)}")
+        frappe.db.commit()
+        print(f"✅ {len(test_doctors)} doctors eliminados.")
+    else:
+        print("\n✅ No hay doctors de prueba para limpiar")
+    
+    # 5. Limpiar warehouses
+    test_warehouses = check_test_warehouses()
+    if test_warehouses:
+        print(f"\n🗑️  Limpiando {len(test_warehouses)} warehouses de prueba...")
+        for warehouse in test_warehouses:
+            try:
+                frappe.delete_doc("Warehouse", warehouse.name, force=1, ignore_permissions=True)
+                print(f"   ✓ Eliminado: {warehouse.name}")
+            except Exception as e:
+                print(f"   ✗ Error al eliminar {warehouse.name}: {str(e)}")
+        frappe.db.commit()
+        print(f"✅ {len(test_warehouses)} warehouses eliminados.")
+    else:
+        print("\n✅ No hay warehouses de prueba para limpiar")
+    
+    # 6. Limpiar suppliers
+    test_suppliers = check_test_suppliers()
+    if test_suppliers:
+        print(f"\n🗑️  Limpiando {len(test_suppliers)} suppliers de prueba...")
+        for supplier in test_suppliers:
+            try:
+                frappe.delete_doc("Supplier", supplier.name, force=1, ignore_permissions=True)
+                print(f"   ✓ Eliminado: {supplier.supplier_name}")
+            except Exception as e:
+                print(f"   ✗ Error al eliminar {supplier.name}: {str(e)}")
+        frappe.db.commit()
+        print(f"✅ {len(test_suppliers)} suppliers eliminados.")
+    else:
+        print("\n✅ No hay suppliers de prueba para limpiar")
+    
+    # 7. Limpiar companies (al final porque otros docs pueden depender)
+    test_companies = check_test_companies()
+    if test_companies:
+        print(f"\n🗑️  Limpiando {len(test_companies)} companies de prueba...")
+        for company in test_companies:
+            try:
+                frappe.delete_doc("Company", company.name, force=1, ignore_permissions=True)
+                print(f"   ✓ Eliminado: {company.name}")
+            except Exception as e:
+                print(f"   ✗ Error al eliminar {company.name}: {str(e)}")
+        frappe.db.commit()
+        print(f"✅ {len(test_companies)} companies eliminadas.")
+    else:
+        print("\n✅ No hay companies de prueba para limpiar")
     
     print("\n" + "="*70)
     print("✅ Limpieza completa de datos de prueba finalizada.")

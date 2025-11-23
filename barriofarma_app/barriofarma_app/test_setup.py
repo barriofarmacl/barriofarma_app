@@ -225,21 +225,27 @@ def create_test_warehouse(warehouse_name, **kwargs):
     if frappe.db.exists("Warehouse", warehouse_name):
         return frappe.get_doc("Warehouse", warehouse_name)
     
-    # Obtener o crear Company por defecto
+    # Obtener o crear Company por defecto - Siempre usar Barriofarma (CLP) para tests
     company = kwargs.get("company")
     if not company:
-        company = frappe.db.get_value("Company", {"name": ("!=", "")}, "name")
-        if not company:
-            # Crear company básica si no existe
-            company = frappe.get_doc({
-                "doctype": "Company",
-                "company_name": "Test Company",
-                "abbr": "TC",
-                "default_currency": "USD"
-            })
-            company.insert(ignore_permissions=True)
-            frappe.db.commit()
-            company = company.name
+        # Primero intentar usar Barriofarma (company real con CLP)
+        if frappe.db.exists("Company", "Barriofarma"):
+            company = "Barriofarma"
+        else:
+            # Fallback: cualquier company con CLP
+            company = frappe.db.get_value("Company", {"default_currency": "CLP"}, "name")
+            if not company:
+                # Crear company básica con CLP si no existe
+                company = frappe.get_doc({
+                    "doctype": "Company",
+                    "company_name": "Barriofarma Test",
+                    "abbr": "BFT",
+                    "default_currency": "CLP",
+                    "country": "Chile"
+                })
+                company.insert(ignore_permissions=True)
+                frappe.db.commit()
+                company = company.name
     
     defaults = {
         "doctype": "Warehouse",
@@ -275,10 +281,18 @@ def create_test_purchase_order(item_code, qty, supplier_name=None, **kwargs):
     
     supplier = create_test_supplier(supplier_name)
     
-    # Obtener company
+    # Obtener company - Siempre usar Barriofarma (CLP) para tests
     company = kwargs.get("company")
     if not company:
-        company = frappe.db.get_value("Company", {"name": ("!=", "")}, "name")
+        # Primero intentar usar Barriofarma (company real con CLP)
+        if frappe.db.exists("Company", "Barriofarma"):
+            company = "Barriofarma"
+        else:
+            # Fallback: cualquier company con CLP
+            company = frappe.db.get_value("Company", {"default_currency": "CLP"}, "name")
+            if not company:
+                # Último recurso: cualquier company disponible
+                company = frappe.db.get_value("Company", {"name": ("!=", "")}, "name")
     
     # Obtener item
     if not frappe.db.exists("Item", item_code):
