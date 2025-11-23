@@ -66,6 +66,25 @@ def get_or_create_root_territory():
     return territory_name
 
 
+def get_test_company():
+    """
+    Obtiene la company correcta para tests (siempre Barriofarma si existe, con CLP)
+    
+    Returns:
+        str: Nombre de la company (prioriza Barriofarma con CLP)
+    """
+    # Primero intentar usar Barriofarma (company real con CLP)
+    if frappe.db.exists("Company", "Barriofarma"):
+        return "Barriofarma"
+    else:
+        # Fallback: cualquier company con CLP
+        company = frappe.db.get_value("Company", {"default_currency": "CLP"}, "name")
+        if company:
+            return company
+        # Último recurso: cualquier company disponible
+        return frappe.db.get_value("Company", {"name": ("!=", "")}, "name")
+
+
 def create_test_customer(customer_name, customer_type="Individual", **kwargs):
     """
     Función auxiliar para crear Customer de prueba
