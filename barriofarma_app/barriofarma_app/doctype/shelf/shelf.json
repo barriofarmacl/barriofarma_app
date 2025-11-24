@@ -1,0 +1,169 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-11-24 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "name": "Shelf",
+ "field_order": [
+  "shelf_name",
+  "warehouse",
+  "location_code",
+  "col_break1",
+  "shelf_type",
+  "zone",
+  "capacity_section",
+  "capacity_mode",
+  "max_capacity",
+  "is_full",
+  "current_occupancy",
+  "col_break2",
+  "company",
+  "disabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "shelf_name",
+   "fieldtype": "Data",
+   "label": "Nombre del Estante",
+   "reqd": 1
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "options": "Warehouse",
+   "reqd": 1
+  },
+  {
+   "fieldname": "location_code",
+   "fieldtype": "Data",
+   "label": "Código de Ubicación",
+   "reqd": 1
+  },
+  {
+   "fieldname": "col_break1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "shelf_type",
+   "fieldtype": "Select",
+   "label": "Tipo de Estante",
+   "options": "Normal\nRefrigerado\nControlado\nMostrador",
+   "reqd": 1,
+   "default": "Normal"
+  },
+  {
+   "fieldname": "zone",
+   "fieldtype": "Data",
+   "label": "Zona"
+  },
+  {
+   "fieldname": "capacity_section",
+   "fieldtype": "Section Break",
+   "label": "Capacidad"
+  },
+  {
+   "fieldname": "capacity_mode",
+   "fieldtype": "Select",
+   "label": "Modo de Capacidad",
+   "options": "Dinámica\nFija",
+   "default": "Dinámica"
+  },
+  {
+   "fieldname": "max_capacity",
+   "fieldtype": "Float",
+   "label": "Capacidad Máxima",
+   "depends_on": "eval:doc.capacity_mode == 'Fija' || doc.is_full == 1"
+  },
+  {
+   "fieldname": "is_full",
+   "fieldtype": "Check",
+   "label": "Estante Lleno"
+  },
+  {
+   "fieldname": "current_occupancy",
+   "fieldtype": "Float",
+   "label": "Ocupación Actual",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_break2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "disabled",
+   "fieldtype": "Check",
+   "label": "Deshabilitado",
+   "default": 0
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SHELF-.#####",
+   "reqd": 1,
+   "default": "SHELF-.#####"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-11-24 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Barriofarma App",
+ "name": "Shelf",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Stock Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Stock User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
+

@@ -200,6 +200,24 @@ def check_test_doctors():
     return test_doctors
 
 
+def check_test_shelves():
+    """
+    Verifica si existen shelves de prueba en la base de datos
+    Retorna lista de shelves encontrados
+    """
+    test_shelves = frappe.db.sql("""
+        SELECT name, shelf_name, warehouse, creation
+        FROM `tabShelf`
+        WHERE shelf_name LIKE '%Test%' 
+           OR name LIKE 'TEST-%' 
+           OR name LIKE 'SHELF-%'
+           OR shelf_name LIKE 'Estante Sin%'
+        ORDER BY creation DESC
+    """, as_dict=True)
+    
+    return test_shelves
+
+
 def print_validation_report():
     """
     Imprime un reporte completo de validación
@@ -292,9 +310,21 @@ def print_validation_report():
     else:
         print("   ✅ No se encontraron doctors de prueba")
     
-    # 8. Items incompletos
+    # 8. Shelves de prueba
+    test_shelves = check_test_shelves()
+    print(f"\n8. Shelves de Prueba (SHELF-*, Estante Sin*): {len(test_shelves)}")
+    if test_shelves:
+        print("   ⚠️  ENCONTRADOS:")
+        for shelf in test_shelves[:10]:
+            print(f"      - {shelf.name}: {shelf.shelf_name} ({shelf.warehouse}) - creado: {shelf.creation}")
+        if len(test_shelves) > 10:
+            print(f"      ... y {len(test_shelves) - 10} más")
+    else:
+        print("   ✅ No se encontraron shelves de prueba")
+    
+    # 9. Items incompletos
     incomplete_items = check_incomplete_items()
-    print(f"\n8. Items con Campos Custom Incompletos: {len(incomplete_items)}")
+    print(f"\n9. Items con Campos Custom Incompletos: {len(incomplete_items)}")
     if incomplete_items:
         print("   ⚠️  ENCONTRADOS:")
         for item in incomplete_items[:10]:
@@ -306,9 +336,9 @@ def print_validation_report():
     else:
         print("   ✅ No se encontraron items incompletos")
     
-    # 9. Errores de validación
+    # 10. Errores de validación
     validation_errors = check_validation_errors()
-    print(f"\n9. Errores de Validación (Invariantes DDD): {len(validation_errors)}")
+    print(f"\n10. Errores de Validación (Invariantes DDD): {len(validation_errors)}")
     if validation_errors:
         print("   ⚠️  ENCONTRADOS:")
         for error_group in validation_errors:
@@ -323,7 +353,7 @@ def print_validation_report():
     print("\n" + "="*70)
     print(f"RESUMEN: {len(test_items)} items, {len(test_prescriptions)} recetas, {len(test_companies)} companies, " +
           f"{len(test_warehouses)} warehouses, {len(test_suppliers)} suppliers, {len(test_patients)} patients, " +
-          f"{len(test_doctors)} doctors de prueba")
+          f"{len(test_doctors)} doctors, {len(test_shelves)} shelves de prueba")
     print("="*70 + "\n")
     
     return {
@@ -334,6 +364,7 @@ def print_validation_report():
         'test_suppliers': len(test_suppliers),
         'test_patients': len(test_patients),
         'test_doctors': len(test_doctors),
+        'test_shelves': len(test_shelves),
         'incomplete_items': len(incomplete_items),
         'validation_errors': len(validation_errors)
     }
@@ -491,7 +522,22 @@ def cleanup_all_test_data():
     else:
         print("\n✅ No hay suppliers de prueba para limpiar")
     
-    # 7. Limpiar companies (al final porque otros docs pueden depender)
+    # 7. Limpiar shelves
+    test_shelves = check_test_shelves()
+    if test_shelves:
+        print(f"\n🗑️  Limpiando {len(test_shelves)} shelves de prueba...")
+        for shelf in test_shelves:
+            try:
+                frappe.delete_doc("Shelf", shelf.name, force=1, ignore_permissions=True)
+                print(f"   ✓ Eliminado: {shelf.name} ({shelf.shelf_name})")
+            except Exception as e:
+                print(f"   ✗ Error al eliminar {shelf.name}: {str(e)}")
+        frappe.db.commit()
+        print(f"✅ {len(test_shelves)} shelves eliminados.")
+    else:
+        print("\n✅ No hay shelves de prueba para limpiar")
+    
+    # 8. Limpiar companies (al final porque otros docs pueden depender)
     test_companies = check_test_companies()
     if test_companies:
         print(f"\n🗑️  Limpiando {len(test_companies)} companies de prueba...")
