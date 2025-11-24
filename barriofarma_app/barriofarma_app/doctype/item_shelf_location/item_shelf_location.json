@@ -1,0 +1,58 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-11-24 17:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "shelf",
+  "shelf_name",
+  "preferred_location",
+  "last_updated"
+ ],
+ "fields": [
+  {
+   "fieldname": "shelf",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Estante",
+   "options": "Shelf",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "shelf.shelf_name",
+   "fieldname": "shelf_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Nombre del Estante",
+   "read_only": 1
+  },
+  {
+   "default": 0,
+   "fieldname": "preferred_location",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Ubicación Preferida"
+  },
+  {
+   "default": "now",
+   "fieldname": "last_updated",
+   "fieldtype": "Datetime",
+   "label": "Última Actualización",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "modified": "2025-11-24 17:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Barriofarma App",
+ "name": "Item Shelf Location",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
+

@@ -1,0 +1,150 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-01-27 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "name": "Shelf Movement",
+ "field_order": [
+  "movement_type",
+  "movement_date",
+  "col_break1",
+  "shelf",
+  "to_shelf",
+  "item",
+  "quantity",
+  "col_break2",
+  "reference_doctype",
+  "reference_name",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "movement_type",
+   "fieldtype": "Select",
+   "label": "Tipo de Movimiento",
+   "options": "Transferencia\nRecepción\nVenta\nAjuste",
+   "reqd": 1
+  },
+  {
+   "fieldname": "movement_date",
+   "fieldtype": "Datetime",
+   "label": "Fecha de Movimiento",
+   "reqd": 1,
+   "default": "now"
+  },
+  {
+   "fieldname": "col_break1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "shelf",
+   "fieldtype": "Link",
+   "label": "Estante",
+   "options": "Shelf",
+   "reqd": 1
+  },
+  {
+   "fieldname": "to_shelf",
+   "fieldtype": "Link",
+   "label": "Estante Destino",
+   "options": "Shelf",
+   "depends_on": "eval:doc.movement_type == 'Transferencia'"
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Producto",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "quantity",
+   "fieldtype": "Float",
+   "label": "Cantidad",
+   "reqd": 1
+  },
+  {
+   "fieldname": "col_break2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "label": "Documento Referencia Tipo",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "reference_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Documento Referencia",
+   "options": "reference_doctype"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text",
+   "label": "Notas"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "SHELF-MOV-.#####",
+   "reqd": 1,
+   "default": "SHELF-MOV-.#####"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-01-27 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Barriofarma App",
+ "name": "Shelf Movement",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Stock Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Stock User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
+

@@ -253,18 +253,18 @@ def create_test_warehouse(warehouse_name, **kwargs):
         else:
             # Fallback: cualquier company con CLP
             company = frappe.db.get_value("Company", {"default_currency": "CLP"}, "name")
-            if not company:
+        if not company:
                 # Crear company básica con CLP si no existe
-                company = frappe.get_doc({
-                    "doctype": "Company",
+            company = frappe.get_doc({
+                "doctype": "Company",
                     "company_name": "Barriofarma Test",
                     "abbr": "BFT",
                     "default_currency": "CLP",
                     "country": "Chile"
-                })
-                company.insert(ignore_permissions=True)
-                frappe.db.commit()
-                company = company.name
+            })
+            company.insert(ignore_permissions=True)
+            frappe.db.commit()
+            company = company.name
     
     defaults = {
         "doctype": "Warehouse",
@@ -469,4 +469,71 @@ def create_test_patient(patient_name=None, rut_dni=None, **kwargs):
 	frappe.db.commit()
 	
 	return patient
+
+
+def create_test_shelf(shelf_name=None, warehouse=None, location_code=None, **kwargs):
+	"""
+	Función auxiliar para crear Shelf de prueba
+	
+	Args:
+		shelf_name: Nombre del estante (si no se proporciona, se genera uno)
+		warehouse: Warehouse al que pertenece (obligatorio si no se proporciona)
+		location_code: Código de ubicación (ej: "A1", "B2") - obligatorio si no se proporciona
+		**kwargs: Campos adicionales del Shelf (shelf_type, zone, capacity_mode, etc.)
+	
+	Returns:
+		Shelf document creado
+	"""
+	# Generar valores por defecto si no se proporcionan
+	if not shelf_name:
+		shelf_name = f"Estante Test {frappe.generate_hash(length=6)}"
+	
+	if not location_code:
+		location_code = f"TEST-{frappe.generate_hash(length=4)}"
+	
+	# Obtener warehouse si no se proporciona
+	if not warehouse:
+		# Crear warehouse de prueba si no existe
+		warehouse_name = f"TEST-WH-{frappe.generate_hash(length=6)}"
+		warehouse_doc = create_test_warehouse(warehouse_name)
+		warehouse = warehouse_doc.name
+	
+	# Verificar si ya existe un shelf con este location_code en el mismo warehouse
+	existing_shelf = frappe.db.get_value("Shelf", {
+		"location_code": location_code,
+		"warehouse": warehouse
+	}, "name")
+	
+	if existing_shelf:
+		return frappe.get_doc("Shelf", existing_shelf)
+	
+	# Obtener company desde warehouse
+	company = frappe.db.get_value("Warehouse", warehouse, "company")
+	if not company:
+		company = get_test_company()
+	
+	defaults = {
+		"doctype": "Shelf",
+		"shelf_name": shelf_name,
+		"warehouse": warehouse,
+		"location_code": location_code,
+		"shelf_type": kwargs.get("shelf_type", "Normal"),
+		"capacity_mode": kwargs.get("capacity_mode", "Dinámica"),
+		"zone": kwargs.get("zone"),
+		"company": company,
+	}
+	
+	# Agregar campos opcionales solo si se proporcionan
+	if "max_capacity" in kwargs:
+		defaults["max_capacity"] = kwargs["max_capacity"]
+	if "is_full" in kwargs:
+		defaults["is_full"] = kwargs.get("is_full", 0)
+	
+	defaults.update({k: v for k, v in kwargs.items() if k not in defaults})
+	
+	shelf = frappe.get_doc(defaults)
+	shelf.insert(ignore_permissions=True)
+	frappe.db.commit()
+	
+	return shelf
 
