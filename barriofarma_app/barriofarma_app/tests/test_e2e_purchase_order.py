@@ -71,11 +71,31 @@ class TestE2EPurchaseOrder(unittest.TestCase):
         for warehouse_name in self.test_warehouses:
             try:
                 if frappe.db.exists("Warehouse", warehouse_name):
+                    # Limpiar Stock Ledger Entries relacionados primero
+                    frappe.db.sql("DELETE FROM `tabStock Ledger Entry` WHERE warehouse = %s", (warehouse_name,))
                     # Limpiar Bins relacionados
                     frappe.db.sql("DELETE FROM `tabBin` WHERE warehouse = %s", (warehouse_name,))
+                    # Limpiar Shelf Movements relacionados (si hay shelves)
+                    shelves = frappe.get_all("Shelf", filters={"warehouse": warehouse_name}, fields=["name"])
+                    if shelves:
+                        shelf_names = [s["name"] for s in shelves]
+                        frappe.db.sql("DELETE FROM `tabShelf Movement` WHERE shelf IN ({})".format(
+                            ",".join(["%s"] * len(shelf_names))
+                        ), tuple(shelf_names))
+                        # Eliminar shelves
+                        for shelf in shelves:
+                            try:
+                                frappe.delete_doc("Shelf", shelf.name, force=True, ignore_permissions=True)
+                            except Exception:
+                                frappe.db.sql("DELETE FROM `tabShelf` WHERE name = %s", (shelf.name,))
+                    # Ahora eliminar el warehouse
                     frappe.delete_doc("Warehouse", warehouse_name, force=True, ignore_permissions=True)
             except Exception:
-                pass
+                # Si falla, intentar eliminación directa
+                try:
+                    frappe.db.sql("DELETE FROM `tabWarehouse` WHERE name = %s", (warehouse_name,))
+                except Exception:
+                    pass
         
         # Limpiar suppliers
         for supplier in self.test_suppliers:

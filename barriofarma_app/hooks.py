@@ -77,7 +77,8 @@ app_license = "mit"
 # Custom Fields para DocType Item (DDD)
 # Los fixtures ya están exportados en fixtures/custom_field.json
 # Se importan automáticamente durante bench migrate
-fixtures = ["Custom Field"]
+# Client Scripts para funcionalidades de UI (ej: auto-fill de barcode)
+fixtures = ["Custom Field", "Client Script"]
 
 # Uninstallation
 # ------------
@@ -126,7 +127,8 @@ fixtures = ["Custom Field"]
 override_doctype_class = {
 	"Item": "barriofarma_app.barriofarma_app.overrides.item.Item",
 	"Purchase Receipt": "barriofarma_app.barriofarma_app.overrides.purchase_receipt.PurchaseReceipt",
-	"Stock Entry": "barriofarma_app.barriofarma_app.overrides.stock_entry.StockEntry"
+	"Stock Entry": "barriofarma_app.barriofarma_app.overrides.stock_entry.StockEntry",
+	"Sales Invoice": "barriofarma_app.barriofarma_app.overrides.sales_invoice.SalesInvoice"
 }
 
 # Document Events

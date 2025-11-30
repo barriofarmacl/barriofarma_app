@@ -89,11 +89,31 @@ class TestE2EPOSShelf(unittest.TestCase):
         for warehouse_name in self.test_warehouses:
             try:
                 if frappe.db.exists("Warehouse", warehouse_name):
+                    # Limpiar Stock Ledger Entries relacionados primero
+                    frappe.db.sql("DELETE FROM `tabStock Ledger Entry` WHERE warehouse = %s", (warehouse_name,))
                     # Limpiar Bins relacionados
                     frappe.db.sql("DELETE FROM `tabBin` WHERE warehouse = %s", (warehouse_name,))
+                    # Limpiar Shelf Movements relacionados (si hay shelves)
+                    shelves = frappe.get_all("Shelf", filters={"warehouse": warehouse_name}, fields=["name"])
+                    if shelves:
+                        shelf_names = [s["name"] for s in shelves]
+                        frappe.db.sql("DELETE FROM `tabShelf Movement` WHERE shelf IN ({})".format(
+                            ",".join(["%s"] * len(shelf_names))
+                        ), tuple(shelf_names))
+                        # Eliminar shelves
+                        for shelf in shelves:
+                            try:
+                                frappe.delete_doc("Shelf", shelf.name, force=True, ignore_permissions=True)
+                            except Exception:
+                                frappe.db.sql("DELETE FROM `tabShelf` WHERE name = %s", (shelf.name,))
+                    # Ahora eliminar el warehouse
                     frappe.delete_doc("Warehouse", warehouse_name, force=True, ignore_permissions=True)
             except Exception:
-                pass
+                # Si falla, intentar eliminación directa
+                try:
+                    frappe.db.sql("DELETE FROM `tabWarehouse` WHERE name = %s", (warehouse_name,))
+                except Exception:
+                    pass
         
         # Limpiar customers
         for customer_name in self.test_customers:
@@ -351,6 +371,17 @@ class TestE2EPOSShelf(unittest.TestCase):
         frappe.db.commit()
         self.test_stock_entries.append(stock_entry_recepcion.name)
         
+        # Asignar el item al shelf para que pueda ser vendido desde ese shelf
+        item.reload()
+        if hasattr(item, "custom_shelf_locations"):
+            existing_assignment = [sl for sl in item.custom_shelf_locations if sl.shelf == shelf.name]
+            if not existing_assignment:
+                item.append("custom_shelf_locations", {
+                    "shelf": shelf.name
+                })
+                item.save(ignore_permissions=True)
+                frappe.db.commit()
+        
         # Verificar stock inicial
         from erpnext.stock.utils import get_or_make_bin
         bin_name = get_or_make_bin(item.name, warehouse.name)
@@ -394,28 +425,27 @@ class TestE2EPOSShelf(unittest.TestCase):
         # Por ahora verificamos que el Sales Invoice se creó correctamente
         self.assertIsNotNone(stock_final, "Stock debe existir")
         
-        # Paso 3: Crear Shelf Movement tipo Venta manualmente
-        # (Nota: En el futuro esto podría ser automático cuando se integre Sales Invoice con Shelf)
-        shelf_movement = frappe.get_doc({
-            "doctype": "Shelf Movement",
-            "movement_type": "Venta",
-            "shelf": shelf.name,
-            "item": item.name,
-            "quantity": 25.0,
-            "reference_doctype": "Sales Invoice",
-            "reference_name": sales_invoice.name
-        })
+        # Paso 3: Verificar que Shelf Movement tipo Venta se creó AUTOMÁTICAMENTE
+        # (Después de submitir Sales Invoice, el override debe crear el movimiento automáticamente)
+        movements = frappe.get_all(
+            "Shelf Movement",
+            filters={
+                "reference_doctype": "Sales Invoice",
+                "reference_name": sales_invoice.name,
+                "movement_type": "Venta"
+            },
+            fields=["name", "movement_type", "shelf", "item", "quantity"]
+        )
         
-        shelf_movement.insert(ignore_permissions=True)
-        frappe.db.commit()
-        self.test_movements.append(shelf_movement.name)
+        self.assertGreater(len(movements), 0, "Debe crearse automáticamente un Shelf Movement tipo Venta")
         
-        # Verificar que el movimiento se creó correctamente
-        self.assertIsNotNone(shelf_movement.name, "Shelf Movement debe tener nombre")
-        self.assertEqual(shelf_movement.movement_type, "Venta", "Tipo debe ser Venta")
-        self.assertEqual(shelf_movement.shelf, shelf.name, "Shelf debe coincidir")
-        self.assertEqual(shelf_movement.item, item.name, "Item debe coincidir")
-        self.assertEqual(shelf_movement.quantity, 25.0, "Cantidad debe ser 25.0")
+        if movements:
+            mov = movements[0]
+            self.assertEqual(mov.movement_type, "Venta", "Tipo debe ser Venta")
+            self.assertEqual(mov.shelf, shelf.name, "Shelf debe coincidir")
+            self.assertEqual(mov.item, item.name, "Item debe coincidir")
+            self.assertEqual(mov.quantity, 25.0, "Cantidad debe coincidir")
+            self.test_movements.append(mov.name)
         
         # Paso 4: Verificar stock en shelf después de venta
         shelf_movements = frappe.get_all(

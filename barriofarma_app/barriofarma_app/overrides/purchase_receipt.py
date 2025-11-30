@@ -12,6 +12,7 @@ import frappe
 import json
 from frappe import _
 from frappe.utils import flt
+from datetime import datetime
 from erpnext.stock.doctype.purchase_receipt.purchase_receipt import (
     PurchaseReceipt as ERPNextPurchaseReceipt,
     get_returned_qty_map,
@@ -221,6 +222,70 @@ class PurchaseReceipt(ERPNextPurchaseReceipt):
                     item.custom_qc_status = "Cuarentena"
             if not item.get("custom_qc_rejection_reason"):
                 item.custom_qc_rejection_reason = "Sobrante no autorizado"
+    
+    def on_submit(self):
+        """
+        Override: Crear Shelf Movement automáticamente al submitir Purchase Receipt
+        si los items tienen custom_to_shelf especificado
+        """
+        super().on_submit()
+        self.create_shelf_movements()
+    
+    def create_shelf_movements(self):
+        """
+        Crear registros de Shelf Movement basados en los items del Purchase Receipt
+        que tengan custom_to_shelf especificado
+        """
+        if not self.get("items"):
+            return
+        
+        for item in self.items:
+            # Obtener shelf destino desde campo custom
+            # Acceder como atributo del child table
+            to_shelf = getattr(item, "custom_to_shelf", None) or item.get("custom_to_shelf")
+            
+            # Solo crear movimiento si hay shelf destino especificado
+            if not to_shelf:
+                continue
+            
+            # Purchase Receipt siempre crea movimientos tipo "Recepción"
+            movement_type = "Recepción"
+            
+            # Crear Shelf Movement
+            self._create_shelf_movement(
+                movement_type=movement_type,
+                shelf=to_shelf,
+                item=item.item_code,
+                quantity=item.qty
+            )
+    
+    def _create_shelf_movement(self, movement_type, shelf, item, quantity, to_shelf=None):
+        """
+        Crear registro de Shelf Movement
+        """
+        try:
+            movement = frappe.get_doc({
+                "doctype": "Shelf Movement",
+                "movement_type": movement_type,
+                "shelf": shelf,
+                "to_shelf": to_shelf,
+                "item": item,
+                "quantity": quantity,
+                "movement_date": self.posting_date or self.transaction_date or datetime.now(),
+                "reference_doctype": "Purchase Receipt",
+                "reference_name": self.name,
+                "notes": f"Movimiento automático desde Purchase Receipt {self.name}"
+            })
+            
+            movement.insert(ignore_permissions=True)
+            frappe.db.commit()
+        except Exception as e:
+            frappe.log_error(
+                message=f"Error al crear Shelf Movement desde Purchase Receipt {self.name}: {str(e)}",
+                title="Error en Shelf Movement"
+            )
+            # No lanzar excepción para no bloquear el submit del Purchase Receipt
+            # pero registrar el error para debugging
 
 
 def make_purchase_invoice(source_name, target_doc=None, args=None):

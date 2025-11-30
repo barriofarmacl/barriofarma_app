@@ -70,32 +70,91 @@ def cleanup_test_data():
     
     # Limpiar Warehouses de prueba
     # Nota: Los warehouses pueden tener registros de inventario asociados
-    # Primero limpiar Stock Ledger Entries relacionados
+    # Primero limpiar Stock Ledger Entries y Bins relacionados
     print("\nLimpiando Warehouses...")
-    warehouses = frappe.get_all("Warehouse", filters={"warehouse_name": ("like", "TEST-WH-%")}, fields=["name", "warehouse_name"])
+    # Buscar por nombre o por código que empiece con TEST-WH
+    warehouses = frappe.db.sql("""
+        SELECT name, warehouse_name 
+        FROM `tabWarehouse` 
+        WHERE name LIKE 'TEST-WH%' 
+           OR warehouse_name LIKE 'TEST-WH%'
+           OR warehouse_name LIKE 'TEST-%'
+    """, as_dict=True)
+    
     for wh in warehouses:
         try:
-            # Intentar eliminar Stock Ledger Entries relacionados primero
+            # Primero eliminar Stock Ledger Entries relacionados
             sle_count = frappe.db.count("Stock Ledger Entry", {"warehouse": wh.name})
             if sle_count > 0:
                 frappe.db.sql("DELETE FROM `tabStock Ledger Entry` WHERE warehouse = %s", (wh.name,))
                 print(f"  ✓ Eliminados {sle_count} Stock Ledger Entries de {wh.warehouse_name}")
             
-            # Intentar eliminar Bin relacionados
+            # Eliminar Bins relacionados
             bin_count = frappe.db.count("Bin", {"warehouse": wh.name})
             if bin_count > 0:
                 frappe.db.sql("DELETE FROM `tabBin` WHERE warehouse = %s", (wh.name,))
                 print(f"  ✓ Eliminados {bin_count} Bins de {wh.warehouse_name}")
             
-            # Ahora eliminar el warehouse
-            frappe.delete_doc("Warehouse", wh.name, force=True, ignore_permissions=True)
-            print(f"  ✓ Eliminado: {wh.warehouse_name}")
-        except Exception as e:
-            print(f"  ✗ Error eliminando {wh.warehouse_name}: {e}")
-            # Si aún falla, intentar con más fuerza
+            # Eliminar Shelf Movements relacionados (si existen)
+            # Primero obtener los shelves del warehouse
+            shelves = frappe.db.sql("SELECT name FROM `tabShelf` WHERE warehouse = %s", (wh.name,), as_dict=True)
+            if shelves:
+                shelf_names = [s["name"] for s in shelves]
+                # Contar movimientos antes de eliminar
+                shelf_movement_count = frappe.db.sql("""
+                    SELECT COUNT(*) as count 
+                    FROM `tabShelf Movement` 
+                    WHERE shelf IN ({})
+                """.format(",".join(["%s"] * len(shelf_names))), tuple(shelf_names), as_dict=True)[0]["count"]
+                
+                if shelf_movement_count > 0:
+                    frappe.db.sql("DELETE FROM `tabShelf Movement` WHERE shelf IN ({})".format(
+                        ",".join(["%s"] * len(shelf_names))
+                    ), tuple(shelf_names))
+                    print(f"  ✓ Eliminados {shelf_movement_count} movimientos de shelves relacionados con {wh.warehouse_name}")
+            
+            # Eliminar Shelves relacionados (si existen)
+            shelf_count = frappe.db.count("Shelf", {"warehouse": wh.name})
+            if shelf_count > 0:
+                shelves = frappe.get_all("Shelf", filters={"warehouse": wh.name}, fields=["name"])
+                for shelf in shelves:
+                    try:
+                        frappe.delete_doc("Shelf", shelf.name, force=True, ignore_permissions=True)
+                    except:
+                        frappe.db.sql("DELETE FROM `tabShelf` WHERE name = %s", (shelf.name,))
+                print(f"  ✓ Eliminados {shelf_count} Shelves relacionados con {wh.warehouse_name}")
+            
+            # Eliminar Stock Entries relacionados (si existen y están en draft)
+            stock_entries = frappe.get_all("Stock Entry", 
+                filters={"docstatus": 0, "from_warehouse": wh.name}, 
+                fields=["name"])
+            stock_entries.extend(frappe.get_all("Stock Entry", 
+                filters={"docstatus": 0, "to_warehouse": wh.name}, 
+                fields=["name"]))
+            if stock_entries:
+                for se in stock_entries:
+                    try:
+                        frappe.delete_doc("Stock Entry", se.name, force=True, ignore_permissions=True)
+                    except:
+                        pass
+                print(f"  ✓ Eliminados {len(stock_entries)} Stock Entries relacionados con {wh.warehouse_name}")
+            
+            # Ahora intentar eliminar el warehouse usando el método estándar
             try:
+                frappe.delete_doc("Warehouse", wh.name, force=True, ignore_permissions=True)
+                print(f"  ✓ Eliminado: {wh.warehouse_name}")
+            except Exception as e:
+                # Si falla, intentar directamente desde BD
+                print(f"  ⚠️  Error con delete_doc, intentando eliminación directa: {e}")
                 frappe.db.sql("DELETE FROM `tabWarehouse` WHERE name = %s", (wh.name,))
                 print(f"  ✓ Eliminado directamente de BD: {wh.warehouse_name}")
+                
+        except Exception as e:
+            print(f"  ✗ Error eliminando {wh.warehouse_name}: {e}")
+            # Último intento: eliminación directa de BD
+            try:
+                frappe.db.sql("DELETE FROM `tabWarehouse` WHERE name = %s", (wh.name,))
+                print(f"  ✓ Eliminado directamente de BD (último intento): {wh.warehouse_name}")
             except Exception as e2:
                 print(f"  ✗ Error crítico eliminando {wh.warehouse_name}: {e2}")
     
@@ -199,12 +258,18 @@ def check_test_data():
         if len(test_suppliers) > 10:
             print(f"  ... y {len(test_suppliers) - 10} más")
     
-    # Warehouses de prueba
-    test_warehouses = frappe.get_all("Warehouse", filters={"warehouse_name": ("like", "TEST-WH-%")}, fields=["name", "warehouse_name", "creation"])
+    # Warehouses de prueba (buscar por nombre o código)
+    test_warehouses = frappe.db.sql("""
+        SELECT name, warehouse_name, creation 
+        FROM `tabWarehouse` 
+        WHERE name LIKE 'TEST-WH%' 
+           OR warehouse_name LIKE 'TEST-WH%'
+           OR warehouse_name LIKE 'TEST-%'
+    """, as_dict=True)
     print(f"\nWarehouses de prueba encontrados: {len(test_warehouses)}")
     if test_warehouses:
         for wh in test_warehouses[:10]:
-            print(f"  - {wh.warehouse_name} (creado: {wh.creation})")
+            print(f"  - {wh.warehouse_name} ({wh.name}, creado: {wh.creation})")
         if len(test_warehouses) > 10:
             print(f"  ... y {len(test_warehouses) - 10} más")
     

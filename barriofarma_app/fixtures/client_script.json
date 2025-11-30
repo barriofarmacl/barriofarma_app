@@ -1,0 +1,24 @@
+[
+  {
+    "name": "Stock Entry-barcode-autofill",
+    "docstatus": 0,
+    "idx": 0,
+    "dt": "Stock Entry",
+    "view": "Form",
+    "module": null,
+    "enabled": 1,
+    "script": "\nfrappe.ui.form.on('Stock Entry', {\n    'items': {\n        item_code: function(frm, cdt, cdn) {\n            console.log('\ud83d\udd0d Evento item_code disparado', cdt, cdn);\n            // Cuando cambia el item_code en la tabla items\n            let row = locals[cdt][cdn];\n            console.log('\ud83d\udce6 Row data:', row.item_code, 'Barcode actual:', row.barcode);\n            \n            if (row.item_code && !row.barcode) {\n                console.log('\ud83d\udd0e Buscando barcode para:', row.item_code);\n                // Buscar directamente el barcode en Item Barcode\n                frappe.call({\n                    method: 'frappe.client.get_list',\n                    args: {\n                        doctype: 'Item Barcode',\n                        filters: {\n                            parent: row.item_code\n                        },\n                        fields: ['barcode'],\n                        limit: 1\n                    },\n                    callback: function(bc_r) {\n                        console.log('\ud83d\udccb Respuesta barcode:', bc_r);\n                        if (bc_r.message && bc_r.message.length > 0 && bc_r.message[0].barcode) {\n                            console.log('\u2705 Seteando barcode:', bc_r.message[0].barcode);\n                            frappe.model.set_value(cdt, cdn, 'barcode', bc_r.message[0].barcode);\n                        } else {\n                            console.log('\u26a0\ufe0f No se encontr\u00f3 barcode');\n                        }\n                    }\n                });\n            } else {\n                console.log('\u23ed\ufe0f Saltando: item_code vac\u00edo o barcode ya existe');\n            }\n        }\n    }\n});\n",
+    "doctype": "Client Script"
+  },
+  {
+    "name": "Stock Entry Detail-barcode-autofill",
+    "docstatus": 0,
+    "idx": 0,
+    "dt": "Stock Entry Detail",
+    "view": "Form",
+    "module": null,
+    "enabled": 1,
+    "script": "\nfrappe.ui.form.on('Stock Entry Detail', {\n    item_code: function(frm, cdt, cdn) {\n        let row = locals[cdt][cdn];\n        if (row.item_code) {\n            // Obtener el c\u00f3digo de barras del item\n            frappe.call({\n                method: 'frappe.client.get_list',\n                args: {\n                    doctype: 'Item Barcode',\n                    filters: {\n                        parent: row.item_code\n                    },\n                    fields: ['barcode'],\n                    limit: 1\n                },\n                callback: function(bc_r) {\n                    if (bc_r.message && bc_r.message.length > 0 && bc_r.message[0].barcode) {\n                        // Acceder directamente al row y setear el valor\n                        let row_obj = locals[cdt][cdn];\n                        row_obj.barcode = bc_r.message[0].barcode;\n                        // Refrescar el campo\n                        frm.refresh_field('items');\n                    }\n                }\n            });\n        }\n    }\n});\n",
+    "doctype": "Client Script"
+  }
+]

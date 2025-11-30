@@ -537,7 +537,139 @@ def cleanup_all_test_data():
     else:
         print("\n✅ No hay shelves de prueba para limpiar")
     
-    # 8. Limpiar companies (al final porque otros docs pueden depender)
+    # 8. Limpiar Shelf Movements de prueba
+    test_shelf_movements = frappe.get_all("Shelf Movement", fields=["name", "movement_type", "docstatus"])
+    if test_shelf_movements:
+        print(f"\n🗑️  Limpiando {len(test_shelf_movements)} Shelf Movements de prueba...")
+        for sm in test_shelf_movements:
+            try:
+                if sm.docstatus == 1:
+                    sm_doc = frappe.get_doc("Shelf Movement", sm.name)
+                    sm_doc.cancel()
+                frappe.delete_doc("Shelf Movement", sm.name, force=1, ignore_permissions=True)
+                print(f"   ✓ Eliminado: {sm.name} ({sm.movement_type})")
+            except Exception as e:
+                print(f"   ✗ Error al eliminar {sm.name}: {str(e)}")
+        frappe.db.commit()
+        print(f"✅ {len(test_shelf_movements)} Shelf Movements eliminados.")
+    else:
+        print("\n✅ No hay Shelf Movements de prueba para limpiar")
+    
+    # 9. Limpiar Stock Entries de prueba
+    test_stock_entries = frappe.get_all("Stock Entry", 
+        filters={"purpose": ("in", ["Material Receipt", "Material Transfer", "Material Issue"])},
+        fields=["name", "purpose", "docstatus"])
+    if test_stock_entries:
+        print(f"\n🗑️  Limpiando {len(test_stock_entries)} Stock Entries de prueba...")
+        deleted_count = 0
+        for se in test_stock_entries:
+            try:
+                if se.docstatus == 1:
+                    se_doc = frappe.get_doc("Stock Entry", se.name)
+                    se_doc.cancel()
+                frappe.delete_doc("Stock Entry", se.name, force=1, ignore_permissions=True)
+                print(f"   ✓ Eliminado: {se.name} ({se.purpose})")
+                deleted_count += 1
+            except Exception as e:
+                # Si falla por referencias rotas (warehouses eliminados), intentar eliminación directa
+                try:
+                    error_msg = str(e)
+                    if "Could not find Warehouse" in error_msg or "does not exist" in error_msg:
+                        # Eliminar directamente desde BD
+                        frappe.db.sql("DELETE FROM `tabStock Entry` WHERE name = %s", (se.name,))
+                        frappe.db.sql("DELETE FROM `tabStock Entry Detail` WHERE parent = %s", (se.name,))
+                        print(f"   ✓ Eliminado (directo BD): {se.name} ({se.purpose}) - Referencias rotas")
+                        deleted_count += 1
+                    else:
+                        print(f"   ✗ Error al eliminar {se.name}: {str(e)}")
+                except Exception as e2:
+                    print(f"   ✗ Error crítico al eliminar {se.name}: {str(e2)}")
+        frappe.db.commit()
+        print(f"✅ {deleted_count} de {len(test_stock_entries)} Stock Entries eliminados.")
+    else:
+        print("\n✅ No hay Stock Entries de prueba para limpiar")
+    
+    # 10. Limpiar Purchase Receipts de prueba
+    test_purchase_receipts = frappe.get_all("Purchase Receipt", 
+        filters={"supplier": ("like", "TEST-%")}, 
+        fields=["name", "supplier", "docstatus", "status"])
+    if test_purchase_receipts:
+        print(f"\n🗑️  Limpiando {len(test_purchase_receipts)} Purchase Receipts de prueba...")
+        for pr in test_purchase_receipts:
+            try:
+                pr_doc = frappe.get_doc("Purchase Receipt", pr.name)
+                if pr_doc.docstatus == 1:
+                    pr_doc.cancel()
+                frappe.delete_doc("Purchase Receipt", pr.name, force=1, ignore_permissions=True)
+                print(f"   ✓ Eliminado: {pr.name} ({pr.supplier})")
+            except Exception as e:
+                print(f"   ✗ Error al eliminar {pr.name}: {str(e)}")
+        frappe.db.commit()
+        print(f"✅ {len(test_purchase_receipts)} Purchase Receipts eliminados.")
+    else:
+        print("\n✅ No hay Purchase Receipts de prueba para limpiar")
+    
+    # 11. Limpiar Purchase Orders de prueba
+    test_purchase_orders = frappe.get_all("Purchase Order", 
+        filters={"supplier": ("like", "TEST-%")}, 
+        fields=["name", "supplier", "docstatus", "status"])
+    if test_purchase_orders:
+        print(f"\n🗑️  Limpiando {len(test_purchase_orders)} Purchase Orders de prueba...")
+        for po in test_purchase_orders:
+            try:
+                po_doc = frappe.get_doc("Purchase Order", po.name)
+                if po_doc.docstatus == 1:
+                    po_doc.cancel()
+                frappe.delete_doc("Purchase Order", po.name, force=1, ignore_permissions=True)
+                print(f"   ✓ Eliminado: {po.name} ({po.supplier})")
+            except Exception as e:
+                print(f"   ✗ Error al eliminar {po.name}: {str(e)}")
+        frappe.db.commit()
+        print(f"✅ {len(test_purchase_orders)} Purchase Orders eliminados.")
+    else:
+        print("\n✅ No hay Purchase Orders de prueba para limpiar")
+    
+    # 12. Limpiar Sales Invoices de prueba
+    test_sales_invoices = frappe.get_all("Sales Invoice", 
+        filters={"customer": ("like", "TEST-%")}, 
+        fields=["name", "customer", "docstatus", "status"])
+    if test_sales_invoices:
+        print(f"\n🗑️  Limpiando {len(test_sales_invoices)} Sales Invoices de prueba...")
+        for si in test_sales_invoices:
+            try:
+                si_doc = frappe.get_doc("Sales Invoice", si.name)
+                if si_doc.docstatus == 1:
+                    si_doc.cancel()
+                frappe.delete_doc("Sales Invoice", si.name, force=1, ignore_permissions=True)
+                print(f"   ✓ Eliminado: {si.name} ({si.customer})")
+            except Exception as e:
+                print(f"   ✗ Error al eliminar {si.name}: {str(e)}")
+        frappe.db.commit()
+        print(f"✅ {len(test_sales_invoices)} Sales Invoices eliminados.")
+    else:
+        print("\n✅ No hay Sales Invoices de prueba para limpiar")
+    
+    # 13. Limpiar Purchase Invoices de prueba
+    test_purchase_invoices = frappe.get_all("Purchase Invoice", 
+        filters={"supplier": ("like", "TEST-%")}, 
+        fields=["name", "supplier", "docstatus", "status"])
+    if test_purchase_invoices:
+        print(f"\n🗑️  Limpiando {len(test_purchase_invoices)} Purchase Invoices de prueba...")
+        for pi in test_purchase_invoices:
+            try:
+                pi_doc = frappe.get_doc("Purchase Invoice", pi.name)
+                if pi_doc.docstatus == 1:
+                    pi_doc.cancel()
+                frappe.delete_doc("Purchase Invoice", pi.name, force=1, ignore_permissions=True)
+                print(f"   ✓ Eliminado: {pi.name} ({pi.supplier})")
+            except Exception as e:
+                print(f"   ✗ Error al eliminar {pi.name}: {str(e)}")
+        frappe.db.commit()
+        print(f"✅ {len(test_purchase_invoices)} Purchase Invoices eliminados.")
+    else:
+        print("\n✅ No hay Purchase Invoices de prueba para limpiar")
+    
+    # 14. Limpiar companies (al final porque otros docs pueden depender)
     test_companies = check_test_companies()
     if test_companies:
         print(f"\n🗑️  Limpiando {len(test_companies)} companies de prueba...")
