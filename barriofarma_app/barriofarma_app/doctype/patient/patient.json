@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "field:patient_name",
- "creation": "2025-11-17 20:00:00.000000",
+ "creation": "2025-11-17 20:00:00",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -27,12 +27,15 @@
   {
    "fieldname": "patient_name",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Nombre Completo",
-   "reqd": 1
+   "reqd": 1,
+   "unique": 1
   },
   {
    "fieldname": "rut_dni",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "RUT/DNI",
    "reqd": 1,
    "unique": 1
@@ -45,7 +48,7 @@
   {
    "fieldname": "gender",
    "fieldtype": "Select",
-   "label": "Género",
+   "label": "G\u00e9nero",
    "options": "Masculino\nFemenino\nOtro"
   },
   {
@@ -62,17 +65,17 @@
   {
    "fieldname": "contact_section",
    "fieldtype": "Section Break",
-   "label": "Información de Contacto"
+   "label": "Informaci\u00f3n de Contacto"
   },
   {
    "fieldname": "address",
    "fieldtype": "Small Text",
-   "label": "Dirección"
+   "label": "Direcci\u00f3n"
   },
   {
    "fieldname": "phone",
    "fieldtype": "Data",
-   "label": "Teléfono"
+   "label": "Tel\u00e9fono"
   },
   {
    "fieldname": "email",
@@ -86,12 +89,12 @@
   {
    "fieldname": "medical_section",
    "fieldtype": "Section Break",
-   "label": "Información Médica"
+   "label": "Informaci\u00f3n M\u00e9dica"
   },
   {
    "fieldname": "blood_group",
    "fieldtype": "Data",
-   "label": "Grupo Sanguíneo"
+   "label": "Grupo Sangu\u00edneo"
   },
   {
    "fieldname": "allergies",
@@ -101,12 +104,12 @@
   {
    "fieldname": "medical_conditions",
    "fieldtype": "Small Text",
-   "label": "Condiciones Médicas"
+   "label": "Condiciones M\u00e9dicas"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-17 20:00:00.000000",
+ "modified": "2026-01-07 16:07:40.659313",
  "modified_by": "Administrator",
  "module": "Barriofarma App",
  "name": "Patient",
@@ -122,15 +125,45 @@
   },
   {
    "create": 1,
+   "export": 1,
+   "print": 1,
    "read": 1,
-   "role": "Farmacéutico",
+   "report": 1,
+   "role": "Farmac\u00e9utico",
    "write": 1
   },
   {
    "read": 1,
    "role": "All"
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auxiliar",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrativo"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Inform\u00e1tica",
+   "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "search_fields": "patient_name,rut_dni,phone,email",
  "sort_field": "modified",
  "sort_order": "DESC",
@@ -138,4 +171,3 @@
  "title_field": "patient_name",
  "track_changes": 1
 }
-

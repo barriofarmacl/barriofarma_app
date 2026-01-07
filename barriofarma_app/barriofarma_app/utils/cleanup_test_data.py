@@ -368,13 +368,204 @@ def check_test_data():
     print(f"Total Doctors: {len(test_doctors)}")
 
 
+# =============================================================================
+# LIMPIEZA DE USUARIOS DE PRUEBA
+# =============================================================================
+
+# Usuarios protegidos que NO deben eliminarse
+PROTECTED_USERS = [
+    "Administrator",
+    "Guest",
+    "administrator",
+    "guest"
+]
+
+
+def cleanup_test_users():
+    """
+    Elimina TODOS los usuarios de prueba, incluyendo:
+    - Usuarios de Frappe Framework (_Test*)
+    - Usuarios de BarrioFarma (test_*)
+    - Usuarios con emails @example.com
+    
+    Uso:
+        bench --site barriofarma.localhost execute \
+            barriofarma_app.barriofarma_app.utils.cleanup_test_data.cleanup_test_users
+    """
+    frappe.set_user("Administrator")
+    
+    print("\n" + "=" * 70)
+    print("LIMPIEZA DE USUARIOS DE PRUEBA")
+    print("=" * 70)
+    
+    deleted = []
+    errors = []
+    skipped = []
+    
+    # 1. Buscar usuarios con prefijo _Test (Frappe Framework)
+    frappe_test_users = frappe.get_all("User", 
+        filters=[["name", "like", "_Test%"]],
+        fields=["name", "email", "full_name"]
+    )
+    
+    # 2. Buscar usuarios con prefijo test_ (BarrioFarma)
+    barriofarma_test_users = frappe.get_all("User",
+        filters=[["name", "like", "test_%"]],
+        fields=["name", "email", "full_name"]
+    )
+    
+    # 3. Buscar usuarios con email @example.com (usuarios de prueba genericos)
+    example_email_users = frappe.get_all("User",
+        filters=[["email", "like", "%@example.com"]],
+        fields=["name", "email", "full_name"]
+    )
+    
+    # Combinar y eliminar duplicados
+    all_test_users = {}
+    for user in frappe_test_users + barriofarma_test_users + example_email_users:
+        if user.name not in all_test_users:
+            all_test_users[user.name] = user
+    
+    print(f"\nUsuarios de prueba encontrados: {len(all_test_users)}")
+    
+    # Eliminar cada usuario
+    for user_name, user_info in all_test_users.items():
+        # Verificar si es usuario protegido
+        if user_name in PROTECTED_USERS:
+            skipped.append(f"{user_name} (protegido)")
+            continue
+        
+        try:
+            frappe.delete_doc("User", user_name, force=True, ignore_permissions=True)
+            deleted.append(f"{user_name} ({user_info.email})")
+            print(f"  Eliminado: {user_name} ({user_info.email})")
+        except Exception as e:
+            errors.append(f"{user_name}: {str(e)}")
+            print(f"  Error: {user_name} - {str(e)}")
+    
+    # Resumen
+    print("\n" + "-" * 70)
+    print("RESUMEN USUARIOS")
+    print("-" * 70)
+    
+    if deleted:
+        print(f"\nEliminados ({len(deleted)}):")
+        for u in deleted:
+            print(f"  - {u}")
+    else:
+        print("\nNo se eliminaron usuarios.")
+    
+    if skipped:
+        print(f"\nOmitidos ({len(skipped)}):")
+        for u in skipped:
+            print(f"  - {u}")
+    
+    if errors:
+        print(f"\nErrores ({len(errors)}):")
+        for e in errors:
+            print(f"  - {e}")
+    
+    print("=" * 70)
+    
+    frappe.db.commit()
+    return {"deleted": deleted, "skipped": skipped, "errors": errors}
+
+
+def check_test_users():
+    """
+    Lista todos los usuarios de prueba sin eliminarlos.
+    
+    Uso:
+        bench --site barriofarma.localhost execute \
+            barriofarma_app.barriofarma_app.utils.cleanup_test_data.check_test_users
+    """
+    print("\n" + "=" * 70)
+    print("USUARIOS DE PRUEBA EN EL SISTEMA")
+    print("=" * 70)
+    
+    # 1. Usuarios _Test (Frappe Framework)
+    frappe_test_users = frappe.get_all("User", 
+        filters=[["name", "like", "_Test%"]],
+        fields=["name", "email", "user_type", "enabled"],
+        order_by="name"
+    )
+    
+    print(f"\n1. Usuarios Frappe Framework (_Test*): {len(frappe_test_users)}")
+    for user in frappe_test_users:
+        status = "activo" if user.enabled else "deshabilitado"
+        print(f"   - {user.name} ({user.email}) [{user.user_type}] - {status}")
+    
+    # 2. Usuarios test_ (BarrioFarma)
+    barriofarma_test_users = frappe.get_all("User",
+        filters=[["name", "like", "test_%"]],
+        fields=["name", "email", "user_type", "enabled"],
+        order_by="name"
+    )
+    
+    print(f"\n2. Usuarios BarrioFarma (test_*): {len(barriofarma_test_users)}")
+    for user in barriofarma_test_users:
+        status = "activo" if user.enabled else "deshabilitado"
+        print(f"   - {user.name} ({user.email}) [{user.user_type}] - {status}")
+    
+    # 3. Usuarios con email @example.com (excluyendo los ya listados)
+    example_email_users = frappe.get_all("User",
+        filters=[
+            ["email", "like", "%@example.com"],
+            ["name", "not like", "_Test%"],
+            ["name", "not like", "test_%"]
+        ],
+        fields=["name", "email", "user_type", "enabled"],
+        order_by="name"
+    )
+    
+    print(f"\n3. Otros usuarios @example.com: {len(example_email_users)}")
+    for user in example_email_users:
+        status = "activo" if user.enabled else "deshabilitado"
+        print(f"   - {user.name} ({user.email}) [{user.user_type}] - {status}")
+    
+    total = len(frappe_test_users) + len(barriofarma_test_users) + len(example_email_users)
+    print(f"\n" + "-" * 70)
+    print(f"TOTAL: {total} usuarios de prueba")
+    print("=" * 70)
+    
+    return {
+        "frappe_test": len(frappe_test_users),
+        "barriofarma_test": len(barriofarma_test_users),
+        "example_email": len(example_email_users),
+        "total": total
+    }
+
+
+def cleanup_all():
+    """
+    Ejecuta limpieza completa: datos de prueba + usuarios de prueba.
+    
+    Uso:
+        bench --site barriofarma.localhost execute \
+            barriofarma_app.barriofarma_app.utils.cleanup_test_data.cleanup_all
+    """
+    print("\n" + "=" * 70)
+    print("LIMPIEZA COMPLETA DEL SISTEMA")
+    print("=" * 70)
+    
+    # 1. Limpiar datos de prueba
+    cleanup_test_data()
+    
+    # 2. Limpiar usuarios de prueba
+    cleanup_test_users()
+    
+    print("\n" + "=" * 70)
+    print("LIMPIEZA COMPLETA FINALIZADA")
+    print("=" * 70)
+
+
 if __name__ == "__main__":
     # Ejecutar verificación primero
     check_test_data()
+    check_test_users()
     
     # Preguntar si quiere limpiar
     print("\n¿Desea limpiar estos datos? (s/n): ", end="")
     # En modo interactivo, el usuario puede responder
     # Para ejecución automática, descomentar la siguiente línea:
-    # cleanup_test_data()
-
+    # cleanup_all()

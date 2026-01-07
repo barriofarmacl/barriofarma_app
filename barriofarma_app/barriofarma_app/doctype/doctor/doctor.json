@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "field:doctor_name",
- "creation": "2025-11-17 19:00:00.000000",
+ "creation": "2025-11-17 19:00:00",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -16,13 +16,16 @@
   {
    "fieldname": "doctor_name",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Nombre Completo",
-   "reqd": 1
+   "reqd": 1,
+   "unique": 1
   },
   {
    "fieldname": "license_number",
    "fieldtype": "Data",
-   "label": "Número de Licencia Médica",
+   "in_list_view": 1,
+   "label": "N\u00famero de Licencia M\u00e9dica",
    "reqd": 1,
    "unique": 1
   },
@@ -34,12 +37,12 @@
   {
    "fieldname": "contact_info",
    "fieldtype": "Small Text",
-   "label": "Información de Contacto"
+   "label": "Informaci\u00f3n de Contacto"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-17 19:00:00.000000",
+ "modified": "2026-01-07 16:07:40.842902",
  "modified_by": "Administrator",
  "module": "Barriofarma App",
  "name": "Doctor",
@@ -55,15 +58,29 @@
   },
   {
    "create": 1,
+   "export": 1,
+   "print": 1,
    "read": 1,
-   "role": "Farmacéutico",
+   "report": 1,
+   "role": "Farmac\u00e9utico",
    "write": 1
   },
   {
    "read": 1,
    "role": "All"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Inform\u00e1tica",
+   "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "search_fields": "doctor_name,license_number,specialty",
  "sort_field": "modified",
  "sort_order": "DESC",
@@ -71,4 +88,3 @@
  "title_field": "doctor_name",
  "track_changes": 1
 }
-

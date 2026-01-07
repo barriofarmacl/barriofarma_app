@@ -79,7 +79,20 @@ class Prescription(Document):
 		"""
 		Invariante: Una receta solo puede dispensarse dentro de su periodo de validez
 		valid_till debe ser posterior o igual a prescription_date
+		Mejora: Validar que ambas fechas estén presentes
 		"""
+		if not self.get("prescription_date"):
+			frappe.throw(
+				_("La fecha de emisión (prescription_date) es obligatoria"),
+				title=_("Fecha de Emisión Requerida")
+			)
+		
+		if not self.get("valid_till"):
+			frappe.throw(
+				_("La fecha de validez (valid_till) es obligatoria"),
+				title=_("Fecha de Validez Requerida")
+			)
+
 		if self.get("prescription_date") and self.get("valid_till"):
 			prescription_date = getdate(self.prescription_date)
 			valid_till = getdate(self.valid_till)
@@ -93,9 +106,17 @@ class Prescription(Document):
 	def validate_dispensation_limits(self):
 		"""
 		Invariante: No se puede exceder el número máximo de dispensaciones especificado
+		Mejora: Validar que max_dispensations sea >= 1
 		"""
 		max_dispensations = self.get("max_dispensations") or 0
 		dispensation_count = self.get("dispensation_count") or 0
+
+		# Validar que max_dispensations sea al menos 1
+		if max_dispensations < 1:
+			frappe.throw(
+				_("El número máximo de dispensaciones debe ser al menos 1"),
+				title=_("Límite de Dispensaciones Inválido")
+			)
 
 		if dispensation_count > max_dispensations:
 			frappe.throw(

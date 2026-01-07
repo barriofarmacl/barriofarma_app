@@ -2,7 +2,7 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "naming_series:",
- "creation": "2025-01-27 12:00:00.000000",
+ "creation": "2025-01-27 12:00:00",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -45,12 +45,13 @@
   {
    "fieldname": "doctor_section",
    "fieldtype": "Section Break",
-   "label": "Información del Médico"
+   "label": "Informaci\u00f3n del M\u00e9dico"
   },
   {
    "fieldname": "doctor",
    "fieldtype": "Link",
-   "label": "Médico",
+   "in_list_view": 1,
+   "label": "M\u00e9dico",
    "options": "Doctor",
    "reqd": 1
   },
@@ -58,14 +59,16 @@
    "fetch_from": "doctor.doctor_name",
    "fieldname": "doctor_name",
    "fieldtype": "Data",
-   "label": "Nombre del Médico",
+   "in_list_view": 1,
+   "label": "Nombre del M\u00e9dico",
    "reqd": 1
   },
   {
    "fetch_from": "doctor.license_number",
    "fieldname": "doctor_license",
    "fieldtype": "Data",
-   "label": "Número de Licencia Médica",
+   "in_list_view": 1,
+   "label": "N\u00famero de Licencia M\u00e9dica",
    "reqd": 1
   },
   {
@@ -81,11 +84,12 @@
   {
    "fieldname": "patient_section",
    "fieldtype": "Section Break",
-   "label": "Información del Paciente"
+   "label": "Informaci\u00f3n del Paciente"
   },
   {
    "fieldname": "patient",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Paciente",
    "options": "Patient",
    "reqd": 1
@@ -110,13 +114,13 @@
    "default": "Today",
    "fieldname": "prescription_date",
    "fieldtype": "Date",
-   "label": "Fecha de Emisión",
+   "label": "Fecha de Emisi\u00f3n",
    "reqd": 1
   },
   {
    "fieldname": "valid_till",
    "fieldtype": "Date",
-   "label": "Válida Hasta",
+   "label": "V\u00e1lida Hasta",
    "reqd": 1
   },
   {
@@ -132,13 +136,13 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": 1,
+   "default": "1",
    "fieldname": "max_dispensations",
    "fieldtype": "Int",
-   "label": "Máx. Dispensaciones"
+   "label": "M\u00e1x. Dispensaciones"
   },
   {
-   "default": 0,
+   "default": "0",
    "fieldname": "dispensation_count",
    "fieldtype": "Int",
    "label": "Dispensaciones Realizadas",
@@ -147,7 +151,7 @@
   {
    "fieldname": "diagnosis",
    "fieldtype": "Small Text",
-   "label": "Diagnóstico"
+   "label": "Diagn\u00f3stico"
   },
   {
    "fieldname": "items_section",
@@ -169,7 +173,7 @@
   {
    "fieldname": "notes",
    "fieldtype": "Text Editor",
-   "label": "Notas del Médico"
+   "label": "Notas del M\u00e9dico"
   },
   {
    "fieldname": "attachments_section",
@@ -179,7 +183,7 @@
   {
    "fieldname": "attachments",
    "fieldtype": "Attach",
-   "label": "Adjuntar Receta Física"
+   "label": "Adjuntar Receta F\u00edsica"
   },
   {
    "collapsible": 1,
@@ -196,7 +200,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-27 12:00:00.000000",
+ "modified": "2026-01-07 16:07:37.780795",
  "modified_by": "Administrator",
  "module": "Barriofarma App",
  "name": "Prescription",
@@ -209,8 +213,35 @@
    "read": 1,
    "role": "System Manager",
    "write": 1
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auxiliar"
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Farmac\u00e9utico",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Inform\u00e1tica",
+   "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "search_fields": "patient_name,doctor_name,prescription_date,status",
  "sort_field": "modified",
  "sort_order": "DESC",
@@ -218,4 +249,3 @@
  "title_field": "patient_name",
  "track_changes": 1
 }
-

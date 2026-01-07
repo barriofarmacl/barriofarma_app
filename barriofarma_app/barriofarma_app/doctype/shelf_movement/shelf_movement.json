@@ -2,11 +2,10 @@
  "actions": [],
  "allow_rename": 1,
  "autoname": "naming_series:",
- "creation": "2025-01-27 00:00:00.000000",
+ "creation": "2025-01-27 00:00:00",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
- "name": "Shelf Movement",
  "field_order": [
   "movement_type",
   "movement_date",
@@ -18,22 +17,25 @@
   "col_break2",
   "reference_doctype",
   "reference_name",
-  "notes"
+  "notes",
+  "naming_series"
  ],
  "fields": [
   {
    "fieldname": "movement_type",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Tipo de Movimiento",
-   "options": "Transferencia\nRecepción\nVenta\nAjuste",
+   "options": "Transferencia\nRecepci\u00f3n\nVenta\nAjuste",
    "reqd": 1
   },
   {
+   "default": "now",
    "fieldname": "movement_date",
    "fieldtype": "Datetime",
+   "in_list_view": 1,
    "label": "Fecha de Movimiento",
-   "reqd": 1,
-   "default": "now"
+   "reqd": 1
   },
   {
    "fieldname": "col_break1",
@@ -42,20 +44,22 @@
   {
    "fieldname": "shelf",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Estante",
    "options": "Shelf",
    "reqd": 1
   },
   {
+   "depends_on": "eval:doc.movement_type == 'Transferencia'",
    "fieldname": "to_shelf",
    "fieldtype": "Link",
    "label": "Estante Destino",
-   "options": "Shelf",
-   "depends_on": "eval:doc.movement_type == 'Transferencia'"
+   "options": "Shelf"
   },
   {
    "fieldname": "item",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Producto",
    "options": "Item",
    "reqd": 1
@@ -88,17 +92,17 @@
    "label": "Notas"
   },
   {
+   "default": "SHELF-MOV-.#####",
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Naming Series",
    "options": "SHELF-MOV-.#####",
-   "reqd": 1,
-   "default": "SHELF-MOV-.#####"
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-27 00:00:00.000000",
+ "modified": "2026-01-07 16:07:39.620370",
  "modified_by": "Administrator",
  "module": "Barriofarma App",
  "name": "Shelf Movement",
@@ -140,11 +144,37 @@
    "role": "Stock User",
    "share": 1,
    "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Bodeguero",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrativo"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Inform\u00e1tica",
+   "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
  "track_changes": 1
 }
-

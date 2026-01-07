@@ -70,6 +70,10 @@ app_license = "mit"
 # before_install = "barriofarma_app.install.before_install"
 # after_install = "barriofarma_app.install.after_install"
 
+# Story 8.1: Refinamiento de Gestión de Usuarios y Roles
+# Configurar roles y permisos personalizados después de cada migración
+after_migrate = "barriofarma_app.barriofarma_app.install.after_migrate"
+
 # Fixtures
 # --------
 # Fixtures are documents or records that are automatically created/imported
@@ -78,7 +82,7 @@ app_license = "mit"
 # Los fixtures ya están exportados en fixtures/custom_field.json
 # Se importan automáticamente durante bench migrate
 # Client Scripts para funcionalidades de UI (ej: auto-fill de barcode)
-fixtures = ["Custom Field", "Client Script"]
+fixtures = ["Custom Field", "Client Script", "Report"]
 
 # Uninstallation
 # ------------
@@ -135,34 +139,31 @@ override_doctype_class = {
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"POS Invoice": {
+		"validate": [
+			"barriofarma_app.barriofarma_app.validations.prescription_validation.validate_prescription_validity",
+			"barriofarma_app.barriofarma_app.validations.stock_availability.validate_stock_availability",
+			"barriofarma_app.barriofarma_app.validations.patient_data.validate_patient_data_required",
+			"barriofarma_app.barriofarma_app.validations.discount_limits.validate_discount_limits",
+			"barriofarma_app.barriofarma_app.validations.expired_products.validate_expired_products_in_invoice",
+			"barriofarma_app.barriofarma_app.validations.traceability.validate_batch_required_for_sale"
+		],
+		"on_submit": [
+			"barriofarma_app.barriofarma_app.validations.prescription_validation.update_prescription_dispensation"
+		]
+	}
+}
 
 # Scheduled Tasks
 # ---------------
+# Story 6.2: Alertas de Productos Próximos a Caducar
 
-# scheduler_events = {
-# 	"all": [
-# 		"barriofarma_app.tasks.all"
-# 	],
-# 	"daily": [
-# 		"barriofarma_app.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"barriofarma_app.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"barriofarma_app.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"barriofarma_app.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	"daily": [
+		"barriofarma_app.barriofarma_app.tasks.expiry_alerts.check_expiring_products"
+	]
+}
 
 # Testing
 # -------
@@ -173,6 +174,14 @@ override_doctype_class = {
 # ------------------------------
 override_whitelisted_methods = {
 	"erpnext.stock.doctype.purchase_receipt.purchase_receipt.make_purchase_invoice": "barriofarma_app.barriofarma_app.overrides.purchase_receipt.make_purchase_invoice"
+}
+
+# API Whitelist
+# -------------
+# Story 6.2: Alertas de Productos Próximos a Caducar
+whitelisted_methods = {
+	"barriofarma_app.barriofarma_app.api.expiry_alerts.get_expiry_alerts_summary": ["System Manager", "Stock Manager", "Stock User"],
+	"barriofarma_app.barriofarma_app.api.expiry_alerts.get_item_expiry_status": ["System Manager", "Stock Manager", "Stock User"]
 }
 #
 # each overriding function accepts a `data` argument;

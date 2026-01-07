@@ -13,6 +13,70 @@ from datetime import datetime
 
 
 class StockEntry(ERPNextStockEntry):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from erpnext.stock.doctype.landed_cost_taxes_and_charges.landed_cost_taxes_and_charges import LandedCostTaxesandCharges
+		from erpnext.stock.doctype.stock_entry_detail.stock_entry_detail import StockEntryDetail
+		from frappe.types import DF
+
+		add_to_transit: DF.Check
+		additional_costs: DF.Table[LandedCostTaxesandCharges]
+		address_display: DF.SmallText | None
+		amended_from: DF.Link | None
+		apply_putaway_rule: DF.Check
+		asset_repair: DF.Link | None
+		bom_no: DF.Link | None
+		company: DF.Link
+		credit_note: DF.Link | None
+		delivery_note_no: DF.Link | None
+		fg_completed_qty: DF.Float
+		from_bom: DF.Check
+		from_warehouse: DF.Link | None
+		inspection_required: DF.Check
+		is_opening: DF.Literal["No", "Yes"]
+		is_return: DF.Check
+		items: DF.Table[StockEntryDetail]
+		job_card: DF.Link | None
+		letter_head: DF.Link | None
+		naming_series: DF.Literal["MAT-STE-.YYYY.-"]
+		outgoing_stock_entry: DF.Link | None
+		per_transferred: DF.Percent
+		pick_list: DF.Link | None
+		posting_date: DF.Date | None
+		posting_time: DF.Time | None
+		process_loss_percentage: DF.Percent
+		process_loss_qty: DF.Float
+		project: DF.Link | None
+		purchase_order: DF.Link | None
+		purchase_receipt_no: DF.Link | None
+		purpose: DF.Literal["Material Issue", "Material Receipt", "Material Transfer", "Material Transfer for Manufacture", "Material Consumption for Manufacture", "Manufacture", "Repack", "Send to Subcontractor", "Disassemble"]
+		remarks: DF.Text | None
+		sales_invoice_no: DF.Link | None
+		scan_barcode: DF.Data | None
+		select_print_heading: DF.Link | None
+		set_posting_time: DF.Check
+		source_address_display: DF.SmallText | None
+		source_warehouse_address: DF.Link | None
+		stock_entry_type: DF.Link
+		subcontracting_order: DF.Link | None
+		supplier: DF.Link | None
+		supplier_address: DF.Link | None
+		supplier_name: DF.Data | None
+		target_address_display: DF.SmallText | None
+		target_warehouse_address: DF.Link | None
+		to_warehouse: DF.Link | None
+		total_additional_costs: DF.Currency
+		total_amount: DF.Currency
+		total_incoming_value: DF.Currency
+		total_outgoing_value: DF.Currency
+		use_multi_level_bom: DF.Check
+		value_difference: DF.Currency
+		work_order: DF.Link | None
+	# end: auto-generated types
 	"""
 	Extensión de la clase Stock Entry de ERPNext para registrar
 	automáticamente movimientos en Shelf Movement y validar capacidad/tipo de estante
@@ -45,14 +109,23 @@ class StockEntry(ERPNextStockEntry):
 			from_shelf = item.get("custom_from_shelf")
 			to_shelf = item.get("custom_to_shelf")
 			
-			# Validar shelf destino si existe
+			# Validar shelf destino si existe (debe pertenecer a t_warehouse)
 			if to_shelf:
+				to_warehouse = item.get("t_warehouse") or self.to_warehouse
 				self._validate_shelf_capacity(to_shelf, item.item_code, item.qty)
 				self._validate_shelf_item_compatibility(to_shelf, item.item_code)
+				if to_warehouse:
+					self._validate_shelf_warehouse_match(to_shelf, to_warehouse, "destino")
 			
-			# Validar shelf origen si existe (para transferencias)
+			# Validar shelf origen si existe (debe pertenecer a s_warehouse)
 			if from_shelf:
+				from_warehouse = item.get("s_warehouse") or self.from_warehouse
 				self._validate_shelf_item_compatibility(from_shelf, item.item_code)
+				if from_warehouse:
+					self._validate_shelf_warehouse_match(from_shelf, from_warehouse, "origen")
+					# Validar disponibilidad de stock en estante origen antes de transferir
+					if self.stock_entry_type in ("Material Transfer", "Material Issue") and from_shelf:
+						self._validate_shelf_stock_availability(from_shelf, item.item_code, item.qty, from_warehouse)
 	
 	def _validate_shelf_capacity(self, shelf_name, item_code, quantity):
 		"""
@@ -120,6 +193,109 @@ class StockEntry(ERPNextStockEntry):
 					),
 					title=_("Incompatibilidad Tipo Estante-Producto")
 				)
+	
+	def _validate_shelf_warehouse_match(self, shelf_name, warehouse, shelf_role="origen"):
+		"""
+		Validar que el estante pertenece al warehouse correcto
+		
+		Args:
+			shelf_name: Nombre del estante
+			warehouse: Warehouse del Stock Entry
+			shelf_role: "origen" o "destino" para mensaje de error
+		"""
+		if not shelf_name or not warehouse:
+			return
+		
+		if not frappe.db.exists("Shelf", shelf_name):
+			return
+		
+		shelf_doc = frappe.get_doc("Shelf", shelf_name)
+		
+		if shelf_doc.warehouse != warehouse:
+			frappe.throw(
+				_("El estante {0} pertenece al almacén {1}, pero el Stock Entry está usando el almacén {2}. "
+				  "El estante {3} debe pertenecer al mismo almacén que el Stock Entry.").format(
+					frappe.bold(shelf_doc.shelf_name),
+					frappe.bold(shelf_doc.warehouse),
+					frappe.bold(warehouse),
+					shelf_role
+				),
+				title=_("Incompatibilidad Estante-Almacén")
+			)
+	
+	def _validate_shelf_stock_availability(self, shelf_name, item_code, quantity, warehouse):
+		"""
+		Validar que hay stock disponible en el estante origen antes de transferir
+		
+		Story 6.3: Optimización de Movimientos de Stock entre Almacenes
+		
+		Args:
+			shelf_name: Nombre del estante origen
+			item_code: Código del producto
+			quantity: Cantidad a transferir
+			warehouse: Warehouse del estante
+		"""
+		if not shelf_name or not item_code or not warehouse:
+			return
+		
+		# Obtener stock disponible en el estante usando Shelf Movement
+		# Sumar movimientos de tipo Recepción y Transferencia (entrada)
+		# Restar movimientos de tipo Venta y Ajuste (salida)
+		stock_query = """
+			SELECT 
+				SUM(
+					CASE 
+						WHEN sm.movement_type IN ('Recepción', 'Transferencia') THEN sm.quantity
+						WHEN sm.movement_type IN ('Venta', 'Ajuste') THEN -sm.quantity
+						ELSE 0
+					END
+				) as available_qty
+			FROM `tabShelf Movement` sm
+			INNER JOIN `tabShelf` s ON sm.shelf = s.name
+			WHERE sm.shelf = %(shelf_name)s
+				AND sm.item = %(item_code)s
+				AND s.warehouse = %(warehouse)s
+				AND sm.docstatus = 1
+		"""
+		
+		result = frappe.db.sql(stock_query, {
+			"shelf_name": shelf_name,
+			"item_code": item_code,
+			"warehouse": warehouse
+		}, as_dict=True)
+		
+		available_qty = result[0].get("available_qty") if result and result[0] else None
+		if available_qty is None:
+			available_qty = 0
+		
+		# Si no hay stock en Shelf Movement, verificar stock en Bin (fallback)
+		if available_qty <= 0:
+			bin_stock = frappe.db.get_value(
+				"Bin",
+				{"item_code": item_code, "warehouse": warehouse},
+				"actual_qty"
+			) or 0
+			
+			# Si hay stock en Bin pero no en Shelf Movement, usar stock de Bin
+			# pero advertir que el estante puede no tener stock específico
+			if bin_stock > 0:
+				available_qty = bin_stock
+			else:
+				available_qty = 0
+		
+		# Validar que hay stock suficiente
+		if available_qty < quantity:
+			shelf_doc = frappe.get_doc("Shelf", shelf_name)
+			frappe.throw(
+				_("No hay stock suficiente en el estante {0} para transferir {1} unidades del producto {2}. "
+				  "Stock disponible en el estante: {3} unidades.").format(
+					frappe.bold(shelf_doc.shelf_name),
+					frappe.bold(quantity),
+					frappe.bold(item_code),
+					frappe.bold(available_qty)
+				),
+				title=_("Stock Insuficiente en Estante Origen")
+			)
 	
 	def create_shelf_movements(self):
 		"""

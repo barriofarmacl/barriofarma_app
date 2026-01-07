@@ -1,24 +1,46 @@
 [
-  {
-    "name": "Stock Entry-barcode-autofill",
-    "docstatus": 0,
-    "idx": 0,
-    "dt": "Stock Entry",
-    "view": "Form",
-    "module": null,
-    "enabled": 1,
-    "script": "\nfrappe.ui.form.on('Stock Entry', {\n    'items': {\n        item_code: function(frm, cdt, cdn) {\n            console.log('\ud83d\udd0d Evento item_code disparado', cdt, cdn);\n            // Cuando cambia el item_code en la tabla items\n            let row = locals[cdt][cdn];\n            console.log('\ud83d\udce6 Row data:', row.item_code, 'Barcode actual:', row.barcode);\n            \n            if (row.item_code && !row.barcode) {\n                console.log('\ud83d\udd0e Buscando barcode para:', row.item_code);\n                // Buscar directamente el barcode en Item Barcode\n                frappe.call({\n                    method: 'frappe.client.get_list',\n                    args: {\n                        doctype: 'Item Barcode',\n                        filters: {\n                            parent: row.item_code\n                        },\n                        fields: ['barcode'],\n                        limit: 1\n                    },\n                    callback: function(bc_r) {\n                        console.log('\ud83d\udccb Respuesta barcode:', bc_r);\n                        if (bc_r.message && bc_r.message.length > 0 && bc_r.message[0].barcode) {\n                            console.log('\u2705 Seteando barcode:', bc_r.message[0].barcode);\n                            frappe.model.set_value(cdt, cdn, 'barcode', bc_r.message[0].barcode);\n                        } else {\n                            console.log('\u26a0\ufe0f No se encontr\u00f3 barcode');\n                        }\n                    }\n                });\n            } else {\n                console.log('\u23ed\ufe0f Saltando: item_code vac\u00edo o barcode ya existe');\n            }\n        }\n    }\n});\n",
-    "doctype": "Client Script"
-  },
-  {
-    "name": "Stock Entry Detail-barcode-autofill",
-    "docstatus": 0,
-    "idx": 0,
-    "dt": "Stock Entry Detail",
-    "view": "Form",
-    "module": null,
-    "enabled": 1,
-    "script": "\nfrappe.ui.form.on('Stock Entry Detail', {\n    item_code: function(frm, cdt, cdn) {\n        let row = locals[cdt][cdn];\n        if (row.item_code) {\n            // Obtener el c\u00f3digo de barras del item\n            frappe.call({\n                method: 'frappe.client.get_list',\n                args: {\n                    doctype: 'Item Barcode',\n                    filters: {\n                        parent: row.item_code\n                    },\n                    fields: ['barcode'],\n                    limit: 1\n                },\n                callback: function(bc_r) {\n                    if (bc_r.message && bc_r.message.length > 0 && bc_r.message[0].barcode) {\n                        // Acceder directamente al row y setear el valor\n                        let row_obj = locals[cdt][cdn];\n                        row_obj.barcode = bc_r.message[0].barcode;\n                        // Refrescar el campo\n                        frm.refresh_field('items');\n                    }\n                }\n            });\n        }\n    }\n});\n",
-    "doctype": "Client Script"
-  }
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Stock Entry",
+  "enabled": 1,
+  "modified": "2026-01-07 14:13:43.465336",
+  "module": null,
+  "name": "Stock Entry-barcode-autofill",
+  "script": "\nfrappe.ui.form.on('Stock Entry', {\n    'items': {\n        item_code: function(frm, cdt, cdn) {\n            console.log('🔍 Evento item_code disparado', cdt, cdn);\n            // Cuando cambia el item_code en la tabla items\n            let row = locals[cdt][cdn];\n            console.log('📦 Row data:', row.item_code, 'Barcode actual:', row.barcode);\n            \n            if (row.item_code && !row.barcode) {\n                console.log('🔎 Buscando barcode para:', row.item_code);\n                // Buscar directamente el barcode en Item Barcode\n                frappe.call({\n                    method: 'frappe.client.get_list',\n                    args: {\n                        doctype: 'Item Barcode',\n                        filters: {\n                            parent: row.item_code\n                        },\n                        fields: ['barcode'],\n                        limit: 1\n                    },\n                    callback: function(bc_r) {\n                        console.log('📋 Respuesta barcode:', bc_r);\n                        if (bc_r.message && bc_r.message.length > 0 && bc_r.message[0].barcode) {\n                            console.log('✅ Seteando barcode:', bc_r.message[0].barcode);\n                            frappe.model.set_value(cdt, cdn, 'barcode', bc_r.message[0].barcode);\n                        } else {\n                            console.log('⚠️ No se encontró barcode');\n                        }\n                    }\n                });\n            } else {\n                console.log('⏭️ Saltando: item_code vacío o barcode ya existe');\n            }\n        }\n    }\n});\n",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Stock Entry Detail",
+  "enabled": 1,
+  "modified": "2026-01-07 14:13:43.580821",
+  "module": null,
+  "name": "Stock Entry Detail-barcode-autofill",
+  "script": "\nfrappe.ui.form.on('Stock Entry Detail', {\n    item_code: function(frm, cdt, cdn) {\n        let row = locals[cdt][cdn];\n        if (row.item_code) {\n            // Obtener el código de barras del item\n            frappe.call({\n                method: 'frappe.client.get_list',\n                args: {\n                    doctype: 'Item Barcode',\n                    filters: {\n                        parent: row.item_code\n                    },\n                    fields: ['barcode'],\n                    limit: 1\n                },\n                callback: function(bc_r) {\n                    if (bc_r.message && bc_r.message.length > 0 && bc_r.message[0].barcode) {\n                        // Acceder directamente al row y setear el valor\n                        let row_obj = locals[cdt][cdn];\n                        row_obj.barcode = bc_r.message[0].barcode;\n                        // Refrescar el campo\n                        frm.refresh_field('items');\n                    }\n                }\n            });\n        }\n    }\n});\n",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Sales Invoice",
+  "enabled": 1,
+  "modified": "2026-01-07 14:13:43.603303",
+  "module": null,
+  "name": "Sales Invoice-prescription-add-items",
+  "script": "\nfrappe.ui.form.on('Sales Invoice', {\n    custom_prescription: function(frm) {\n        if (frm.doc.custom_prescription && !frm.doc.__islocal) {\n            // Solo agregar items si el documento ya está guardado\n            // y hay una receta asociada\n            frappe.confirm(\n                __('¿Desea agregar todos los medicamentos de la receta {0} a esta venta?', [frm.doc.custom_prescription]),\n                function() {\n                    // Usuario confirmó\n                    frappe.call({\n                        method: 'barriofarma_app.barriofarma_app.api.prescription.add_prescription_items_to_invoice_api',\n                        args: {\n                            invoice_name: frm.doc.name,\n                            prescription_name: frm.doc.custom_prescription,\n                            warehouse: frm.doc.set_warehouse\n                        },\n                        callback: function(r) {\n                            if (r.message) {\n                                let msg = __('Se agregaron {0} medicamentos de la receta.', [r.message.items_added.length]);\n                                if (r.message.items_skipped.length > 0) {\n                                    msg += ' ' + __('{0} medicamentos ya estaban en la venta.', [r.message.items_skipped.length]);\n                                }\n                                frappe.show_alert({\n                                    message: msg,\n                                    indicator: 'green'\n                                }, 5);\n                                frm.reload_doc();\n                            }\n                        }\n                    });\n                },\n                function() {\n                    // Usuario canceló\n                }\n            );\n        }\n    }\n});\n",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Item",
+  "enabled": 1,
+  "modified": "2026-01-07 12:00:00",
+  "module": null,
+  "name": "Item-expiry-alert-indicator",
+  "script": "\n// Story 6.2: Alertas de Productos Próximos a Caducar\n// Indicadores visuales en listado de productos\n\nfrappe.listview_settings['Item'] = {\n    get_indicator: function(doc) {\n        // Solo mostrar indicador si el item usa batches\n        if (!doc.has_batch_no) {\n            return [];\n        }\n        \n        // Verificar si ya tenemos el estado de caducidad en caché\n        if (doc._expiry_status) {\n            return doc._expiry_status;\n        }\n        \n        // Obtener estado de caducidad del item de forma asíncrona\n        // Por ahora retornamos vacío, el indicador se actualizará cuando se cargue\n        frappe.call({\n            method: 'barriofarma_app.barriofarma_app.api.expiry_alerts.get_item_expiry_status',\n            args: {\n                item_code: doc.name\n            },\n            callback: function(r) {\n                if (r.message && r.message.success && r.message.data) {\n                    let status = r.message.data.status;\n                    let min_days = r.message.data.min_days_to_expiry;\n                    \n                    if (min_days !== null && status !== 'ok') {\n                        let color = 'blue';\n                        let label = __('Caduca en {0} días', [min_days]);\n                        \n                        if (status === 'critical') {\n                            color = 'red';\n                            label = __('⚠️ Caduca en {0} días', [min_days]);\n                        } else if (status === 'warning') {\n                            color = 'orange';\n                            label = __('⚡ Caduca en {0} días', [min_days]);\n                        } else if (status === 'info') {\n                            color = 'blue';\n                            label = __('ℹ️ Caduca en {0} días', [min_days]);\n                        }\n                        \n                        // Guardar en caché\n                        doc._expiry_status = [label, color, 'expiry_date,<,' + min_days];\n                        \n                        // Refrescar el listado para mostrar el indicador\n                        if (cur_list) {\n                            cur_list.refresh();\n                        }\n                    }\n                }\n            }\n        });\n        \n        return [];\n    }\n};\n",
+  "view": "List"
+ }
 ]

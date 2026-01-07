@@ -14,3 +14,6 @@ barriofarma_app/www/inicio.html
 # Backup files
 *.bak
 *.backup
+
+# Scripts de operaciones (admin del sitio, no distribuibles)
+barriofarma_app/barriofarma_app/utils/operations/
