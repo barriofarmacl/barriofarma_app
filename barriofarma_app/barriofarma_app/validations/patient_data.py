@@ -10,7 +10,7 @@ FR26: El sistema debe registrar datos mínimos del cliente/paciente según norma
 
 import frappe
 from frappe import _
-from barriofarma_app.barriofarma_app.utils.rut_validation import validate_rut_format
+from barriofarma_app.barriofarma_app.utils.domain.rut_validation import validate_rut_format
 
 
 def validate_patient_data_required(doc, method=None):

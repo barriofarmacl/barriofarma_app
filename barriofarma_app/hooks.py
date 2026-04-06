@@ -132,7 +132,8 @@ override_doctype_class = {
 	"Item": "barriofarma_app.barriofarma_app.overrides.item.Item",
 	"Purchase Receipt": "barriofarma_app.barriofarma_app.overrides.purchase_receipt.PurchaseReceipt",
 	"Stock Entry": "barriofarma_app.barriofarma_app.overrides.stock_entry.StockEntry",
-	"Sales Invoice": "barriofarma_app.barriofarma_app.overrides.sales_invoice.SalesInvoice"
+	"Sales Invoice": "barriofarma_app.barriofarma_app.overrides.sales_invoice.SalesInvoice",
+	"POS Invoice": "barriofarma_app.barriofarma_app.overrides.pos_invoice.POSInvoice"
 }
 
 # Document Events
@@ -142,7 +143,7 @@ override_doctype_class = {
 doc_events = {
 	"POS Invoice": {
 		"validate": [
-			"barriofarma_app.barriofarma_app.validations.prescription_validation.validate_prescription_validity",
+			"barriofarma_app.barriofarma_app.validations.receta_medica_validation.validate_receta_medica_validity",
 			"barriofarma_app.barriofarma_app.validations.stock_availability.validate_stock_availability",
 			"barriofarma_app.barriofarma_app.validations.patient_data.validate_patient_data_required",
 			"barriofarma_app.barriofarma_app.validations.discount_limits.validate_discount_limits",
@@ -150,7 +151,7 @@ doc_events = {
 			"barriofarma_app.barriofarma_app.validations.traceability.validate_batch_required_for_sale"
 		],
 		"on_submit": [
-			"barriofarma_app.barriofarma_app.validations.prescription_validation.update_prescription_dispensation"
+			"barriofarma_app.barriofarma_app.validations.receta_medica_validation.update_receta_medica_dispensation"
 		]
 	}
 }

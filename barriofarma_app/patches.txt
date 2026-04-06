@@ -4,3 +4,4 @@
 
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
+barriofarma_app.patches.rename_custom_prescription_to_custom_receta_medica

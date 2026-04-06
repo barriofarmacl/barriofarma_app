@@ -9,6 +9,7 @@ Validar evaluación de fechas vs umbral y obtención de umbral desde Company/Ite
 
 import unittest
 import frappe
+from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_months, today, getdate
 
 from barriofarma_app.barriofarma_app.test_setup import (
@@ -22,7 +23,7 @@ from barriofarma_app.barriofarma_app.test_setup import (
 from barriofarma_app.barriofarma_app.overrides.purchase_receipt import PurchaseReceipt
 
 
-class TestPurchaseReceiptExpiryThreshold(unittest.TestCase):
+class TestPurchaseReceiptExpiryThreshold(FrappeTestCase):
     """Tests unitarios para umbral de vencimiento configurable"""
     
     def setUp(self):

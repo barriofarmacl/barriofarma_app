@@ -4,9 +4,6 @@
   "description": "frontend para farmacias barriofarma",
   "main": "index.js",
   "scripts": {
-    "test": "cypress run --config-file cypress.config.js",
-    "test:open": "cypress open --config-file cypress.config.js",
-    "test:headed": "cypress run --headed --config-file cypress.config.js",
     "postinstall": "cd inicio && yarn install",
     "dev": "cd inicio && yarn dev",
     "build": "cd inicio && yarn build"
@@ -16,8 +13,6 @@
   "license": "ISC",
   "devDependencies": {
     "autoprefixer": "^10.4.20",
-    "cypress": "^13.17.0",
-    "@testing-library/cypress": "^10.0.2",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.14"
   },

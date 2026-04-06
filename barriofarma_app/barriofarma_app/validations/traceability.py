@@ -42,9 +42,14 @@ def validate_batch_required_for_sale(doc, items_field="items"):
     if not hasattr(doc, items_field):
         return
     
-    items = getattr(doc, items_field, [])
+    # Obtener items usando get() para asegurar que obtenemos la lista, no el método
+    items = doc.get(items_field, [])
     if not items:
         return
+    
+    # Si items es un método (callable), llamarlo
+    if callable(items):
+        items = items()
     
     for item in items:
         item_code = item.get("item_code")

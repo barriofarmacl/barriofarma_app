@@ -9,7 +9,7 @@ Story 4.3: Registro de Datos Mínimos de Cliente/Paciente
 """
 
 import unittest
-from barriofarma_app.barriofarma_app.utils.rut_validation import (
+from barriofarma_app.barriofarma_app.utils.domain.rut_validation import (
 	validate_rut_format,
 	validate_rut_verifier,
 	format_rut

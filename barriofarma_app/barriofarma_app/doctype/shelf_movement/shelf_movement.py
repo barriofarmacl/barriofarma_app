@@ -116,4 +116,77 @@ class ShelfMovement(Document):
 					_("No se puede transferir a estante deshabilitado: {0}").format(self.to_shelf),
 					frappe.ValidationError
 				)
+	
+	def on_submit(self):
+		"""
+		Actualizar current_occupancy del Shelf después de submitir el movimiento
+		Esto asegura que cuando se vende un producto, el shelf muestre el valor descontado
+		"""
+		self._update_shelf_occupancy()
+	
+	def on_cancel(self):
+		"""
+		Actualizar current_occupancy del Shelf después de cancelar el movimiento
+		"""
+		self._update_shelf_occupancy()
+	
+	def _update_shelf_occupancy(self):
+		"""
+		Actualizar current_occupancy de los shelves afectados por este movimiento
+		Esto asegura que el shelf refleje el stock real después de ventas, transferencias, etc.
+		
+		Nota: La actualización del Bin en ERPNext es SÍNCRONA (no hay procesos asíncronos de Redis).
+		Sin embargo, debemos asegurar que:
+		1. El commit de la transacción actual esté completo
+		2. Los datos del Bin estén frescos (sin caché)
+		3. El cálculo se haga con los datos más recientes
+		"""
+		# Actualizar shelf origen (siempre existe)
+		if self.shelf and frappe.db.exists("Shelf", self.shelf):
+			try:
+				# Forzar commit para asegurar que todos los cambios de stock (SLE, Bin) estén persistidos
+				# Esto es importante porque el Stock Ledger Entry se crea en la misma transacción
+				# pero el commit puede no estar completo cuando se ejecuta este hook
+				frappe.db.commit()
+				
+				# Invalidar caché del Bin para asegurar que leemos datos frescos
+				# Esto es necesario porque Frappe puede cachear consultas SQL
+				frappe.clear_cache(doctype="Bin")
+				
+				# Recargar el shelf para obtener datos actualizados
+				shelf_doc = frappe.get_doc("Shelf", self.shelf)
+				shelf_doc.reload()
+				
+				if hasattr(shelf_doc, "calculate_current_occupancy"):
+					# Calcular occupancy con datos frescos del Bin
+					new_occupancy = shelf_doc.calculate_current_occupancy()
+					shelf_doc.current_occupancy = new_occupancy
+					shelf_doc.save(ignore_permissions=True)
+					frappe.db.commit()
+			except Exception as e:
+				frappe.log_error(
+					message=f"Error al actualizar current_occupancy del Shelf {self.shelf}: {str(e)}",
+					title="Error en actualización de Shelf occupancy"
+				)
+		
+		# Actualizar shelf destino (solo para Transferencias)
+		if self.movement_type == "Transferencia" and self.to_shelf and frappe.db.exists("Shelf", self.to_shelf):
+			try:
+				# Forzar commit e invalidar caché también para el shelf destino
+				frappe.db.commit()
+				frappe.clear_cache(doctype="Bin")
+				
+				to_shelf_doc = frappe.get_doc("Shelf", self.to_shelf)
+				to_shelf_doc.reload()
+				
+				if hasattr(to_shelf_doc, "calculate_current_occupancy"):
+					new_occupancy = to_shelf_doc.calculate_current_occupancy()
+					to_shelf_doc.current_occupancy = new_occupancy
+					to_shelf_doc.save(ignore_permissions=True)
+					frappe.db.commit()
+			except Exception as e:
+				frappe.log_error(
+					message=f"Error al actualizar current_occupancy del Shelf destino {self.to_shelf}: {str(e)}",
+					title="Error en actualización de Shelf occupancy"
+				)
 

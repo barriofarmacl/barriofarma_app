@@ -26,11 +26,11 @@ from barriofarma_app.barriofarma_app.validations.returns import (
 	validate_return_requirements,
 	validate_return_permissions
 )
-from barriofarma_app.barriofarma_app.validations.prescription_validation import (
-	validate_prescription_validity,
-	update_prescription_dispensation
+from barriofarma_app.barriofarma_app.validations.receta_medica_validation import (
+	validate_receta_medica_validity,
+	update_receta_medica_dispensation
 )
-from barriofarma_app.barriofarma_app.utils.control_level_audit import (
+from barriofarma_app.barriofarma_app.utils.domain.control_level_audit import (
 	validate_control_level_change_reason,
 	detect_and_log_control_level_changes
 )
@@ -222,7 +222,7 @@ class SalesInvoice(ERPNextSalesInvoice):
 		else:
 			# Validaciones para ventas normales (no devoluciones)
 			# Story 5.2: Validar vigencia de receta médica
-			validate_prescription_validity(self)
+			validate_receta_medica_validity(self)
 			# FR22: Validar disponibilidad de stock en tiempo real
 			validate_stock_availability(self)
 			# FR26: Validar datos mínimos de cliente/paciente según normativa
@@ -243,10 +243,12 @@ class SalesInvoice(ERPNextSalesInvoice):
 		"""
 		super().on_submit()
 		# Story 5.2: Actualizar dispensación de receta
-		update_prescription_dispensation(self)
+		update_receta_medica_dispensation(self)
 		# FR25, FR40: Registrar cambios en control level con auditoría
 		detect_and_log_control_level_changes(self)
 		# Registrar Shelf Movement automáticamente
+		# Nota: Se ejecuta después de super().on_submit() para que el stock ya esté actualizado
+		frappe.db.commit()  # Asegurar que el stock esté persistido antes de crear Shelf Movement
 		self.create_shelf_movements_from_sale()
 	
 	def create_shelf_movements_from_sale(self):
@@ -333,6 +335,7 @@ class SalesInvoice(ERPNextSalesInvoice):
 			})
 			
 			movement.insert(ignore_permissions=True)
+			movement.submit(ignore_permissions=True)  # Submit para que se ejecute on_submit y actualice current_occupancy
 			frappe.db.commit()
 		except Exception as e:
 			frappe.log_error(

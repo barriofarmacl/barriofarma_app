@@ -9,6 +9,7 @@ BF-007: Solo incluir items con custom_qc_status = "Aceptado"
 
 import unittest
 import frappe
+from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_months, today
 
 from barriofarma_app.barriofarma_app.test_setup import (
@@ -22,7 +23,7 @@ from barriofarma_app.barriofarma_app.test_setup import (
 from barriofarma_app.barriofarma_app.overrides.purchase_receipt import make_purchase_invoice
 
 
-class TestPurchaseReceiptInvoice(unittest.TestCase):
+class TestPurchaseReceiptInvoice(FrappeTestCase):
     """Tests unitarios para conciliación Purchase Invoice"""
     
     def setUp(self):

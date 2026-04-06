@@ -8,10 +8,11 @@ Tests unitarios para el DocType Doctor
 
 import unittest
 import frappe
+from frappe.tests.utils import FrappeTestCase
 from frappe.utils import today
 
 
-class TestDoctor(unittest.TestCase):
+class TestDoctor(FrappeTestCase):
 	"""Tests para el DocType Doctor"""
 
 	def setUp(self):

@@ -24,7 +24,7 @@ def setup_custom_roles():
     Crear roles personalizados si no existen
     Sigue buenas prácticas de Frappe: idempotente y ejecutable en migraciones
     """
-    from barriofarma_app.barriofarma_app.utils.setup_roles import create_custom_roles
+    from barriofarma_app.barriofarma_app.utils.permissions.setup_roles import create_custom_roles
     
     try:
         created = create_custom_roles()
@@ -39,7 +39,7 @@ def setup_custom_permissions():
     Configurar permisos personalizados para roles de Barriofarma
     Sigue buenas prácticas de Frappe: idempotente y ejecutable en migraciones
     """
-    from barriofarma_app.barriofarma_app.utils.setup_permissions import setup_all_permissions
+    from barriofarma_app.barriofarma_app.utils.permissions.setup_permissions import setup_all_permissions
     
     try:
         setup_all_permissions()

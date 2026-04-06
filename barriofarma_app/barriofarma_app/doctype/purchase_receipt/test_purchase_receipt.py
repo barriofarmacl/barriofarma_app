@@ -9,6 +9,7 @@ Fase RED del TDD para BF-006
 
 import unittest
 import frappe
+from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_months, today
 
 from barriofarma_app.barriofarma_app.test_setup import (
@@ -21,7 +22,7 @@ from barriofarma_app.barriofarma_app.test_setup import (
 )
 
 
-class TestPurchaseReceipt(unittest.TestCase):
+class TestPurchaseReceipt(FrappeTestCase):
     """Tests unitarios para Purchase Receipt"""
     
     def setUp(self):

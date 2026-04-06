@@ -8,10 +8,11 @@ Tests unitarios para el DocType Patient
 
 import unittest
 import frappe
+from frappe.tests.utils import FrappeTestCase
 from frappe.utils import today, add_days
 
 
-class TestPatient(unittest.TestCase):
+class TestPatient(FrappeTestCase):
 	"""Tests para el DocType Patient"""
 
 	def setUp(self):

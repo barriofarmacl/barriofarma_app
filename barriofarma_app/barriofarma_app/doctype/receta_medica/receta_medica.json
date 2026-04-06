@@ -1,0 +1,233 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2025-01-27 12:00:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "doctor_section",
+  "doctor",
+  "doctor_name",
+  "doctor_license",
+  "doctor_specialty",
+  "col_break1",
+  "patient_section",
+  "patient",
+  "patient_name",
+  "col_break2",
+  "prescription_details_section",
+  "prescription_date",
+  "valid_till",
+  "status",
+  "col_break3",
+  "max_dispensations",
+  "dispensation_count",
+  "items_section",
+  "items",
+  "attachments_section",
+  "attachments",
+  "sales_invoices_section",
+  "related_sales_invoices"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "RX-.YY.-.MM.-.#####"
+  },
+  {
+   "fieldname": "doctor_section",
+   "fieldtype": "Section Break",
+   "label": "Informaci\u00f3n del M\u00e9dico"
+  },
+  {
+   "fieldname": "doctor",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "M\u00e9dico",
+   "options": "Doctor",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "doctor.doctor_name",
+   "fieldname": "doctor_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Nombre del M\u00e9dico",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "doctor.license_number",
+   "fieldname": "doctor_license",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "N\u00famero de Licencia M\u00e9dica",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "doctor.specialty",
+   "fieldname": "doctor_specialty",
+   "fieldtype": "Data",
+   "label": "Especialidad"
+  },
+  {
+   "fieldname": "col_break1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "patient_section",
+   "fieldtype": "Section Break",
+   "label": "Informaci\u00f3n del Paciente"
+  },
+  {
+   "fieldname": "patient",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Paciente",
+   "options": "Patient",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "patient.patient_name",
+   "fieldname": "patient_name",
+   "fieldtype": "Data",
+   "label": "Nombre del Paciente",
+   "reqd": 1
+  },
+  {
+   "fieldname": "col_break2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "prescription_details_section",
+   "fieldtype": "Section Break",
+   "label": "Detalles de la Receta"
+  },
+  {
+   "default": "Today",
+   "fieldname": "prescription_date",
+   "fieldtype": "Date",
+   "label": "Fecha de Emisi\u00f3n",
+   "reqd": 1
+  },
+  {
+   "fieldname": "valid_till",
+   "fieldtype": "Date",
+   "label": "V\u00e1lida Hasta",
+   "reqd": 1
+  },
+  {
+   "default": "Nueva",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Estado",
+   "options": "Nueva\nParcialmente Dispensada\nCompletada\nVencida",
+   "reqd": 1
+  },
+  {
+   "fieldname": "col_break3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "max_dispensations",
+   "fieldtype": "Int",
+   "label": "M\u00e1x. Dispensaciones"
+  },
+  {
+   "default": "0",
+   "fieldname": "dispensation_count",
+   "fieldtype": "Int",
+   "label": "Dispensaciones Realizadas",
+   "read_only": 1
+  },
+  {
+   "fieldname": "items_section",
+   "fieldtype": "Section Break",
+   "label": "Medicamentos Prescritos"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Medicamentos",
+   "options": "Receta Medica Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "attachments_section",
+   "fieldtype": "Section Break",
+   "label": "Documento de Receta"
+  },
+  {
+   "fieldname": "attachments",
+   "fieldtype": "Attach",
+   "label": "Adjuntar Receta F\u00edsica"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sales_invoices_section",
+   "fieldtype": "Section Break",
+   "label": "Dispensaciones Realizadas"
+  },
+  {
+   "fieldname": "related_sales_invoices",
+   "fieldtype": "Table",
+   "label": "Facturas Relacionadas",
+   "options": "Receta Medica Dispensacion"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-04-05 00:39:13.219929",
+ "modified_by": "Administrator",
+ "module": "Barriofarma App",
+ "name": "Receta Medica",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auxiliar"
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Farmac\u00e9utico",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Inform\u00e1tica",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "patient_name,doctor_name,prescription_date,status",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "patient_name",
+ "track_changes": 1
+}

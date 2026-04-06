@@ -1,0 +1,1 @@
+# BarrioFarma database patches
