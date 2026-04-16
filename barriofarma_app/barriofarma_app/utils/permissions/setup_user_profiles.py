@@ -425,9 +425,12 @@ def setup_user_from_profile(email, profile_name, full_name=None, enabled=True, u
             "Projects": "Projects"
         }
         
-        # Módulos base que siempre deben estar disponibles
+        # Módulos base que suelen requerirse para Desk / comunicación / app BarrioFarma.
+        # No incluir aquí módulos de negocio opcionales (Calidad, Integraciones, etc.):
+        # si van en base_modules, quedan visibles para todos los perfiles aunque no estén
+        # en visible_modules. Esos deben bloquearse salvo que un perfil los liste explícitamente.
         base_modules = {
-            "Desk",           # Herramientas base
+            "Desk",           # Herramientas base (mapeado desde Tools)
             "Workflow",       # Flujos de Trabajo
             "Customize",      # Personalizar
             "Automation",     # Automatización
@@ -439,9 +442,6 @@ def setup_user_from_profile(email, profile_name, full_name=None, enabled=True, u
             "Portal",
             "Geo",
             "EDI",
-            "Quality Management",  # Gestión de Calidad
-            "Integrations",   # Integraciones
-            "ERPNext Integrations",  # Integraciones ERPNext
             "Barriofarma App"  # Barriofarma App (nombre real en la BD)
         }
         
