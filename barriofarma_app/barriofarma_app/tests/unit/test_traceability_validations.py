@@ -32,9 +32,15 @@ class MockItem:
 
 
 class MockInvoice:
-    """Mock de Sales Invoice"""
+    """Mock de Sales Invoice (API compatible con Document.get)."""
+
     def __init__(self, items=None):
         self.items = items or []
+
+    def get(self, key, default=None):
+        if key == "items":
+            return self.items
+        return getattr(self, key, default)
 
 
 class TestBatchRequiredForSale(unittest.TestCase):
