@@ -59,10 +59,7 @@ app_license = "mit"
 # ----------
 
 # add methods and filters to jinja environment
-# jinja = {
-# 	"methods": "barriofarma_app.utils.jinja_methods",
-# 	"filters": "barriofarma_app.utils.jinja_filters"
-# }
+# (Print Format boleta SII vive en la app ``pagosbf`` cuando esta instalada.)
 
 # Installation
 # ------------
@@ -148,11 +145,13 @@ doc_events = {
 			"barriofarma_app.barriofarma_app.validations.patient_data.validate_patient_data_required",
 			"barriofarma_app.barriofarma_app.validations.discount_limits.validate_discount_limits",
 			"barriofarma_app.barriofarma_app.validations.expired_products.validate_expired_products_in_invoice",
-			"barriofarma_app.barriofarma_app.validations.traceability.validate_batch_required_for_sale"
+			"barriofarma_app.barriofarma_app.validations.traceability.validate_batch_required_for_sale",
+			"barriofarma_app.barriofarma_app.utils.domain.control_level_audit.validate_control_level_change_reason_doc_event",
 		],
 		"on_submit": [
-			"barriofarma_app.barriofarma_app.validations.receta_medica_validation.update_receta_medica_dispensation"
-		]
+			"barriofarma_app.barriofarma_app.validations.receta_medica_validation.update_receta_medica_dispensation",
+			"barriofarma_app.barriofarma_app.utils.domain.control_level_audit.detect_and_log_control_level_changes_doc_event",
+		],
 	}
 }
 
