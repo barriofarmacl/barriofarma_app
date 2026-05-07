@@ -229,16 +229,37 @@ class Item(ERPNextItem):
             return
         
         preferred_count = 0
-        shelf_names = []
+        shelf_names = set()
         
         for shelf_location in self.custom_shelf_locations:
             shelf_name = shelf_location.get("shelf")
+            qty = float(shelf_location.get("quantity") or 0)
             
             # Validar que el shelf existe
             if shelf_name and not frappe.db.exists("Shelf", shelf_name):
                 frappe.throw(
                     _("El estante {0} no existe").format(frappe.bold(shelf_name)),
                     title=_("Estante Inválido")
+                )
+
+            # Evitar duplicar el mismo shelf para un item
+            if shelf_name in shelf_names:
+                frappe.throw(
+                    _("El estante {0} está repetido en las ubicaciones del producto").format(
+                        frappe.bold(shelf_name)
+                    ),
+                    title=_("Ubicación de Estante Duplicada")
+                )
+            if shelf_name:
+                shelf_names.add(shelf_name)
+
+            # Validar cantidad no negativa
+            if qty < 0:
+                frappe.throw(
+                    _("La cantidad en estante no puede ser negativa para {0}").format(
+                        frappe.bold(shelf_name or _("(sin estante)"))
+                    ),
+                    title=_("Cantidad Inválida en Estante")
                 )
             
             # Contar ubicaciones preferidas
@@ -249,6 +270,14 @@ class Item(ERPNextItem):
             if shelf_name:
                 shelf_doc = frappe.get_doc("Shelf", shelf_name)
                 shelf_type = shelf_doc.get("shelf_type")
+
+                if shelf_doc.get("disabled"):
+                    frappe.throw(
+                        _("No se puede asignar producto al estante deshabilitado {0}").format(
+                            frappe.bold(shelf_doc.shelf_name)
+                        ),
+                        title=_("Estante Deshabilitado")
+                    )
                 
                 # Validar estante Controlado
                 if shelf_type == "Controlado":
@@ -305,4 +334,110 @@ class Item(ERPNextItem):
                 ),
                 title=_("Múltiples Ubicaciones Preferidas")
             )
+
+        # Autocompletar cantidad por estante cuando sea inferible
+        self._auto_fill_single_shelf_quantity()
+        self._auto_fill_shelf_quantities_from_movements()
+
+    def _auto_fill_single_shelf_quantity(self):
+        """
+        Si en un warehouse el item tiene exactamente un shelf y la cantidad está en 0,
+        autocompletar con el stock real de Bin para ese warehouse.
+
+        Regla conservadora: con múltiples estantes por warehouse no se distribuye
+        automáticamente para evitar asignaciones incorrectas.
+        """
+        if not hasattr(self, "custom_shelf_locations") or not self.custom_shelf_locations:
+            return
+
+        shelves_by_warehouse = {}
+        for row in self.custom_shelf_locations:
+            shelf_name = row.get("shelf")
+            if not shelf_name or not frappe.db.exists("Shelf", shelf_name):
+                continue
+            shelf_wh = frappe.db.get_value("Shelf", shelf_name, "warehouse")
+            if not shelf_wh:
+                continue
+            shelves_by_warehouse.setdefault(shelf_wh, []).append(row)
+
+        for warehouse, rows in shelves_by_warehouse.items():
+            if len(rows) != 1:
+                continue
+            row = rows[0]
+
+            bin_qty = (
+                frappe.db.get_value(
+                    "Bin",
+                    {"item_code": self.name, "warehouse": warehouse},
+                    "actual_qty",
+                )
+                or 0
+            )
+            # Un solo estante en warehouse => Bin es fuente de verdad operativa.
+            row.quantity = float(bin_qty or 0)
+
+    def _auto_fill_shelf_quantities_from_movements(self):
+        """
+        Sincronizar cantidad por estante desde Shelf Movement para filas con quantity=0.
+
+        Política de seguridad:
+        - Solo actualiza filas con quantity <= 0 (no sobreescribe ajustes manuales > 0).
+        - Usa solo movimientos submitidos (docstatus=1).
+        """
+        if not hasattr(self, "custom_shelf_locations") or not self.custom_shelf_locations:
+            return
+
+        shelf_rows = [r for r in self.custom_shelf_locations if r.get("shelf")]
+        if not shelf_rows:
+            return
+
+        movement_rows = frappe.db.sql(
+            """
+            SELECT t.shelf, SUM(t.delta_qty) AS qty
+            FROM (
+                SELECT
+                    sm.shelf AS shelf,
+                    CASE
+                        WHEN sm.movement_type = 'Recepción' THEN sm.quantity
+                        WHEN sm.movement_type = 'Transferencia' THEN -sm.quantity
+                        WHEN sm.movement_type IN ('Venta', 'Ajuste') THEN -sm.quantity
+                        ELSE 0
+                    END AS delta_qty
+                FROM `tabShelf Movement` sm
+                WHERE sm.item = %(item_code)s
+                    AND sm.docstatus = 1
+
+                UNION ALL
+
+                SELECT
+                    sm.to_shelf AS shelf,
+                    sm.quantity AS delta_qty
+                FROM `tabShelf Movement` sm
+                WHERE sm.item = %(item_code)s
+                    AND sm.movement_type = 'Transferencia'
+                    AND sm.to_shelf IS NOT NULL
+                    AND sm.docstatus = 1
+            ) t
+            WHERE t.shelf IS NOT NULL
+            GROUP BY t.shelf
+            """,
+            {"item_code": self.name},
+            as_dict=True,
+        )
+        if not movement_rows:
+            return
+
+        qty_by_shelf = {r.get("shelf"): float(r.get("qty") or 0) for r in movement_rows}
+        for row in shelf_rows:
+            shelf = row.get("shelf")
+            if not shelf:
+                continue
+            current_qty = float(row.get("quantity") or 0)
+            if current_qty > 0:
+                continue
+            movement_qty = qty_by_shelf.get(shelf)
+            if movement_qty is None:
+                continue
+            if movement_qty >= 0:
+                row.quantity = movement_qty
 

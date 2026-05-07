@@ -11,7 +11,7 @@ app_license = "mit"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/barriofarma_app/css/barriofarma_app.css"
-# app_include_js = "/assets/barriofarma_app/js/barriofarma_app.js"
+app_include_js = ["/assets/barriofarma_app/js/pos_shelf_info.js"]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/barriofarma_app/css/barriofarma_app.css"

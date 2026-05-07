@@ -359,19 +359,19 @@ def get_shelf_stock(item_code, warehouse, shelf_filter=None):
                 shelf_name = shelf_info.get("shelf_name")
                 shelf_code = shelf_info.get("shelf")
                 
-                # Obtener stock real desde Bin para este item en este warehouse
-                # Nota: El stock en Bin es por warehouse, no por shelf específico
-                # Por ahora mostramos el stock del warehouse completo
+                configured_qty = float(shelf_info.get("configured_qty") or 0)
+                # Fallback para instalaciones antiguas sin cantidad por estante:
+                # si no hay qty configurada, usar stock de warehouse.
                 bin_stock = frappe.db.get_value(
                     "Bin",
                     {"item_code": item_code, "warehouse": warehouse},
                     "actual_qty"
                 ) or 0
-                
+
                 shelf_data.append({
                     "shelf": shelf_code,
                     "shelf_name": shelf_name,
-                    "qty": bin_stock
+                    "qty": configured_qty if configured_qty > 0 else bin_stock
                 })
     
     return shelf_data
@@ -408,7 +408,8 @@ def get_shelf_locations_from_item(item_code, warehouse, shelf_filter=None):
     query = f"""
         SELECT DISTINCT
             isl.shelf,
-            s.shelf_name
+            s.shelf_name,
+            isl.quantity as configured_qty
         FROM `tabItem Shelf Location` isl
         INNER JOIN `tabShelf` s ON isl.shelf = s.name
         WHERE {where_clause}

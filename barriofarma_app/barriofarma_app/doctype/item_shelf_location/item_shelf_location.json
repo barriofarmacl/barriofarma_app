@@ -8,6 +8,7 @@
  "field_order": [
   "shelf",
   "shelf_name",
+  "quantity",
   "preferred_location",
   "last_updated"
  ],
@@ -27,6 +28,13 @@
    "in_list_view": 1,
    "label": "Nombre del Estante",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "quantity",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Cantidad en Estante"
   },
   {
    "default": 0,

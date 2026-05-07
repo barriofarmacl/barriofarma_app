@@ -97,6 +97,7 @@ class StockEntry(ERPNextStockEntry):
 		"""
 		super().on_submit()
 		self.create_shelf_movements()
+		self.sync_item_shelf_quantities()
 	
 	def validate_shelf_capacity_and_type(self):
 		"""
@@ -403,4 +404,132 @@ class StockEntry(ERPNextStockEntry):
 			)
 			# No lanzar excepción para no bloquear el submit del Stock Entry
 			# pero registrar el error para debugging
+
+	def sync_item_shelf_quantities(self):
+		"""
+		Sincroniza `Item Shelf Location.quantity` desde Shelf Movement al enviar el Stock Entry.
+
+		Política conservadora:
+		- Solo actualiza filas con quantity <= 0 (no pisa ajustes manuales positivos).
+		- Asegura que ingresos nuevos (Material Receipt/Transfer) propaguen distribución
+		  por estante sin depender de edición manual del Item.
+		"""
+		if not self.items:
+			return
+
+		for row in self.items:
+			item_code = row.get("item_code")
+			if not item_code or not frappe.db.exists("Item", item_code):
+				continue
+			try:
+				item_doc = frappe.get_doc("Item", item_code)
+			except Exception:
+				continue
+
+			if not hasattr(item_doc, "custom_shelf_locations") or not item_doc.custom_shelf_locations:
+				continue
+
+			movement_rows = frappe.db.sql(
+				"""
+				SELECT t.shelf, SUM(t.delta_qty) AS qty
+				FROM (
+					SELECT
+						sm.shelf AS shelf,
+						CASE
+							WHEN sm.movement_type = 'Recepción' THEN sm.quantity
+							WHEN sm.movement_type = 'Transferencia' THEN -sm.quantity
+							WHEN sm.movement_type IN ('Venta', 'Ajuste') THEN -sm.quantity
+							ELSE 0
+						END AS delta_qty
+					FROM `tabShelf Movement` sm
+					WHERE sm.item = %(item_code)s
+						AND sm.docstatus = 1
+
+					UNION ALL
+
+					SELECT
+						sm.to_shelf AS shelf,
+						sm.quantity AS delta_qty
+					FROM `tabShelf Movement` sm
+					WHERE sm.item = %(item_code)s
+						AND sm.movement_type = 'Transferencia'
+						AND sm.to_shelf IS NOT NULL
+						AND sm.docstatus = 1
+				) t
+				WHERE t.shelf IS NOT NULL
+				GROUP BY t.shelf
+				""",
+				{"item_code": item_code},
+				as_dict=True,
+			)
+			if not movement_rows:
+				continue
+
+			qty_by_shelf = {r.get("shelf"): float(r.get("qty") or 0) for r in movement_rows}
+			changed = False
+			for shelf_row in item_doc.custom_shelf_locations:
+				shelf = shelf_row.get("shelf")
+				if not shelf:
+					continue
+				current_qty = float(shelf_row.get("quantity") or 0)
+				if current_qty > 0:
+					continue
+				new_qty = qty_by_shelf.get(shelf)
+				if new_qty is None:
+					continue
+				if new_qty >= 0 and current_qty != new_qty:
+					shelf_row.quantity = new_qty
+					changed = True
+
+			if changed:
+				try:
+					item_doc.save(ignore_permissions=True)
+				except Exception as e:
+					frappe.log_error(
+						message=f"Error al sincronizar quantity por estante para item {item_code}: {str(e)}",
+						title="Error sync Item Shelf Location.quantity",
+					)
+
+			# Regla de consistencia: si en un warehouse hay un único shelf del item,
+			# su quantity debe reflejar exactamente el Bin del warehouse.
+			self._force_single_shelf_qty_from_bin(item_doc)
+
+	def _force_single_shelf_qty_from_bin(self, item_doc):
+		if not hasattr(item_doc, "custom_shelf_locations") or not item_doc.custom_shelf_locations:
+			return
+		by_warehouse = {}
+		for r in item_doc.custom_shelf_locations:
+			shelf = r.get("shelf")
+			if not shelf or not frappe.db.exists("Shelf", shelf):
+				continue
+			wh = frappe.db.get_value("Shelf", shelf, "warehouse")
+			if not wh:
+				continue
+			by_warehouse.setdefault(wh, []).append(r)
+
+		changed = False
+		for wh, rows in by_warehouse.items():
+			if len(rows) != 1:
+				continue
+			bin_qty = (
+				frappe.db.get_value(
+					"Bin",
+					{"item_code": item_doc.name, "warehouse": wh},
+					"actual_qty",
+				)
+				or 0
+			)
+			row = rows[0]
+			if float(row.get("quantity") or 0) != float(bin_qty):
+				row.quantity = float(bin_qty)
+				changed = True
+
+		if changed:
+			try:
+				item_doc.save(ignore_permissions=True)
+			except Exception as e:
+				frappe.log_error(
+					message=f"Error al forzar quantity por estante único para item {item_doc.name}: {str(e)}",
+					title="Error force single shelf quantity",
+				)
 

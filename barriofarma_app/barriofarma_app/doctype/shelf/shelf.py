@@ -21,9 +21,35 @@ class Shelf(Document):
 		Validar invariantes del dominio antes de guardar
 		"""
 		self.validate_warehouse()
+		self.validate_warehouse_shelf_limit()
 		self.validate_location_code_unique()
 		self.validate_capacity()
 		self.validate_shelf_type()
+
+	def validate_warehouse_shelf_limit(self):
+		"""
+		Regla de negocio: un warehouse puede tener entre 0 y 10 estantes.
+
+		Se valida al crear/editar Shelf para no exceder 10 registros por warehouse.
+		"""
+		if not self.warehouse:
+			return
+
+		existing_count = frappe.db.count(
+			"Shelf",
+			{
+				"warehouse": self.warehouse,
+				"name": ["!=", self.name],
+			},
+		)
+		# +1 incluye el documento actual
+		if int(existing_count or 0) + 1 > 10:
+			frappe.throw(
+				_("El almacén {0} ya tiene 10 estantes. No se pueden crear más.").format(
+					frappe.bold(self.warehouse)
+				),
+				frappe.ValidationError,
+			)
 	
 	def validate_warehouse(self):
 		"""
