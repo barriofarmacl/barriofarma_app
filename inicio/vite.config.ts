@@ -20,4 +20,8 @@ export default defineConfig({
 		emptyOutDir: true,
 		target: 'es2015',
 	},
+	test: {
+		environment: 'jsdom',
+		include: ['src/**/*.{test,spec}.{ts,tsx}'],
+	},
 });

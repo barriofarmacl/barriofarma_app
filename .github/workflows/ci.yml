@@ -1,0 +1,17 @@
+name: CI
+
+on:
+  push:
+    branches: [dev, main, develop]
+  pull_request:
+    branches: [dev, main, develop]
+
+jobs:
+  import-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ripgrep
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ripgrep
+      - name: Ban pagosbf imports
+        run: bash scripts/check_no_pagosbf_imports.sh

@@ -1,0 +1,6 @@
+export { LandingHeader } from './LandingHeader'
+export { LandingHero } from './LandingHero'
+export { LandingCategories } from './LandingCategories'
+export { LandingServices } from './LandingServices'
+export { LandingContact } from './LandingContact'
+export { LandingFooter } from './LandingFooter'

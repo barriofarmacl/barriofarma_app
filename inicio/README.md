@@ -1,4 +1,24 @@
-# React + TypeScript + Vite
+# Barriofarma — SPA `inicio`
+
+## Stack oficial de este frontend (decisión de proyecto Barriofarma)
+
+**Esta combinación es el stack oficial del proyecto Barriofarma** para la SPA bajo la ruta `inicio` dentro de **barriofarma_app**:
+
+| Capa | Herramienta |
+|------|-------------|
+| UI | **React 18** + componentes estilo **shadcn/ui** (primitivas **Radix UI**, **Tailwind CSS**, **class-variance-authority**) en `src/components/ui/` |
+| Build | **Vite** + **TypeScript** |
+| Integración Frappe | **`frappe-react-sdk`** (sesión por cookie, `useFrappeAuth`, `useFrappeGetCall`, etc.) |
+
+No se usa **Frappe UI (Vue 3)** en esta SPA. Las guías y skills que lo prescriben (p. ej. `frappe-frontend-development`) aplican solo como **referencia de buenas prácticas** (proxy, auth, loading, build), no como mandato de migración: **no hay plan de pasar esta SPA a Vue**.
+
+Alcance actual acordado: **landing informativa** y **login** hacia el Desk (`/app`). Nuevas pantallas deben seguir el mismo patrón: **SDK + cookies**; evitar `fetch` ad hoc que ignore la sesión.
+
+**Fecha de ratificación:** 2026-04-20 (decisión explícita del equipo).
+
+---
+
+# React + TypeScript + Vite (plantilla base)
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

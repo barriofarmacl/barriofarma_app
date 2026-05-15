@@ -234,3 +234,12 @@ def validate_control_level_change_reason(doc, items_field="items"):
                     title=_("Motivo Requerido para Cambio de Control Level")
                 )
 
+
+def validate_control_level_change_reason_doc_event(doc, method=None):
+    """Wrapper para doc_events: Frappe invoca handlers como (doc, nombre_metodo)."""
+    validate_control_level_change_reason(doc, items_field="items")
+
+
+def detect_and_log_control_level_changes_doc_event(doc, method=None):
+    """Wrapper para doc_events: Frappe invoca handlers como (doc, nombre_metodo)."""
+    detect_and_log_control_level_changes(doc, items_field="items")

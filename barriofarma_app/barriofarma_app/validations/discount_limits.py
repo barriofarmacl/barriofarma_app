@@ -6,6 +6,10 @@
 Validación de límites de descuento por rol de usuario.
 
 FR27: El sistema debe permitir aplicar descuentos y promociones a productos
+
+Spec pos-pharma-payments-boundary R5: esta regla permanece en barriofarma_app como
+politica clinica-comercial por rol (no es regla de medio de pago). No mover a pagosbf
+sin un change explicito de arquitectura.
 """
 
 import frappe

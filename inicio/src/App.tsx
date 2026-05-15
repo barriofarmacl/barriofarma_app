@@ -1,15 +1,13 @@
 // App.tsx
 import * as React from "react";
-import * as ReactDOM from "react-dom/client";
 import {
 	createBrowserRouter,
 	RouterProvider,
-} from "react-router-dom"; // Asegúrate de importar RouterProvider
+} from "react-router-dom";
 import { FrappeProvider } from 'frappe-react-sdk'
+import { Toaster } from 'sonner'
 import './index.css'
-import LoginPage from './pages/login-page'; // Importa LoginPage
-import POSSystem from './pages/pos-system'; // Importa POSSystem
-import DashboardFarmacia from "./pages/dashboard";
+import LoginPage from './pages/login-page';
 import HomePage from "./pages/home";
 
 function App() {
@@ -25,23 +23,15 @@ function App() {
 	const router = createBrowserRouter([
 		{
 			path: "/",
-			element: <HomePage />, // Agrega la ruta para HomePage
+			element: <HomePage />,
 		},
 		{
 			path: "/inicio",
-			element: <HomePage />, // Agrega la ruta para HomePage
+			element: <HomePage />,
 		},
 		{
 			path: "/inicio/login",
-			element: <LoginPage />, // Agrega la ruta para LoginPage
-		},
-		{
-			path: "/inicio/pos",
-			element: <POSSystem />, // Agrega la ruta para POSSystem
-		},
-		{
-			path: "/inicio/dashboard",
-			element: <DashboardFarmacia />, // Agrega la ruta para POSSystem
+			element: <LoginPage />,
 		},
 	]);
 
@@ -52,7 +42,7 @@ function App() {
 				siteName={getSiteName()}
 			>
 				<RouterProvider router={router} />
-				{/* El RouterProvider ahora gestiona las rutas */}
+				<Toaster richColors closeButton position="top-center" />
 			</FrappeProvider>
 		</div>
 	);

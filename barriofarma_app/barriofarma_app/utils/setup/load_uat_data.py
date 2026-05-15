@@ -13,7 +13,7 @@ Uso:
 
 import frappe
 from frappe import _
-from frappe.utils import today, add_days, add_months, getdate
+from frappe.utils import today, add_days, add_months, getdate, flt
 import logging
 from datetime import datetime
 
@@ -157,7 +157,7 @@ def create_uat_suppliers():
     for supplier_name in supplier_names:
         supplier = create_test_supplier(supplier_name)
         suppliers.append(supplier)
-        logger.info(f"  ✓ Creado: {supplier.supplier_name}")
+        logger.info(f"  ✓ Proveedor listo: {supplier.supplier_name} ({supplier.name})")
     
     frappe.db.commit()
     logger.info(f"Total proveedores creados: {len(suppliers)}")
@@ -186,7 +186,7 @@ def create_uat_warehouses():
     for wh_data in warehouse_data:
         warehouse = create_test_warehouse(wh_data["name"], company=company)
         warehouses.append(warehouse)
-        logger.info(f"  ✓ Creado: {warehouse.warehouse_name}")
+        logger.info(f"  ✓ Almacén listo: {warehouse.warehouse_name} ({warehouse.name})")
     
     frappe.db.commit()
     logger.info(f"Total almacenes creados: {len(warehouses)}")
@@ -403,7 +403,22 @@ def create_initial_stock(items, warehouses, batches):
         
         # Seleccionar algunos items para este almacén
         items_for_warehouse = items[:10]  # 10 items por almacén
-        
+
+        # Re-seed: si ya hay cantidad en Bin para el primer ítem UAT, no duplicar Material Receipt
+        probe_item = items_for_warehouse[0].name if items_for_warehouse else None
+        if probe_item:
+            existing_qty = frappe.db.get_value(
+                "Bin",
+                {"warehouse": warehouse.name, "item_code": probe_item},
+                "actual_qty",
+            )
+            if flt(existing_qty) > 0:
+                logger.info(
+                    f"    Omitido Stock Entry: {warehouse.warehouse_name} ya tiene stock "
+                    f"({probe_item} qty={flt(existing_qty)})"
+                )
+                continue
+
         items_list = []
         for item in items_for_warehouse:
             item_detail = {

@@ -212,9 +212,13 @@ def create_test_supplier(supplier_name, **kwargs):
     Returns:
         Supplier document creado
     """
-    if frappe.db.exists("Supplier", supplier_name):
-        return frappe.get_doc("Supplier", supplier_name)
-    
+    # name (PK) suele ser serie (p. ej. SUP-00001), no el texto supplier_name
+    existing_name = frappe.db.get_value(
+        "Supplier", {"supplier_name": supplier_name}, "name"
+    )
+    if existing_name:
+        return frappe.get_doc("Supplier", existing_name)
+
     defaults = {
         "doctype": "Supplier",
         "supplier_name": supplier_name,
@@ -241,9 +245,6 @@ def create_test_warehouse(warehouse_name, **kwargs):
     Returns:
         Warehouse document creado
     """
-    if frappe.db.exists("Warehouse", warehouse_name):
-        return frappe.get_doc("Warehouse", warehouse_name)
-    
     # Obtener o crear Company por defecto - Siempre usar Barriofarma (CLP) para tests
     company = kwargs.get("company")
     if not company:
@@ -265,7 +266,16 @@ def create_test_warehouse(warehouse_name, **kwargs):
             company.insert(ignore_permissions=True)
             frappe.db.commit()
             company = company.name
-    
+
+    # El name (PK) del Warehouse no coincide con warehouse_name (p. ej. "Nombre - BF")
+    existing_name = frappe.db.get_value(
+        "Warehouse",
+        {"warehouse_name": warehouse_name, "company": company},
+        "name",
+    )
+    if existing_name:
+        return frappe.get_doc("Warehouse", existing_name)
+
     defaults = {
         "doctype": "Warehouse",
         "warehouse_name": warehouse_name,

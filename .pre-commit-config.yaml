@@ -1,0 +1,12 @@
+exclude: "node_modules|.git|inicio/node_modules"
+default_stages: [pre-commit]
+fail_fast: false
+
+repos:
+  - repo: local
+    hooks:
+      - id: no-pagosbf-imports
+        name: Ban direct imports from pagosbf (pos-pharma R4)
+        entry: bash scripts/check_no_pagosbf_imports.sh
+        language: system
+        pass_filenames: false
