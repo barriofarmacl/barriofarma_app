@@ -30,6 +30,7 @@ from barriofarma_app.barriofarma_app.validations.receta_medica_validation import
 	validate_receta_medica_validity,
 	update_receta_medica_dispensation
 )
+from barriofarma_app.barriofarma_app.utils.shelf_movement_submit import insert_and_submit_shelf_movement
 from barriofarma_app.barriofarma_app.utils.domain.control_level_audit import (
 	validate_control_level_change_reason,
 	detect_and_log_control_level_changes
@@ -334,9 +335,7 @@ class SalesInvoice(ERPNextSalesInvoice):
 				"notes": f"Movimiento automático desde Sales Invoice {self.name}"
 			})
 			
-			movement.insert(ignore_permissions=True)
-			movement.submit(ignore_permissions=True)  # Submit para que se ejecute on_submit y actualice current_occupancy
-			frappe.db.commit()
+			insert_and_submit_shelf_movement(movement)
 		except Exception as e:
 			frappe.log_error(
 				message=f"Error al crear Shelf Movement desde Sales Invoice {self.name}: {str(e)}",

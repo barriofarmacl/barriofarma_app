@@ -10,6 +10,7 @@ Override del DocType POS Invoice para:
 import frappe
 from frappe import _
 from erpnext.accounts.doctype.pos_invoice.pos_invoice import POSInvoice as ERPNextPOSInvoice
+from barriofarma_app.barriofarma_app.utils.shelf_movement_submit import insert_and_submit_shelf_movement
 from datetime import datetime
 
 
@@ -248,9 +249,7 @@ class POSInvoice(ERPNextPOSInvoice):
 				"notes": f"Movimiento automático desde POS Invoice {self.name}"
 			})
 			
-			movement.insert(ignore_permissions=True)
-			movement.submit(ignore_permissions=True)  # Submit para que se ejecute on_submit y actualice current_occupancy
-			frappe.db.commit()
+			insert_and_submit_shelf_movement(movement)
 		except Exception as e:
 			frappe.log_error(
 				message=f"Error al crear Shelf Movement desde POS Invoice {self.name}: {str(e)}",

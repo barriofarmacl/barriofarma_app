@@ -11,25 +11,18 @@ from frappe import _
 from erpnext.accounts.doctype.pos_invoice.pos_invoice import get_stock_availability
 
 
-@frappe.whitelist()
-def get_item_shelf_summary(item_code: str, warehouse: str) -> dict:
-	"""Retorna estantes configurados del item para un warehouse en formato POS."""
-	item_code = (item_code or "").strip()
-	warehouse = (warehouse or "").strip()
-
-	if not item_code or not warehouse:
-		return {"summary": "", "shelves": [], "warehouse_qty": 0}
-
-	# Usar la misma fuente que POS para evitar diferencias visuales con "Cantidad Disponible".
+def _get_warehouse_qty(item_code: str, warehouse: str) -> float:
 	try:
 		pos_availability = get_stock_availability(item_code=item_code, warehouse=warehouse)
-		warehouse_qty = float(pos_availability[0] or 0)
+		return float(pos_availability[0] or 0)
 	except Exception:
-		warehouse_qty = (
+		return float(
 			frappe.db.get_value("Bin", {"item_code": item_code, "warehouse": warehouse}, "actual_qty") or 0
 		)
 
-	shelves = frappe.db.sql(
+
+def _get_configured_shelves(item_code: str, warehouse: str) -> list[dict]:
+	return frappe.db.sql(
 		"""
 		SELECT
 			isl.shelf,
@@ -47,12 +40,12 @@ def get_item_shelf_summary(item_code: str, warehouse: str) -> dict:
 		as_dict=True,
 	)
 
-	# Stock dinámico por shelf desde movimientos (si existen)
-	movement_rows = frappe.db.sql(
+
+def _get_movement_qty_by_shelf(item_code: str, warehouse: str) -> dict[str, float]:
+	rows = frappe.db.sql(
 		"""
 		SELECT t.shelf, SUM(t.delta_qty) AS qty
 		FROM (
-			-- Origen / normal
 			SELECT
 				sm.shelf AS shelf,
 				CASE
@@ -69,7 +62,6 @@ def get_item_shelf_summary(item_code: str, warehouse: str) -> dict:
 
 			UNION ALL
 
-			-- Destino de transferencia
 			SELECT
 				sm.to_shelf AS shelf,
 				sm.quantity AS delta_qty
@@ -87,18 +79,74 @@ def get_item_shelf_summary(item_code: str, warehouse: str) -> dict:
 		{"item_code": item_code, "warehouse": warehouse},
 		as_dict=True,
 	)
-	movement_qty_by_shelf = {r.get("shelf"): float(r.get("qty") or 0) for r in movement_rows}
+	return {r.get("shelf"): float(r.get("qty") or 0) for r in rows}
+
+
+def _merge_shelf_rows(
+	configured: list[dict],
+	movement_qty_by_shelf: dict[str, float],
+	warehouse: str,
+) -> list[dict]:
+	merged: dict[str, dict] = {}
+
+	for row in configured:
+		shelf = row.get("shelf")
+		if not shelf:
+			continue
+		merged[shelf] = {
+			"shelf": shelf,
+			"shelf_name": row.get("shelf_name") or shelf,
+			"qty": float(row.get("qty") or 0),
+			"preferred_location": int(row.get("preferred_location") or 0),
+		}
+
+	for shelf_id, movement_qty in movement_qty_by_shelf.items():
+		if shelf_id in merged or movement_qty <= 0:
+			continue
+		meta = frappe.db.get_value(
+			"Shelf",
+			shelf_id,
+			["shelf_name", "warehouse", "disabled"],
+			as_dict=True,
+		)
+		if not meta or meta.get("warehouse") != warehouse or meta.get("disabled"):
+			continue
+		merged[shelf_id] = {
+			"shelf": shelf_id,
+			"shelf_name": meta.get("shelf_name") or shelf_id,
+			"qty": 0,
+			"preferred_location": 0,
+		}
+
+	return sorted(
+		merged.values(),
+		key=lambda r: (-r.get("preferred_location", 0), (r.get("shelf_name") or r.get("shelf") or "")),
+	)
+
+
+@frappe.whitelist()
+def get_item_shelf_summary(item_code: str, warehouse: str) -> dict:
+	"""Retorna estantes del item para un warehouse (configuración + movimientos)."""
+	item_code = (item_code or "").strip()
+	warehouse = (warehouse or "").strip()
+
+	if not item_code or not warehouse:
+		return {"summary": "", "shelves": [], "warehouse_qty": 0}
+
+	warehouse_qty = _get_warehouse_qty(item_code, warehouse)
+	configured = _get_configured_shelves(item_code, warehouse)
+	movement_qty_by_shelf = _get_movement_qty_by_shelf(item_code, warehouse)
+	shelves = _merge_shelf_rows(configured, movement_qty_by_shelf, warehouse)
 
 	parts: list[str] = []
 	only_one_shelf = len(shelves) == 1
+	positive_shelves = []
+
 	for row in shelves:
 		label = (row.get("shelf_name") or row.get("shelf") or "").strip()
 		configured_qty = float(row.get("qty") or 0)
 		movement_qty = movement_qty_by_shelf.get(row.get("shelf"))
 
-		# Regla operativa dev:
-		# - Si hay un solo estante para ese item+warehouse, usar Bin como fuente de verdad.
-		# - Si hay múltiples estantes, usar movimientos (o cantidad configurada).
 		if only_one_shelf:
 			display_qty = float(warehouse_qty or 0)
 		elif movement_qty is not None:
@@ -111,15 +159,17 @@ def get_item_shelf_summary(item_code: str, warehouse: str) -> dict:
 		row["qty"] = display_qty
 		if not label:
 			continue
+		if display_qty <= 0 and not only_one_shelf:
+			continue
+		positive_shelves.append(row)
 		parts.append(f"{label}: {display_qty:g}")
 
 	summary = " | ".join(parts)
-	if not summary and shelves:
+	if not summary and positive_shelves:
 		summary = _("Estantes configurados sin cantidad por estante")
 
 	return {
 		"summary": summary,
-		"shelves": shelves,
+		"shelves": positive_shelves or shelves,
 		"warehouse_qty": warehouse_qty,
 	}
-

@@ -1,0 +1,13 @@
+[
+ {
+  "doc_type": "Purchase Order Item",
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "schedule_date",
+  "module": "Barriofarma App",
+  "name": "Purchase Order Item-schedule_date-label",
+  "property": "label",
+  "property_type": "Data",
+  "value": "Fecha Solicitada"
+ }
+]

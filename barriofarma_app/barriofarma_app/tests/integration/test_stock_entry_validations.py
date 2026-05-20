@@ -469,21 +469,27 @@ class TestStockEntryValidations(FrappeTestCase):
     # TESTS: _validate_shelf_stock_availability
     # ========================================
     
-    def test_stock_entry_without_shelf_should_pass(self):
+    def test_stock_entry_without_shelf_should_fail(self):
         """
-        Validación: Stock Entry sin estante especificado debe pasar (no valida stock en estante)
+        Regla #58: Stock Entry con movimiento de stock exige estante origen y destino.
         """
         company = get_test_company()
         warehouse = create_test_warehouse(f"TEST-WH-{frappe.generate_hash(length=6)}", company=company)
         self.test_warehouses.append(warehouse.name)
-        
+
+        shelf = create_test_shelf(
+            shelf_name=f"TEST-SHELF-{frappe.generate_hash(length=6)}",
+            warehouse=warehouse.name,
+            location_code=f"LOC-{frappe.generate_hash(length=6)}",
+        )
+        self.test_shelves.append(shelf.name)
+
         item = create_test_item(
             item_code=f"TEST-ITEM-{frappe.generate_hash(length=6)}",
             custom_dispensing_type="Venta Libre",
         )
         self.test_items.append(item.name)
-        
-        # Crear Stock Entry sin estante
+
         se = frappe.get_doc({
             "doctype": "Stock Entry",
             "stock_entry_type": "Material Transfer",
@@ -496,13 +502,38 @@ class TestStockEntryValidations(FrappeTestCase):
                 "qty": 10,
                 "s_warehouse": warehouse.name,
                 "t_warehouse": warehouse.name,
-                "allow_zero_valuation_rate": 1,  # Evitar error de valuation rate
-                # Sin custom_from_shelf ni custom_to_shelf
+                "allow_zero_valuation_rate": 1,
             }]
         })
-        
-        # No debe lanzar error (validación de stock en estante solo aplica si hay estante)
-        se.insert(ignore_permissions=True)
-        self.test_stock_entries.append(se.name)
-        self.assertIsNotNone(se.name, "Stock Entry sin estante debe pasar")
+
+        with self.assertRaises(frappe.ValidationError):
+            se.insert(ignore_permissions=True)
+
+    def test_stock_entry_warehouse_without_shelves_should_fail(self):
+        """Almacén sin estantes activos no puede recibir movimientos de stock."""
+        company = get_test_company()
+        warehouse = create_test_warehouse(f"TEST-WH-NOSHELF-{frappe.generate_hash(length=6)}", company=company)
+        self.test_warehouses.append(warehouse.name)
+
+        item = create_test_item(
+            item_code=f"TEST-ITEM-{frappe.generate_hash(length=6)}",
+            custom_dispensing_type="Venta Libre",
+        )
+        self.test_items.append(item.name)
+
+        se = frappe.get_doc({
+            "doctype": "Stock Entry",
+            "stock_entry_type": "Material Receipt",
+            "company": company,
+            "posting_date": today(),
+            "to_warehouse": warehouse.name,
+            "items": [{
+                "item_code": item.name,
+                "qty": 5,
+                "t_warehouse": warehouse.name,
+            }]
+        })
+
+        with self.assertRaises(frappe.ValidationError):
+            se.insert(ignore_permissions=True)
 

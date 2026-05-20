@@ -9,6 +9,9 @@ Override del DocType Stock Entry para registrar automáticamente Shelf Movement
 import frappe
 from frappe import _
 from erpnext.stock.doctype.stock_entry.stock_entry import StockEntry as ERPNextStockEntry
+from barriofarma_app.barriofarma_app.utils.shelf_movement_submit import insert_and_submit_shelf_movement
+from barriofarma_app.barriofarma_app.utils.shelf_validations import validate_stock_entry_item_shelves
+from barriofarma_app.barriofarma_app.utils.shelf_item_location import link_item_to_shelf
 from datetime import datetime
 
 
@@ -89,7 +92,15 @@ class StockEntry(ERPNextStockEntry):
 		super().validate()
 		# Solo validar si el documento está siendo enviado (docstatus == 0 y tiene items con shelves)
 		if self.docstatus == 0 and self.items:
+			self.validate_shelf_mandatory()
 			self.validate_shelf_capacity_and_type()
+
+	def validate_shelf_mandatory(self):
+		"""Issue #58: toda línea con movimiento de stock exige estante origen/destino."""
+		if not self.items:
+			return
+		for item in self.items:
+			validate_stock_entry_item_shelves(item, item.idx)
 	
 	def on_submit(self):
 		"""
@@ -97,7 +108,27 @@ class StockEntry(ERPNextStockEntry):
 		"""
 		super().on_submit()
 		self.create_shelf_movements()
+		self.ensure_item_shelf_locations()
 		self.sync_item_shelf_quantities()
+
+	def ensure_item_shelf_locations(self):
+		"""Vincula el item a estantes origen/destino usados en el movimiento."""
+		if not self.items:
+			return
+		for row in self.items:
+			item_code = row.get("item_code")
+			if not item_code:
+				continue
+			qty = row.get("qty")
+			for shelf in (row.get("custom_from_shelf"), row.get("custom_to_shelf")):
+				if shelf:
+					try:
+						link_item_to_shelf(item_code, shelf, qty)
+					except Exception as e:
+						frappe.log_error(
+							message=f"Error al vincular item {item_code} al estante {shelf}: {e}",
+							title="Stock Entry — Item Shelf Location",
+						)
 	
 	def validate_shelf_capacity_and_type(self):
 		"""
@@ -395,8 +426,7 @@ class StockEntry(ERPNextStockEntry):
 				"notes": f"Movimiento automático desde Stock Entry {self.name}"
 			})
 			
-			movement.insert(ignore_permissions=True)
-			frappe.db.commit()
+			insert_and_submit_shelf_movement(movement)
 		except Exception as e:
 			frappe.log_error(
 				message=f"Error al crear Shelf Movement desde Stock Entry {self.name}: {str(e)}",

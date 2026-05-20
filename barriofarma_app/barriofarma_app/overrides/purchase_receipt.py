@@ -24,6 +24,8 @@ import frappe
 import json
 from frappe import _
 from frappe.utils import flt
+from barriofarma_app.barriofarma_app.utils.shelf_movement_submit import insert_and_submit_shelf_movement
+from barriofarma_app.barriofarma_app.utils.shelf_validations import validate_inbound_shelf_line
 from datetime import datetime
 from erpnext.stock.doctype.purchase_receipt.purchase_receipt import (
     PurchaseReceipt as ERPNextPurchaseReceipt,
@@ -172,7 +174,35 @@ class PurchaseReceipt(ERPNextPurchaseReceipt):
         self.validate_qc_rejection_reason_required()
         self.validate_umbral_vencimiento()
         self.validate_sobrante_no_disponible()
+        self.validate_shelf_required()
     
+    def validate_shelf_required(self):
+        """Issue #58: toda recepción debe indicar estante destino por línea."""
+        if not self.get("items"):
+            return
+
+        for item in self.items:
+            if not flt(item.qty):
+                continue
+
+            line_wh = item.warehouse or self.set_warehouse
+            to_shelf = getattr(item, "custom_to_shelf", None) or item.get("custom_to_shelf")
+            validate_inbound_shelf_line(
+                item.idx,
+                item.item_code,
+                line_wh,
+                to_shelf,
+                field_label=_("Estante destino"),
+                missing_shelf_message=_(
+                    "Fila #{0}: debe indicar el <strong>Estante Destino</strong> para el producto "
+                    "{1} en el almacén {2}."
+                ).format(
+                    item.idx,
+                    frappe.bold(item.item_code),
+                    frappe.bold(line_wh or "-"),
+                ),
+            )
+
     def auto_create_batches_if_needed(self):
         """
         Crear Batch automáticamente si no existe cuando se ingresa batch_no en items.
@@ -755,8 +785,7 @@ class PurchaseReceipt(ERPNextPurchaseReceipt):
                 "notes": f"Movimiento automático desde Purchase Receipt {self.name}"
             })
             
-            movement.insert(ignore_permissions=True)
-            frappe.db.commit()
+            insert_and_submit_shelf_movement(movement)
         except Exception as e:
             frappe.log_error(
                 message=f"Error al crear Shelf Movement desde Purchase Receipt {self.name}: {str(e)}",

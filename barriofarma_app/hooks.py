@@ -25,10 +25,16 @@ app_include_js = ["/assets/barriofarma_app/js/pos_shelf_info.js"]
 # webform_include_css = {"doctype": "public/css/doctype.css"}
 
 # include js in page
-# page_js = {"page" : "public/js/file.js"}
+page_js = {
+	"stock-balance": "public/js/stock_balance_move_item.js",
+}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {
+	"Stock Reconciliation": "public/js/stock_reconciliation_shelf.js",
+	"Purchase Receipt": "public/js/purchase_receipt_shelf.js",
+	"Stock Entry": "public/js/stock_entry_shelf.js",
+}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -79,7 +85,7 @@ after_migrate = "barriofarma_app.barriofarma_app.install.after_migrate"
 # Los fixtures ya están exportados en fixtures/custom_field.json
 # Se importan automáticamente durante bench migrate
 # Client Scripts para funcionalidades de UI (ej: auto-fill de barcode)
-fixtures = ["Custom Field", "Client Script", "Report"]
+fixtures = ["Custom Field", "Client Script", "Report", "Property Setter"]
 
 # Uninstallation
 # ------------
@@ -130,7 +136,8 @@ override_doctype_class = {
 	"Purchase Receipt": "barriofarma_app.barriofarma_app.overrides.purchase_receipt.PurchaseReceipt",
 	"Stock Entry": "barriofarma_app.barriofarma_app.overrides.stock_entry.StockEntry",
 	"Sales Invoice": "barriofarma_app.barriofarma_app.overrides.sales_invoice.SalesInvoice",
-	"POS Invoice": "barriofarma_app.barriofarma_app.overrides.pos_invoice.POSInvoice"
+	"POS Invoice": "barriofarma_app.barriofarma_app.overrides.pos_invoice.POSInvoice",
+	"Stock Reconciliation": "barriofarma_app.barriofarma_app.overrides.stock_reconciliation.StockReconciliation",
 }
 
 # Document Events

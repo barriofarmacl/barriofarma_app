@@ -145,6 +145,7 @@ class TestEpic6Story63StockEntryShelves(FrappeTestCase):
                 "item_code": self.item.name,
                 "qty": 50,
                 "t_warehouse": self.warehouse_from.name,
+                "custom_to_shelf": self.shelf_from.name,
                 "basic_rate": 100.0,
                 "allow_zero_valuation_rate": 1
             }]
@@ -166,6 +167,7 @@ class TestEpic6Story63StockEntryShelves(FrappeTestCase):
                 "s_warehouse": self.warehouse_from.name,
                 "t_warehouse": self.warehouse_to.name,
                 "custom_from_shelf": wrong_shelf.name,  # Estante de warehouse incorrecto
+                "custom_to_shelf": self.shelf_to.name,
                 "basic_rate": 100.0,
                 "allow_zero_valuation_rate": 1
             }]
@@ -206,6 +208,7 @@ class TestEpic6Story63StockEntryShelves(FrappeTestCase):
                 "qty": 50,  # Mayor que capacidad (10)
                 "s_warehouse": self.warehouse_from.name,
                 "t_warehouse": self.warehouse_to.name,
+                "custom_from_shelf": self.shelf_from.name,
                 "custom_to_shelf": limited_shelf.name,
                 "basic_rate": 100.0,
                 "allow_zero_valuation_rate": 1
@@ -236,6 +239,7 @@ class TestEpic6Story63StockEntryShelves(FrappeTestCase):
                 "item_code": self.item.name,
                 "qty": 50,
                 "t_warehouse": self.warehouse_from.name,
+                "custom_to_shelf": self.shelf_from.name,
                 "basic_rate": 100.0,
                 "allow_zero_valuation_rate": 1
             }]
@@ -308,6 +312,7 @@ class TestEpic6Story63StockEntryShelves(FrappeTestCase):
                 "s_warehouse": self.warehouse_from.name,
                 "t_warehouse": self.warehouse_to.name,
                 "custom_from_shelf": self.shelf_from.name,
+                "custom_to_shelf": self.shelf_to.name,
                 "basic_rate": 100.0,
                 "allow_zero_valuation_rate": 1
             }]

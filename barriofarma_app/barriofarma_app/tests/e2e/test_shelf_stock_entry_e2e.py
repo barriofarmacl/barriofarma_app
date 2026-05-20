@@ -143,6 +143,7 @@ class TestShelfStockEntryE2E(FrappeTestCase):
                 "item_code": item.name,
                 "qty": 20.0,
                 "t_warehouse": warehouse.name,
+                "custom_to_shelf": shelf_origen.name,
                 "allow_zero_valuation_rate": 1,
                 "basic_rate": 100.0
             }]
