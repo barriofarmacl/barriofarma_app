@@ -3,7 +3,10 @@
 # See license.txt
 
 """
-Script para crear usuarios UAT y POS Profile asociado al auxiliar (rol cajero en E2E UI, repo barriofarma-e2e).
+Script para crear usuarios UAT (UAT 2.0 — equipo farmacia real).
+
+Catálogo, almacenes y estantes se cargan aparte (MaestraProductos.csv + layout manual).
+POS Profile: crear manualmente en pruebas (no auto-seed).
 
 Uso:
     bench --site uat.barriofarma.cl execute \
@@ -18,50 +21,66 @@ from frappe.utils import today, add_days
 logger = logging.getLogger(__name__)
 
 
-# Configuración de usuarios UAT
-# Nota: Usa perfiles predefinidos para garantizar visibilidad de módulos y permisos correctos
-# Si se proporciona "profile_name", se usa el sistema de perfiles (recomendado)
-# Si se proporciona "roles", se usa el método manual (compatibilidad hacia atrás)
+# Configuración de usuarios UAT 2.0 (emails reales; contraseñas entregar por canal seguro)
 UAT_USERS = [
     {
-        "email": "farmaceutico.uat@barriofarma.cl",
-        "full_name": "Juan Pérez - Farmacéutico",
-        "profile_name": "Perfil Farmacéutico",  # ✅ Usa perfil predefinido (recomendado)
-        "username": "farmaceutico_uat",
-        "password": "Farmacia2026!",  # Cambiar en producción
+        "email": "natalia.araya@barriofarma.cl",
+        "full_name": "Natalia Araya - Farmacéutico",
+        "profile_name": "Perfil Farmacéutico",
+        "username": "natalia.araya",
+        "password": "Farmacia2026!",
         "enabled": True,
-        "send_welcome_email": False
+        "send_welcome_email": False,
     },
     {
-        "email": "auxiliar.uat@barriofarma.cl",
-        "full_name": "María González - Auxiliar",
-        "profile_name": "Perfil Auxiliar",  # ✅ Usa perfil predefinido
-        "username": "auxiliar_uat",
-        "password": "Auxiliar2026!",  # Cambiar en producción
+        "email": "daniela.araya@barriofarma.cl",
+        "full_name": "Daniela Araya - Auxiliar",
+        "profile_name": "Perfil Auxiliar",
+        "username": "daniela.araya",
+        "password": "Auxiliar2026!",
         "enabled": True,
-        "send_welcome_email": False
-    },
-    {
-        "email": "administrativo.uat@barriofarma.cl",
-        "full_name": "Ana Martínez - Administrativo",
-        "profile_name": "Perfil Contabilidad",  # ✅ Usa perfil predefinido
-        "username": "administrativo_uat",
-        "password": "Admin2026!",  # Cambiar en producción
-        "enabled": True,
-        "send_welcome_email": False
+        "send_welcome_email": False,
     },
     {
         "email": "bodeguero.uat@barriofarma.cl",
-        "full_name": "Carlos López - Bodeguero",
+        "full_name": "Bodeguero UAT",
         "profile_name": "Perfil Bodeguero",
         "username": "bodeguero_uat",
-        "password": "Bodeguero2026!",  # Cambiar en producción
+        "password": "Bodeguero2026!",
         "enabled": True,
-        "send_welcome_email": False
-    }
+        "send_welcome_email": False,
+    },
+    {
+        "email": "jimena.araya@barriofarma.cl",
+        "full_name": "Jimena Araya - Administrativo",
+        "profile_name": "Perfil Administrativo",
+        "username": "jimena.araya",
+        "password": "Admin2026!",
+        "enabled": True,
+        "send_welcome_email": False,
+    },
+    {
+        "email": "karla.carmona@barriofarma.cl",
+        "full_name": "Karla Carmona - Administrativo",
+        "profile_name": "Perfil Administrativo",
+        "username": "karla.carmona",
+        "password": "Admin2026!",
+        "enabled": True,
+        "send_welcome_email": False,
+    },
+    {
+        "email": "eduardo.araya@barriofarma.cl",
+        "full_name": "Eduardo Araya - Administrador Sistema",
+        "roles": ["System Manager"],
+        "username": "eduardo.araya",
+        "password": "Admin2026!",
+        "enabled": True,
+        "send_welcome_email": False,
+    },
 ]
 
-# POS Profile para E2E (cy.loginAs('cajero') usa auxiliar UAT)
+# UAT 2.0: POS Profile se configura manualmente en pruebas (no auto-seed)
+CREATE_UAT_POS_PROFILE = False
 UAT_POS_PROFILE_NAME = "BarrioFarma UAT POS"
 
 
@@ -70,7 +89,10 @@ def ensure_uat_pos_profile_for_auxiliar():
     Crea o actualiza el POS Profile UAT y vincula al usuario auxiliar (mismo que cajero/vendedor en pruebas E2E).
     Idempotente. Se invoca al final de create_uat_users().
     """
-    auxiliar = next((u for u in UAT_USERS if u.get("username") == "auxiliar_uat"), None)
+    auxiliar = next(
+        (u for u in UAT_USERS if u.get("profile_name") == "Perfil Auxiliar"),
+        None,
+    )
     if not auxiliar:
         logger.warning("No hay auxiliar_uat en UAT_USERS; se omite POS Profile")
         return
@@ -396,11 +418,17 @@ def create_uat_users():
     
     frappe.db.commit()
 
-    try:
-        ensure_uat_pos_profile_for_auxiliar()
-    except Exception as e:
-        logger.warning("ensure_uat_pos_profile_for_auxiliar falló (POS puede requerir setup manual): %s", e)
-    
+    if CREATE_UAT_POS_PROFILE:
+        try:
+            ensure_uat_pos_profile_for_auxiliar()
+        except Exception as e:
+            logger.warning(
+                "ensure_uat_pos_profile_for_auxiliar falló (POS puede requerir setup manual): %s",
+                e,
+            )
+    else:
+        logger.info("POS Profile UAT omitido (CREATE_UAT_POS_PROFILE=false)")
+
     return {
         "created": created,
         "errors": errors
@@ -415,9 +443,10 @@ def list_uat_users():
     logger.info("USUARIOS UAT EXISTENTES")
     logger.info("=" * 60)
     
-    users = frappe.get_all("User", 
-        filters={"username": ("in", [u["username"] for u in UAT_USERS])},
-        fields=["name", "email", "full_name", "enabled"]
+    users = frappe.get_all(
+        "User",
+        filters={"email": ("in", [u["email"] for u in UAT_USERS])},
+        fields=["name", "email", "full_name", "enabled"],
     )
     
     for user in users:
@@ -570,9 +599,10 @@ def verify_uat_users_roles():
     
     frappe.set_user("Administrator")
     
-    users = frappe.get_all("User", 
-        filters={"username": ("in", [u["username"] for u in UAT_USERS])},
-        fields=["name", "email", "full_name", "enabled"]
+    users = frappe.get_all(
+        "User",
+        filters={"email": ("in", [u["email"] for u in UAT_USERS])},
+        fields=["name", "email", "full_name", "enabled"],
     )
     
     for user in users:
