@@ -40,6 +40,7 @@ class TestEpic6Story63StockEntryShelves(FrappeTestCase):
         self.test_warehouses = []
         self.test_shelves = []
         self.test_stock_entries = []
+        self.company = get_test_company()
         
         # Crear warehouses
         self.warehouse_from = create_test_warehouse(f"TEST-WH-FROM-{frappe.generate_hash(length=6)}")
@@ -139,6 +140,7 @@ class TestEpic6Story63StockEntryShelves(FrappeTestCase):
         stock_entry_receipt = frappe.get_doc({
             "doctype": "Stock Entry",
             "stock_entry_type": "Material Receipt",
+            "company": self.company,
             "to_warehouse": self.warehouse_from.name,
             "posting_date": today(),
             "items": [{
@@ -158,6 +160,7 @@ class TestEpic6Story63StockEntryShelves(FrappeTestCase):
         stock_entry = frappe.get_doc({
             "doctype": "Stock Entry",
             "stock_entry_type": "Material Transfer",
+            "company": self.company,
             "from_warehouse": self.warehouse_from.name,
             "to_warehouse": self.warehouse_to.name,
             "posting_date": today(),
@@ -200,6 +203,7 @@ class TestEpic6Story63StockEntryShelves(FrappeTestCase):
         stock_entry = frappe.get_doc({
             "doctype": "Stock Entry",
             "stock_entry_type": "Material Transfer",
+            "company": self.company,
             "from_warehouse": self.warehouse_from.name,
             "to_warehouse": self.warehouse_to.name,
             "posting_date": today(),
@@ -233,6 +237,7 @@ class TestEpic6Story63StockEntryShelves(FrappeTestCase):
         stock_entry_receipt = frappe.get_doc({
             "doctype": "Stock Entry",
             "stock_entry_type": "Material Receipt",
+            "company": self.company,
             "to_warehouse": self.warehouse_from.name,
             "posting_date": today(),
             "items": [{
@@ -253,6 +258,7 @@ class TestEpic6Story63StockEntryShelves(FrappeTestCase):
         stock_entry = frappe.get_doc({
             "doctype": "Stock Entry",
             "stock_entry_type": "Material Transfer",
+            "company": self.company,
             "from_warehouse": self.warehouse_from.name,
             "to_warehouse": self.warehouse_to.name,
             "posting_date": today(),
@@ -303,6 +309,7 @@ class TestEpic6Story63StockEntryShelves(FrappeTestCase):
         stock_entry = frappe.get_doc({
             "doctype": "Stock Entry",
             "stock_entry_type": "Material Transfer",
+            "company": self.company,
             "from_warehouse": self.warehouse_from.name,
             "to_warehouse": self.warehouse_to.name,
             "posting_date": today(),

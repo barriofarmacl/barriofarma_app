@@ -45,6 +45,7 @@ class TestEpic6Story62ExpiryAlerts(FrappeTestCase):
         self.test_items = []
         self.test_warehouses = []
         self.test_batches = []
+        self.company = get_test_company()
         
         # Crear warehouse
         self.warehouse = create_test_warehouse(f"TEST-WH-{frappe.generate_hash(length=6)}")
@@ -170,6 +171,7 @@ class TestEpic6Story62ExpiryAlerts(FrappeTestCase):
         stock_entry = frappe.get_doc({
             "doctype": "Stock Entry",
             "stock_entry_type": "Material Receipt",
+            "company": self.company,
             "to_warehouse": self.warehouse.name,
             "posting_date": today(),
             "items": [{

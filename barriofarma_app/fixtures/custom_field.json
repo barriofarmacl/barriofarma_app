@@ -1488,7 +1488,7 @@
   "collapsible": 0,
   "collapsible_depends_on": null,
   "columns": 0,
-  "default": null,
+  "default": "Venta Libre",
   "depends_on": null,
   "description": "Tipo de dispensación del medicamento",
   "docstatus": 0,

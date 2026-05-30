@@ -30,7 +30,8 @@ from barriofarma_app.barriofarma_app.test_setup import (
     create_test_item,
     create_test_customer,
     get_or_create_item_group,
-    get_or_create_uom
+    get_or_create_uom,
+    get_test_company,
 )
 
 
@@ -173,6 +174,7 @@ class TestUS003VenderProductoVentaLibreEnFactura(FrappeTestCase):
         sales_invoice = frappe.get_doc({
             "doctype": "Sales Invoice",
             "customer": customer.name,
+            "company": get_test_company(),
             "posting_date": today(),
             "items": [
                 {
@@ -230,6 +232,7 @@ class TestUS003VenderProductoVentaLibreEnFactura(FrappeTestCase):
         sales_invoice = frappe.get_doc({
             "doctype": "Sales Invoice",
             "customer": customer.name,
+            "company": get_test_company(),
             "posting_date": today(),
             "items": [
                 {
@@ -276,6 +279,7 @@ class TestUS003VenderProductoVentaLibreEnFactura(FrappeTestCase):
         sales_invoice = frappe.get_doc({
             "doctype": "Sales Invoice",
             "customer": customer.name,
+            "company": get_test_company(),
             "posting_date": today(),
             "status": "Draft",  # Estado Borrador
             "items": [
@@ -334,6 +338,7 @@ class TestUS003VenderProductoVentaLibreEnFactura(FrappeTestCase):
         sales_invoice = frappe.get_doc({
             "doctype": "Sales Invoice",
             "customer": customer.name,
+            "company": get_test_company(),
             "posting_date": today(),
             "items": [
                 {

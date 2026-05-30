@@ -512,7 +512,7 @@ class TestStockEntryValidations(FrappeTestCase):
     def test_stock_entry_warehouse_without_shelves_should_fail(self):
         """Almacén sin estantes activos no puede recibir movimientos de stock."""
         company = get_test_company()
-        warehouse = create_test_warehouse(f"TEST-WH-NOSHELF-{frappe.generate_hash(length=6)}", company=company)
+        warehouse = create_test_warehouse(f"TEST-WH-NOSHELF-{frappe.generate_hash(length=6)}", company=company, with_default_shelf=False)
         self.test_warehouses.append(warehouse.name)
 
         item = create_test_item(

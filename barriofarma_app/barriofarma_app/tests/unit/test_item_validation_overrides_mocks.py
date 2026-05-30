@@ -28,6 +28,13 @@ class MockItem:
     def set(self, key, value):
         self._data[key] = value
 
+    def _auto_fill_single_shelf_quantity(self):
+        pass
+
+    def _auto_fill_shelf_quantities_from_movements(self):
+        pass
+
+
 class TestControlLevelInvariants(unittest.TestCase):
     """
     Tests para validate_control_level_invariants()
@@ -476,6 +483,21 @@ class TestShelfLocationsInvariants(unittest.TestCase):
         """Configurar mocks antes de cada test"""
         from barriofarma_app.barriofarma_app.overrides.item import Item
         self.Item = Item
+
+    @staticmethod
+    def _make_mock_shelf(shelf_type="Normal", shelf_name="SHELF-001", **attrs):
+        mock_shelf = Mock()
+        mock_shelf.shelf_name = shelf_name
+        mock_shelf.max_capacity = attrs.get("max_capacity")
+        mock_shelf.warehouse = attrs.get("warehouse", "Stores - BF")
+        mock_shelf.calculate_current_occupancy = attrs.get(
+            "calculate_current_occupancy", Mock(return_value=0)
+        )
+        field_values = {"shelf_type": shelf_type, "disabled": 0}
+        mock_shelf.get = Mock(
+            side_effect=lambda key, default=None: field_values.get(key, default)
+        )
+        return mock_shelf
     
     @patch('frappe.throw')
     def test_sin_shelf_locations_no_valida(self, mock_throw):
@@ -526,10 +548,9 @@ class TestShelfLocationsInvariants(unittest.TestCase):
     def test_multiples_preferred_locations_lanza_error(self, mock_throw, mock_exists, mock_get_doc):
         """Múltiples ubicaciones preferidas debe lanzar error"""
         mock_exists.return_value = True
-        mock_shelf = Mock()
-        mock_shelf.get.return_value = "Normal"
-        mock_shelf.max_capacity = None
-        mock_get_doc.return_value = mock_shelf
+        mock_get_doc.side_effect = lambda doctype, name=None: self._make_mock_shelf(
+            shelf_name=name or "SHELF-001"
+        )
         
         item = MockItem()
         item.custom_shelf_locations = [
@@ -549,11 +570,9 @@ class TestShelfLocationsInvariants(unittest.TestCase):
     def test_estante_controlado_con_producto_sin_control_level_lanza_error(self, mock_throw, mock_exists, mock_get_doc):
         """Estante Controlado con producto sin control_level debe lanzar error"""
         mock_exists.return_value = True
-        mock_shelf = Mock()
-        mock_shelf.get.return_value = "Controlado"
-        mock_shelf.shelf_name = "SHELF-CTRL-001"
-        mock_shelf.max_capacity = None
-        mock_get_doc.return_value = mock_shelf
+        mock_get_doc.return_value = self._make_mock_shelf(
+            shelf_type="Controlado", shelf_name="SHELF-CTRL-001"
+        )
         
         item = MockItem(custom_control_level=None)
         item.custom_shelf_locations = [
@@ -572,11 +591,9 @@ class TestShelfLocationsInvariants(unittest.TestCase):
     def test_estante_controlado_con_control_level_none_lanza_error(self, mock_throw, mock_exists, mock_get_doc):
         """Estante Controlado con control_level='None' debe lanzar error"""
         mock_exists.return_value = True
-        mock_shelf = Mock()
-        mock_shelf.get.return_value = "Controlado"
-        mock_shelf.shelf_name = "SHELF-CTRL-001"
-        mock_shelf.max_capacity = None
-        mock_get_doc.return_value = mock_shelf
+        mock_get_doc.return_value = self._make_mock_shelf(
+            shelf_type="Controlado", shelf_name="SHELF-CTRL-001"
+        )
         
         item = MockItem(custom_control_level="None")
         item.custom_shelf_locations = [
@@ -593,11 +610,9 @@ class TestShelfLocationsInvariants(unittest.TestCase):
     def test_estante_controlado_con_producto_controlado_no_lanza_error(self, mock_throw, mock_exists, mock_get_doc):
         """Estante Controlado con producto controlado no debe lanzar error"""
         mock_exists.return_value = True
-        mock_shelf = Mock()
-        mock_shelf.get.return_value = "Controlado"
-        mock_shelf.shelf_name = "SHELF-CTRL-001"
-        mock_shelf.max_capacity = None
-        mock_get_doc.return_value = mock_shelf
+        mock_get_doc.return_value = self._make_mock_shelf(
+            shelf_type="Controlado", shelf_name="SHELF-CTRL-001"
+        )
         
         item = MockItem(custom_control_level="Psicotrópico")
         item.custom_shelf_locations = [
@@ -614,11 +629,9 @@ class TestShelfLocationsInvariants(unittest.TestCase):
     def test_estante_refrigerado_sin_requires_refrigeration_lanza_error(self, mock_throw, mock_exists, mock_get_doc):
         """Estante Refrigerado con producto sin requires_refrigeration debe lanzar error"""
         mock_exists.return_value = True
-        mock_shelf = Mock()
-        mock_shelf.get.return_value = "Refrigerado"
-        mock_shelf.shelf_name = "SHELF-FRIO-001"
-        mock_shelf.max_capacity = None
-        mock_get_doc.return_value = mock_shelf
+        mock_get_doc.return_value = self._make_mock_shelf(
+            shelf_type="Refrigerado", shelf_name="SHELF-FRIO-001"
+        )
         
         item = MockItem(custom_requires_refrigeration=False)
         item.custom_shelf_locations = [
@@ -637,11 +650,9 @@ class TestShelfLocationsInvariants(unittest.TestCase):
     def test_estante_refrigerado_con_requires_refrigeration_no_lanza_error(self, mock_throw, mock_exists, mock_get_doc):
         """Estante Refrigerado con producto que requiere refrigeración no debe lanzar error"""
         mock_exists.return_value = True
-        mock_shelf = Mock()
-        mock_shelf.get.return_value = "Refrigerado"
-        mock_shelf.shelf_name = "SHELF-FRIO-001"
-        mock_shelf.max_capacity = None
-        mock_get_doc.return_value = mock_shelf
+        mock_get_doc.return_value = self._make_mock_shelf(
+            shelf_type="Refrigerado", shelf_name="SHELF-FRIO-001"
+        )
         
         item = MockItem(custom_requires_refrigeration=True)
         item.custom_shelf_locations = [
@@ -661,12 +672,11 @@ class TestShelfLocationsInvariants(unittest.TestCase):
         mock_exists.return_value = True
         
         # Mock del shelf
-        mock_shelf = Mock()
-        mock_shelf.get.return_value = "Normal"
-        mock_shelf.shelf_name = "SHELF-001"
-        mock_shelf.warehouse = "Stores - BF"
-        mock_shelf.max_capacity = 100
-        mock_shelf.calculate_current_occupancy.return_value = 90  # Ocupación actual
+        mock_shelf = self._make_mock_shelf(
+            shelf_name="SHELF-001",
+            max_capacity=100,
+            calculate_current_occupancy=Mock(return_value=90),
+        )
         
         # Mock del bin
         mock_bin = Mock()
@@ -700,11 +710,9 @@ class TestShelfLocationsInvariants(unittest.TestCase):
     def test_configuracion_valida_no_lanza_error(self, mock_throw, mock_exists, mock_get_doc):
         """Configuración válida de shelf_locations no debe lanzar error"""
         mock_exists.return_value = True
-        mock_shelf = Mock()
-        mock_shelf.get.return_value = "Normal"
-        mock_shelf.shelf_name = "SHELF-001"
-        mock_shelf.max_capacity = None
-        mock_get_doc.return_value = mock_shelf
+        mock_get_doc.side_effect = lambda doctype, name=None: self._make_mock_shelf(
+            shelf_name=name or "SHELF-001"
+        )
         
         item = MockItem()
         item.custom_shelf_locations = [

@@ -151,6 +151,7 @@ class TestE2EPurchaseOrder(FrappeTestCase):
                     "uom": item1.stock_uom,
                     "rate": 50.0,
                     "schedule_date": frappe.utils.add_days(frappe.utils.today(), 7),
+                    "warehouse": warehouse.name,
                 },
                 {
                     "item_code": item2.name,
@@ -158,6 +159,7 @@ class TestE2EPurchaseOrder(FrappeTestCase):
                     "uom": item2.stock_uom,
                     "rate": 75.0,
                     "schedule_date": frappe.utils.add_days(frappe.utils.today(), 7),
+                    "warehouse": warehouse.name,
                 }
             ]
         })
@@ -245,6 +247,7 @@ class TestE2EPurchaseOrder(FrappeTestCase):
                 "uom": item.stock_uom,
                 "rate": 100.0,
                 "schedule_date": frappe.utils.add_days(frappe.utils.today(), 7),
+                "warehouse": warehouse.name,
             }]
         })
         
@@ -298,6 +301,7 @@ class TestE2EPurchaseOrder(FrappeTestCase):
                 "uom": item.stock_uom,
                 "rate": 100.0,
                 "schedule_date": frappe.utils.add_days(frappe.utils.today(), 7),
+                "warehouse": warehouse.name,
             }]
         })
         
@@ -328,6 +332,7 @@ class TestE2EPurchaseOrder(FrappeTestCase):
                 "qty": 100.0,
                 "rate": 100.0,
                 "warehouse": warehouse.name,
+                "custom_to_shelf": frappe.db.get_value("Shelf", {"warehouse": warehouse.name, "disabled": 0}, "name"),
                 "purchase_order": po.name,
                 "purchase_order_item": po.items[0].name
             }]

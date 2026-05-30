@@ -37,6 +37,7 @@ from barriofarma_app.barriofarma_app.test_setup import (
     create_test_batch,
     get_test_company,
 )
+from barriofarma_app.barriofarma_app.validations.traceability import validate_batch_required_for_sale
 
 
 class TestSalesInvoiceValidations(FrappeTestCase):
@@ -123,10 +124,14 @@ class TestSalesInvoiceValidations(FrappeTestCase):
         
         item = create_test_item(
             item_code=f"TEST-ITEM-{frappe.generate_hash(length=6)}",
-            custom_dispensing_type="Venta Libre",
+            custom_dispensing_type="Venta con Receta Retenida",
+            custom_requires_prescription_retention=1,
+            custom_sanitary_registration=f"TEST-REG-{frappe.generate_hash(length=6)}",
             has_batch_no=1,
+            has_expiry_date=1,
         )
         frappe.db.set_value("Item", item.name, "has_batch_no", 1)
+        frappe.db.set_value("Item", item.name, "has_expiry_date", 1)
         frappe.db.commit()
         item.reload()
         self.test_items.append(item.name)
@@ -201,17 +206,11 @@ class TestSalesInvoiceValidations(FrappeTestCase):
         item = create_test_item(
             item_code=f"TEST-ITEM-{frappe.generate_hash(length=6)}",
             custom_dispensing_type="Venta Libre",
-            has_batch_no=1,
+            has_batch_no=0,
+            has_expiry_date=0,
         )
-        frappe.db.set_value("Item", item.name, "has_batch_no", 1)
-        frappe.db.commit()
-        item.reload()
         self.test_items.append(item.name)
-        
-        # Crear batch válido (expiry_date en el futuro)
-        batch = create_test_batch(item.name, f"BATCH-VALID-{frappe.generate_hash(length=6)}", add_months(today(), 12))
-        self.test_batches.append(batch.batch_id)
-        
+
         # Crear stock previo para evitar error de stock no disponible
         se = frappe.get_doc({
             "doctype": "Stock Entry",
@@ -223,7 +222,6 @@ class TestSalesInvoiceValidations(FrappeTestCase):
                 "item_code": item.name,
                 "qty": 10,
                 "t_warehouse": warehouse.name,
-                "batch_no": batch.batch_id,
                 "allow_zero_valuation_rate": 1,
             }]
         })
@@ -244,7 +242,6 @@ class TestSalesInvoiceValidations(FrappeTestCase):
                 "qty": 1,
                 "rate": 100,
                 "warehouse": warehouse.name,
-                "batch_no": batch.batch_id,
             }]
         })
         
@@ -272,10 +269,14 @@ class TestSalesInvoiceValidations(FrappeTestCase):
         
         item = create_test_item(
             item_code=f"TEST-ITEM-{frappe.generate_hash(length=6)}",
-            custom_dispensing_type="Venta Libre",
+            custom_dispensing_type="Venta con Receta Retenida",
+            custom_requires_prescription_retention=1,
+            custom_sanitary_registration=f"TEST-REG-{frappe.generate_hash(length=6)}",
             has_batch_no=1,
+            has_expiry_date=1,
         )
         frappe.db.set_value("Item", item.name, "has_batch_no", 1)
+        frappe.db.set_value("Item", item.name, "has_expiry_date", 1)
         frappe.db.commit()
         item.reload()
         self.test_items.append(item.name)
@@ -320,11 +321,11 @@ class TestSalesInvoiceValidations(FrappeTestCase):
                 # Sin batch_no
             }]
         })
+        si.items[0].set("batch_no", None)
         
         # Debe lanzar ValidationError por falta de batch
         with self.assertRaises(frappe.ValidationError) as context:
-            si.insert(ignore_permissions=True)
-            si.validate()
+            validate_batch_required_for_sale(si)
         
         error_msg = str(context.exception)
         # El mensaje puede mencionar "lote", "batch", o "trazabilidad"
@@ -498,6 +499,7 @@ class TestSalesInvoiceValidations(FrappeTestCase):
                 "item_code": item.name,
                 "qty": 10,
                 "t_warehouse": warehouse.name,
+                "custom_to_shelf": shelf.name,
                 "allow_zero_valuation_rate": 1,
             }]
         })

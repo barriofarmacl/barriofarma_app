@@ -99,12 +99,15 @@ class Patient(Document):
 		else:
 			# Crear nuevo Customer
 			from barriofarma_app.barriofarma_app.test_setup import (
-				get_or_create_root_customer_group,
-				get_or_create_root_territory
+				get_or_create_test_customer_group,
+				get_or_create_test_territory,
+				get_test_company,
 			)
 			
-			customer_group = get_or_create_root_customer_group()
-			territory = get_or_create_root_territory()
+			customer_group = get_or_create_test_customer_group("Individual")
+			territory = get_or_create_test_territory("Chile")
+			company = get_test_company()
+			default_currency = frappe.db.get_value("Company", company, "default_currency") if company else "CLP"
 			
 			customer = frappe.get_doc({
 				"doctype": "Customer",
@@ -112,6 +115,7 @@ class Patient(Document):
 				"customer_type": "Individual",
 				"customer_group": customer_group,
 				"territory": territory,
+				"default_currency": default_currency or "CLP",
 			})
 			customer.insert(ignore_permissions=True)
 			frappe.db.commit()

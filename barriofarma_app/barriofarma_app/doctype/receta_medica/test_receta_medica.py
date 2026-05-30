@@ -1,9 +1,22 @@
-# Copyright (c) 2026, Barrio Farma and Contributors
+# Copyright (c) 2026, eaa and Contributors
 # See license.txt
 
-from frappe.tests.utils import FrappeTestCase
+# import frappe
+from frappe.tests import IntegrationTestCase
 
 
-class TestRecetaMedica(FrappeTestCase):
-	"""Tests del DocType Receta Medica. Ver tests/domain/test_receta_medica.py para invariantes de dominio."""
+# On IntegrationTestCase, the doctype test records and all
+# link-field test record dependencies are recursively loaded
+# Use these module variables to add/remove to/from that list
+EXTRA_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
+IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
+
+
+
+class IntegrationTestRecetaMedica(IntegrationTestCase):
+	"""
+	Integration tests for RecetaMedica.
+	Use this class for testing interactions between multiple components.
+	"""
+
 	pass

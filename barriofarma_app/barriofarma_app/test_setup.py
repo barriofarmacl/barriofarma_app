@@ -8,6 +8,7 @@ Disponibles para crear datos mínimos en español
 """
 
 import frappe
+from frappe.utils import today
 
 
 def ensure_minimum_masters():
@@ -35,35 +36,136 @@ def ensure_minimum_masters():
         item_group.insert(ignore_permissions=True)
         frappe.db.commit()
 
+    get_or_create_test_customer_group("Individual")
+    get_or_create_test_territory("Chile")
+    ensure_test_currency_exchanges()
+
+    if frappe.db.get_single_value("Buying Settings", "allow_multiple_items") != "1":
+        frappe.db.set_single_value("Buying Settings", "allow_multiple_items", 1)
+        frappe.db.commit()
+
+
+def _ensure_root_customer_group():
+    root_name = frappe.db.get_value(
+        "Customer Group",
+        {"is_group": 1, "parent_customer_group": ["in", ["", None]]},
+        "name",
+    )
+    if not root_name:
+        root_name = frappe.db.get_value("Customer Group", {"is_group": 1}, "name")
+    if root_name:
+        return root_name
+
+    root = frappe.get_doc({
+        "doctype": "Customer Group",
+        "customer_group_name": "All Customer Groups",
+        "is_group": 1,
+    })
+    root.insert(ignore_permissions=True)
+    frappe.db.commit()
+    return root.name
+
+
+def get_or_create_test_customer_group(group_name="Individual"):
+    """Customer Group hoja para Customer (ERPNext v16 rechaza grupos is_group=1)."""
+    _ensure_root_customer_group()
+    existing = frappe.db.get_value(
+        "Customer Group",
+        {"customer_group_name": group_name, "is_group": 0},
+        "name",
+    )
+    if existing:
+        return existing
+
+    root = frappe.db.get_value("Customer Group", {"is_group": 1}, "name")
+    doc = frappe.get_doc({
+        "doctype": "Customer Group",
+        "customer_group_name": group_name,
+        "parent_customer_group": root,
+        "is_group": 0,
+    })
+    doc.insert(ignore_permissions=True)
+    frappe.db.commit()
+    return doc.name
+
 
 def get_or_create_root_customer_group():
-    """Crea/usa Customer Group raíz en ES/EN"""
-    customer_group_name = frappe.db.get_value("Customer Group", {"is_group": 1}, "name")
-    if not customer_group_name:
-        customer_group = frappe.get_doc({
-            "doctype": "Customer Group",
-            "customer_group_name": "All Customer Groups",
-            "is_group": 1
-        })
-        customer_group.insert(ignore_permissions=True)
-        frappe.db.commit()
-        return customer_group.name
-    return customer_group_name
+    """Alias retrocompatible: devuelve grupo hoja usable en Customer."""
+    return get_or_create_test_customer_group("Individual")
+
+
+def _ensure_root_territory():
+    root_name = frappe.db.get_value(
+        "Territory",
+        {"is_group": 1, "parent_territory": ["in", ["", None]]},
+        "name",
+    )
+    if not root_name:
+        root_name = frappe.db.get_value("Territory", {"is_group": 1}, "name")
+    if root_name:
+        return root_name
+
+    root = frappe.get_doc({
+        "doctype": "Territory",
+        "territory_name": "All Territories",
+        "is_group": 1,
+    })
+    root.insert(ignore_permissions=True)
+    frappe.db.commit()
+    return root.name
+
+
+def get_or_create_test_territory(territory_name="Chile"):
+    """Territory hoja para Customer."""
+    _ensure_root_territory()
+    existing = frappe.db.get_value(
+        "Territory",
+        {"territory_name": territory_name, "is_group": 0},
+        "name",
+    )
+    if existing:
+        return existing
+
+    root = frappe.db.get_value("Territory", {"is_group": 1}, "name")
+    doc = frappe.get_doc({
+        "doctype": "Territory",
+        "territory_name": territory_name,
+        "parent_territory": root,
+        "is_group": 0,
+    })
+    doc.insert(ignore_permissions=True)
+    frappe.db.commit()
+    return doc.name
 
 
 def get_or_create_root_territory():
-    """Crea/usa Territory raíz en ES/EN"""
-    territory_name = frappe.db.get_value("Territory", {"is_group": 1}, "name")
-    if not territory_name:
-        territory = frappe.get_doc({
-            "doctype": "Territory",
-            "territory_name": "All Territories",
-            "is_group": 1
-        })
-        territory.insert(ignore_permissions=True)
-        frappe.db.commit()
-        return territory.name
-    return territory_name
+    """Alias retrocompatible: devuelve territory hoja usable en Customer."""
+    return get_or_create_test_territory("Chile")
+
+
+def ensure_test_currency_exchanges():
+    """Tipos de cambio mínimos para tests con company CLP y datos ERPNext _Test*."""
+    company = get_test_company()
+    if not company:
+        return
+
+    to_currency = frappe.db.get_value("Company", company, "default_currency") or "CLP"
+    for from_currency in ("INR", "USD", "EUR"):
+        if from_currency == to_currency:
+            continue
+        if frappe.db.exists(
+            "Currency Exchange",
+            {"from_currency": from_currency, "to_currency": to_currency},
+        ):
+            continue
+        frappe.get_doc({
+            "doctype": "Currency Exchange",
+            "from_currency": from_currency,
+            "to_currency": to_currency,
+            "exchange_rate": 900.0 if from_currency == "INR" and to_currency == "CLP" else 950.0,
+            "date": today(),
+        }).insert(ignore_permissions=True)
+    frappe.db.commit()
 
 
 def get_test_company():
@@ -100,8 +202,12 @@ def create_test_customer(customer_name, customer_type="Individual", **kwargs):
     if frappe.db.exists("Customer", customer_name):
         return frappe.get_doc("Customer", customer_name)
     
-    customer_group = get_or_create_root_customer_group()
-    territory = get_or_create_root_territory()
+    customer_group = get_or_create_test_customer_group("Individual")
+    territory = get_or_create_test_territory("Chile")
+    company = kwargs.get("company") or get_test_company()
+    default_currency = kwargs.get("default_currency")
+    if not default_currency and company:
+        default_currency = frappe.db.get_value("Company", company, "default_currency") or "CLP"
     
     defaults = {
         "doctype": "Customer",
@@ -109,6 +215,7 @@ def create_test_customer(customer_name, customer_type="Individual", **kwargs):
         "customer_type": customer_type,
         "customer_group": customer_group,
         "territory": territory,
+        "default_currency": default_currency or "CLP",
     }
     
     defaults.update(kwargs)
@@ -223,6 +330,7 @@ def create_test_supplier(supplier_name, **kwargs):
         "doctype": "Supplier",
         "supplier_name": supplier_name,
         "supplier_type": kwargs.get("supplier_type", "Company"),
+        "default_currency": kwargs.get("default_currency", "CLP"),
     }
     
     defaults.update(kwargs)
@@ -234,7 +342,7 @@ def create_test_supplier(supplier_name, **kwargs):
     return supplier
 
 
-def create_test_warehouse(warehouse_name, **kwargs):
+def create_test_warehouse(warehouse_name, with_default_shelf=True, **kwargs):
     """
     Función auxiliar para crear Warehouse de prueba
     
@@ -287,7 +395,18 @@ def create_test_warehouse(warehouse_name, **kwargs):
     warehouse = frappe.get_doc(defaults)
     warehouse.insert(ignore_permissions=True)
     frappe.db.commit()
-    
+
+    if with_default_shelf:
+        from barriofarma_app.barriofarma_app.utils.shelf_validations import count_active_shelves
+
+        if count_active_shelves(warehouse.name) == 0:
+            create_test_shelf(
+                shelf_name=f"Estante {warehouse_name}",
+                warehouse=warehouse.name,
+                location_code=f"LOC-{frappe.generate_hash(length=6)}",
+                shelf_type="Normal",
+            )
+
     return warehouse
 
 
@@ -328,11 +447,24 @@ def create_test_purchase_order(item_code, qty, supplier_name=None, **kwargs):
         raise ValueError(f"Item {item_code} no existe. Crear primero con create_test_item.")
     
     item = frappe.get_doc("Item", item_code)
+
+    company_currency = frappe.db.get_value("Company", company, "default_currency") or "CLP"
+
+    warehouse = kwargs.pop("warehouse", None)
+    if not warehouse:
+        warehouse = create_test_warehouse(
+            f"TEST-WH-PO-{frappe.generate_hash(length=6)}",
+            company=company,
+        ).name
     
     defaults = {
         "doctype": "Purchase Order",
         "supplier": supplier.name,
         "company": company,
+        "currency": kwargs.get("currency", company_currency),
+        "conversion_rate": kwargs.get("conversion_rate", 1),
+        "price_list_currency": kwargs.get("price_list_currency", company_currency),
+        "plc_conversion_rate": kwargs.get("plc_conversion_rate", 1),
         "transaction_date": kwargs.get("transaction_date", frappe.utils.today()),
         "schedule_date": kwargs.get("schedule_date", frappe.utils.add_days(frappe.utils.today(), 7)),
         "items": [{
@@ -341,10 +473,27 @@ def create_test_purchase_order(item_code, qty, supplier_name=None, **kwargs):
             "uom": item.stock_uom,
             "rate": kwargs.get("rate", 100),
             "schedule_date": kwargs.get("schedule_date", frappe.utils.add_days(frappe.utils.today(), 7)),
+            "warehouse": warehouse,
         }]
     }
     
-    defaults.update({k: v for k, v in kwargs.items() if k not in ["company", "transaction_date", "rate"]})
+    defaults.update(
+        {
+            k: v
+            for k, v in kwargs.items()
+            if k
+            not in [
+                "company",
+                "transaction_date",
+                "rate",
+                "warehouse",
+                "currency",
+                "conversion_rate",
+                "price_list_currency",
+                "plc_conversion_rate",
+            ]
+        }
+    )
     
     po = frappe.get_doc(defaults)
     po.insert(ignore_permissions=True)

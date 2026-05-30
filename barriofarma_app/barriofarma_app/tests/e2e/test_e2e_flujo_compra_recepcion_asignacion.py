@@ -216,7 +216,8 @@ class TestE2EFlujoCompraRecepcionAsignacion(FrappeTestCase):
                 "item_code": item.name,
                 "qty": 50.0,
                 "rate": 100.0,
-                "warehouse": warehouse.name
+                "warehouse": warehouse.name,
+                "custom_to_shelf": shelf.name,
             }]
         })
         pr.insert(ignore_permissions=True)
@@ -394,7 +395,8 @@ class TestE2EFlujoCompraRecepcionAsignacion(FrappeTestCase):
                 "item_code": item.name,
                 "qty": 30.0,
                 "rate": 100.0,
-                "warehouse": warehouse.name
+                "warehouse": warehouse.name,
+                "custom_to_shelf": shelf_preferido.name,
             }]
         })
         pr.insert(ignore_permissions=True)
@@ -502,7 +504,8 @@ class TestE2EFlujoCompraRecepcionAsignacion(FrappeTestCase):
                 "item_code": item_refrigerado.name,
                 "qty": 20.0,
                 "rate": 100.0,
-                "warehouse": warehouse.name
+                "warehouse": warehouse.name,
+                "custom_to_shelf": shelf_refrigerado.name,
             }]
         })
         pr.insert(ignore_permissions=True)

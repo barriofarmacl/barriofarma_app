@@ -209,11 +209,22 @@ class SalesInvoice(ERPNextSalesInvoice):
 	- Validar vigencia de receta médica y que todos los items de receta estén incluidos (Story 5.2, 5.3)
 	- Registrar automáticamente movimientos de tipo "Venta" en Shelf Movement
 	"""
+
+	def before_validate(self):
+		if self.company:
+			company_currency = frappe.db.get_value("Company", self.company, "default_currency")
+			if company_currency:
+				self.currency = company_currency
+				self.conversion_rate = 1
+		if not self.get("is_return"):
+			validate_batch_required_for_sale(self)
 	
 	def validate(self):
 		"""
 		Validar invariantes del dominio farmacéutico antes de guardar
 		"""
+		if not self.get("is_return"):
+			validate_batch_required_for_sale(self)
 		super().validate()
 		
 		# Story 4.5: Validar devoluciones (solo si is_return = 1)

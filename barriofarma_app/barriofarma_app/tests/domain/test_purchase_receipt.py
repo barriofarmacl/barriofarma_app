@@ -303,7 +303,7 @@ class TestPurchaseReceiptDDD(FrappeTestCase):
     
     def test_invariante_umbral_vencimiento(self):
         """
-        Invariante: Productos con vencimiento bajo umbral configurable (ej. <6 meses)
+        Invariante: Productos con vencimiento bajo umbral configurable
         deben quedar en Cuarentena o Rechazados automáticamente.
         """
         # Crear item
@@ -330,14 +330,16 @@ class TestPurchaseReceiptDDD(FrappeTestCase):
         batch_corto = create_test_batch(item.name, f"BATCH-CORTO-{frappe.generate_hash(length=6)}", add_months(today(), 2))
         self.test_batches.append(batch_corto)
         
-        # Crear Purchase Receipt con vencimiento corto (<6 meses)
+        # Crear Purchase Receipt con vencimiento corto bajo un umbral explícito.
+        # El valor 6 es tratado como default por el override y puede ceder prioridad
+        # a Company/Item Group; 7 aísla esta invariante del setup global de la suite.
         pr = frappe.get_doc({
             "doctype": "Purchase Receipt",
             "supplier": supplier.name,
             "company": po.company,
             "posting_date": today(),
             "set_warehouse": warehouse.name,
-            "custom_minimum_expiry_months": 6,  # Umbral de 6 meses
+            "custom_minimum_expiry_months": 7,
             "items": [{
                 "item_code": item.name,
                 "qty": 10,

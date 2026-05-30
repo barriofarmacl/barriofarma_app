@@ -47,3 +47,10 @@ def setup_custom_permissions():
     except Exception as e:
         frappe.logger().error(f"Story 8.1: Error al configurar permisos: {str(e)}")
 
+
+def before_tests():
+    """ERPNext 16 bootstrap + estantes BarrioFarma (Issue #58, erpnext-v16-platform-upgrade)."""
+    from barriofarma_app.barriofarma_app.utils.setup.erpnext_test_bootstrap import before_tests as _bootstrap
+
+    _bootstrap()
+

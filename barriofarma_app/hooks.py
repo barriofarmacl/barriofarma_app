@@ -178,7 +178,7 @@ scheduler_events = {
 # Testing
 # -------
 
-# before_tests = "barriofarma_app.install.before_tests"
+before_tests = "barriofarma_app.barriofarma_app.install.before_tests"
 
 # Overriding Methods
 # ------------------------------

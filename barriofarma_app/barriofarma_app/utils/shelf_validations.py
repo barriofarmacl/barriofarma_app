@@ -21,6 +21,22 @@ def count_active_shelves(warehouse):
 	return frappe.db.count("Shelf", {"warehouse": warehouse, "disabled": 0})
 
 
+def resolve_shelf_for_warehouse(warehouse, shelf):
+	"""
+	Si el almacén tiene un único estante activo, usarlo cuando la línea no indica estante.
+	Aplica en operación real (almacenes pequeños) y en bootstrap ERPNext.
+	"""
+	if shelf or not warehouse:
+		return shelf
+	if count_active_shelves(warehouse) != 1:
+		return shelf
+	return frappe.db.get_value(
+		"Shelf",
+		{"warehouse": warehouse, "disabled": 0},
+		"name",
+	)
+
+
 def assert_warehouse_has_active_shelves(warehouse, *, context=None, title=None):
 	"""El almacén debe tener al menos un estante activo antes de mover stock."""
 	if not warehouse:
@@ -93,6 +109,8 @@ def validate_inbound_shelf_line(
 	if not warehouse:
 		return
 
+	shelf = resolve_shelf_for_warehouse(warehouse, shelf)
+
 	assert_warehouse_has_active_shelves(
 		warehouse,
 		context=_("Recepción o ingreso de productos en este almacén."),
@@ -121,6 +139,8 @@ def validate_outbound_shelf_line(
 	"""Línea que sale de un almacén: exige almacén con estantes y estante origen válido."""
 	if not warehouse:
 		return
+
+	shelf = resolve_shelf_for_warehouse(warehouse, shelf)
 
 	assert_warehouse_has_active_shelves(
 		warehouse,
@@ -161,6 +181,13 @@ def validate_stock_entry_item_shelves(item, row_idx):
 	t_warehouse = item.get("t_warehouse")
 	from_shelf = item.get("custom_from_shelf")
 	to_shelf = item.get("custom_to_shelf")
+
+	from_shelf = resolve_shelf_for_warehouse(s_warehouse, from_shelf)
+	to_shelf = resolve_shelf_for_warehouse(t_warehouse, to_shelf)
+	if from_shelf and from_shelf != item.get("custom_from_shelf"):
+		item.custom_from_shelf = from_shelf
+	if to_shelf and to_shelf != item.get("custom_to_shelf"):
+		item.custom_to_shelf = to_shelf
 
 	if s_warehouse:
 		validate_outbound_shelf_line(

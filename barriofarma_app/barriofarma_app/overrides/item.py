@@ -111,6 +111,11 @@ class Item(ERPNextItem):
     específicas del dominio farmacéutico según el modelo DDD
     """
     
+    def before_insert(self):
+        """Default farmacéutico para inserts sin tipo (p. ej. _Test Item de ERPNext)."""
+        if not self.get("custom_dispensing_type"):
+            self.custom_dispensing_type = "Venta Libre"
+
     def validate(self):
         """
         Valida las invariantes del agregado Item según el modelo DDD

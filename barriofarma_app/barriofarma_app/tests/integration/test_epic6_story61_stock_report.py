@@ -44,6 +44,7 @@ class TestEpic6Story61StockReport(FrappeTestCase):
         self.test_warehouses = []
         self.test_shelves = []
         self.test_batches = []
+        self.company = get_test_company()
         
         # Crear warehouse de prueba
         self.warehouse = create_test_warehouse(f"TEST-WH-{frappe.generate_hash(length=6)}")
@@ -169,6 +170,7 @@ class TestEpic6Story61StockReport(FrappeTestCase):
         stock_entry = frappe.get_doc({
             "doctype": "Stock Entry",
             "stock_entry_type": "Material Receipt",
+            "company": self.company,
             "from_warehouse": None,
             "to_warehouse": self.warehouse.name,
             "posting_date": today(),
@@ -177,6 +179,7 @@ class TestEpic6Story61StockReport(FrappeTestCase):
                 "qty": 50,
                 "batch_no": batch.name,
                 "t_warehouse": self.warehouse.name,
+                "custom_to_shelf": self.shelf.name,
                 "basic_rate": 100.0,
                 "allow_zero_valuation_rate": 1
             }]
@@ -213,6 +216,7 @@ class TestEpic6Story61StockReport(FrappeTestCase):
         stock_entry = frappe.get_doc({
             "doctype": "Stock Entry",
             "stock_entry_type": "Material Receipt",
+            "company": self.company,
             "to_warehouse": self.warehouse.name,
             "posting_date": today(),
             "items": [{
@@ -220,6 +224,7 @@ class TestEpic6Story61StockReport(FrappeTestCase):
                 "qty": 30,
                 "batch_no": batch.name,
                 "t_warehouse": self.warehouse.name,
+                "custom_to_shelf": self.shelf.name,
                 "basic_rate": 100.0,
                 "allow_zero_valuation_rate": 1
             }]
@@ -257,6 +262,7 @@ class TestEpic6Story61StockReport(FrappeTestCase):
         stock_entry = frappe.get_doc({
             "doctype": "Stock Entry",
             "stock_entry_type": "Material Receipt",
+            "company": self.company,
             "to_warehouse": self.warehouse.name,
             "posting_date": today(),
             "items": [{
@@ -264,6 +270,7 @@ class TestEpic6Story61StockReport(FrappeTestCase):
                 "qty": 25,
                 "batch_no": batch.name,
                 "t_warehouse": self.warehouse.name,
+                "custom_to_shelf": self.shelf.name,
                 "basic_rate": 100.0,
                 "allow_zero_valuation_rate": 1
             }]

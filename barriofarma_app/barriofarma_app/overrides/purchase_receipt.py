@@ -151,6 +151,33 @@ class PurchaseReceipt(ERPNextPurchaseReceipt):
     """
     Override de Purchase Receipt con validaciones farmacéuticas
     """
+
+    def before_validate(self):
+        super().before_validate()
+        self._align_currency_with_purchase_order_or_company()
+
+    def _align_currency_with_purchase_order_or_company(self):
+        """ERPNext v16 exige que PR.currency coincida con la PO referenciada."""
+        purchase_orders = {
+            item.get("purchase_order") for item in self.items if item.get("purchase_order")
+        }
+        if len(purchase_orders) == 1:
+            po = frappe.db.get_value(
+                "Purchase Order",
+                purchase_orders.pop(),
+                ["currency", "conversion_rate"],
+                as_dict=True,
+            )
+            if po and po.currency:
+                self.currency = po.currency
+                self.conversion_rate = po.conversion_rate or 1
+                return
+
+        if self.company:
+            company_currency = frappe.db.get_value("Company", self.company, "default_currency")
+            if company_currency:
+                self.currency = company_currency
+                self.conversion_rate = 1
     
     def validate(self):
         """
@@ -187,6 +214,11 @@ class PurchaseReceipt(ERPNextPurchaseReceipt):
 
             line_wh = item.warehouse or self.set_warehouse
             to_shelf = getattr(item, "custom_to_shelf", None) or item.get("custom_to_shelf")
+            from barriofarma_app.barriofarma_app.utils.shelf_validations import resolve_shelf_for_warehouse
+
+            to_shelf = resolve_shelf_for_warehouse(line_wh, to_shelf)
+            if to_shelf and to_shelf != item.get("custom_to_shelf"):
+                item.custom_to_shelf = to_shelf
             validate_inbound_shelf_line(
                 item.idx,
                 item.item_code,
@@ -303,19 +335,27 @@ class PurchaseReceipt(ERPNextPurchaseReceipt):
         Raises:
             frappe.ValidationError: Si hay productos recibidos que no están en Purchase Order
         """
-        if not self.get("purchase_order"):
-            # No hay Purchase Order, no validar
+        purchase_order = self.get("purchase_order")
+        if not purchase_order:
+            purchase_orders = {
+                item.get("purchase_order") for item in self.items if item.get("purchase_order")
+            }
+            if len(purchase_orders) == 1:
+                purchase_order = purchase_orders.pop()
+
+        if not purchase_order:
+            # No hay Purchase Order en cabecera ni líneas, no validar
             return
         
         if not self.get("items"):
             return
         
         try:
-            po = frappe.get_doc("Purchase Order", self.purchase_order)
+            po = frappe.get_doc("Purchase Order", purchase_order)
         except frappe.DoesNotExistError:
             frappe.msgprint(
                 _("Purchase Order {0} no existe. La validación contra Purchase Order se omitirá.").format(
-                    frappe.bold(self.purchase_order)
+                    frappe.bold(purchase_order)
                 ),
                 indicator="orange",
                 title=_("Purchase Order No Encontrado")
@@ -327,7 +367,7 @@ class PurchaseReceipt(ERPNextPurchaseReceipt):
             frappe.msgprint(
                 _("Purchase Order {0} no está en estado válido (docstatus={1}). "
                   "Solo se pueden recibir productos contra Purchase Orders confirmados.").format(
-                    frappe.bold(self.purchase_order),
+                    frappe.bold(purchase_order),
                     po.docstatus
                 ),
                 indicator="orange",
@@ -450,7 +490,7 @@ class PurchaseReceipt(ERPNextPurchaseReceipt):
         if errors:
             frappe.throw(
                 _("Errores de validación contra Purchase Order {0}:\n\n{1}").format(
-                    frappe.bold(self.purchase_order),
+                    frappe.bold(purchase_order),
                     "\n".join(f"• {e}" for e in errors)
                 ),
                 title=_("Validación contra Purchase Order - Errores")
@@ -460,7 +500,7 @@ class PurchaseReceipt(ERPNextPurchaseReceipt):
         if warnings:
             frappe.msgprint(
                 _("Advertencias de validación contra Purchase Order {0}:\n\n{1}").format(
-                    frappe.bold(self.purchase_order),
+                    frappe.bold(purchase_order),
                     "\n".join(f"• {w}" for w in warnings)
                 ),
                 indicator="orange",
