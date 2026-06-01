@@ -71,16 +71,20 @@ MODULE_TO_MINIMAL_ROLES = {
 USER_PROFILES = {
     "Perfil Operativo": {
         "description": "Perfil para usuarios operativos (ej: Natalia Araya)",
-        "visible_modules": ["Buying", "Selling", "Stock", "CRM", "Tools"],
-        "custom_roles": ["Farmacéutico"],  # Roles personalizados adicionales
-        "standard_roles": ["Purchase User", "Sales User", "Stock User", "CRM User", "System Manager"],
-        "use_minimal_roles": True,  # Usar roles mínimos en lugar de Manager
+        "visible_modules": ["Buying", "Selling", "Stock", "CRM"],
+        "extra_modules": ["Setup"],
+        "extra_desktop_icons": ["Organization"],
+        "custom_roles": ["Farmacéutico"],
+        "standard_roles": ["Purchase User", "Sales User", "CRM User"],
+        "use_minimal_roles": True,
     },
     "Perfil Farmacéutico": {
-        "description": "Perfil para farmacéuticos - acceso completo operativo (ej: Natalia Araya)",
-        "visible_modules": ["Buying", "Selling", "Stock", "CRM", "Tools"],
+        "description": "Farmacéutico: PO, QC/submit PR, dispensación, POS y listas de precios (farmacia pequeña)",
+        "visible_modules": ["Buying", "Selling", "Stock", "CRM"],
+        "extra_modules": ["Setup"],
+        "extra_desktop_icons": ["Organization"],
         "custom_roles": ["Farmacéutico"],
-        "standard_roles": ["Purchase User", "Sales User", "Stock User", "CRM User", "System Manager"],
+        "standard_roles": ["Sales User", "Sales Master Manager", "CRM User"],
         "use_minimal_roles": True,
     },
     "Perfil Bodeguero": {
@@ -92,7 +96,8 @@ USER_PROFILES = {
     },
     "Perfil Contabilidad": {
         "description": "Perfil para personal de contabilidad",
-        "visible_modules": ["Accounts", "Selling", "Buying"],  # Ver facturas de compra/venta
+        "visible_modules": ["Accounts", "Selling", "Buying"],
+        "visible_accounts_desktop": True,
         "custom_roles": ["Contabilidad"],
         "standard_roles": ["Accounts User", "Sales User", "Purchase User"],
         "use_minimal_roles": True,
@@ -105,11 +110,13 @@ USER_PROFILES = {
         "use_minimal_roles": False,  # Necesita Accounts Manager (no solo Accounts User) para pagar órdenes
     },
     "Perfil Auxiliar": {
-        "description": "Perfil para auxiliares de farmacia - acceso a ventas, CRM, almacén y bodega (ej: Daniela Araya). Permite recepcionar, guardar y mover productos dentro de la bodega y estantes.",
-        "visible_modules": ["Selling", "Stock", "CRM"],
-        "custom_roles": ["Auxiliar", "Bodeguero"],  # Tiene ambos roles: auxiliar de farmacia y bodeguero
-        "standard_roles": ["Sales User", "Stock Manager", "Stock User", "CRM User"],  # Stock Manager para poder recepcionar y mover productos
-        "use_minimal_roles": False,  # Necesita Stock Manager (no solo Stock User) para operaciones de bodega
+        "description": "Auxiliar: recepción física PR borrador, POS y ventas; sin submit PR (QC farmacéutico)",
+        "visible_modules": ["Buying", "Selling", "Stock", "CRM"],
+        "extra_modules": ["Setup"],
+        "extra_desktop_icons": ["Organization"],
+        "custom_roles": ["Auxiliar"],
+        "standard_roles": ["Sales User", "Stock User", "CRM User"],
+        "use_minimal_roles": True,
     },
 }
 
@@ -420,6 +427,7 @@ def setup_user_from_profile(email, profile_name, full_name=None, enabled=True, u
             "CRM": "CRM",
             "Tools": "Desk",  # Tools se mapea a Desk en Frappe
             "Accounts": "Accounts",
+            "Setup": "Setup",
             "HR": "HR",
             "Manufacturing": "Manufacturing",
             "Projects": "Projects"
@@ -448,6 +456,11 @@ def setup_user_from_profile(email, profile_name, full_name=None, enabled=True, u
         # Módulos permitidos = módulos del perfil + módulos base
         allowed_modules = set()
         for module in profile_config["visible_modules"]:
+            mapped_name = module_name_mapping.get(module, module)
+            if mapped_name in all_module_names:
+                allowed_modules.add(mapped_name)
+
+        for module in profile_config.get("extra_modules", []):
             mapped_name = module_name_mapping.get(module, module)
             if mapped_name in all_module_names:
                 allowed_modules.add(mapped_name)

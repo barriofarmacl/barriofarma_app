@@ -26,6 +26,11 @@ from frappe import _
 from frappe.utils import flt
 from barriofarma_app.barriofarma_app.utils.shelf_movement_submit import insert_and_submit_shelf_movement
 from barriofarma_app.barriofarma_app.utils.shelf_validations import validate_inbound_shelf_line
+from barriofarma_app.barriofarma_app.validations.purchase_receipt_permissions import (
+    validate_purchase_receipt_submit_authorization,
+    validate_purchase_receipt_create_authorization,
+    validate_qc_ready_for_submit,
+)
 from datetime import datetime
 from erpnext.stock.doctype.purchase_receipt.purchase_receipt import (
     PurchaseReceipt as ERPNextPurchaseReceipt,
@@ -194,6 +199,8 @@ class PurchaseReceipt(ERPNextPurchaseReceipt):
         Todas las validaciones se ejecutan antes de permitir guardar el documento.
         """
         super().validate()
+        if self.is_new():
+            validate_purchase_receipt_create_authorization(self)
         self.validate_against_purchase_order()
         self.auto_create_batches_if_needed()  # Story 3.2: Crear Batch automáticamente si no existe
         self.validate_items_requieren_lote_si_necesario()
@@ -202,6 +209,10 @@ class PurchaseReceipt(ERPNextPurchaseReceipt):
         self.validate_umbral_vencimiento()
         self.validate_sobrante_no_disponible()
         self.validate_shelf_required()
+
+    def before_submit(self):
+        validate_purchase_receipt_submit_authorization(self)
+        validate_qc_ready_for_submit(self)
     
     def validate_shelf_required(self):
         """Issue #58: toda recepción debe indicar estante destino por línea."""

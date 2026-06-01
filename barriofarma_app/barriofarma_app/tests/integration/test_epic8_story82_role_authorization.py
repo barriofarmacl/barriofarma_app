@@ -368,10 +368,56 @@ class TestFarmaceuticoRole(TestEpic8Story82RoleAuthorization):
         frappe.set_user(self.username)
         self.assertTrue(test_has_permission("Item", "write", should_have=True))
 
-    def test_farmaceutico_cannot_access_purchase_receipt(self):
-        """Farmacéutico NO puede acceder a Purchase Receipt"""
+    def test_farmaceutico_can_read_purchase_receipt(self):
+        """Farmacéutico puede leer Purchase Receipt (QC)"""
         frappe.set_user(self.username)
-        self.assertTrue(test_can_access_doctype("Purchase Receipt", should_access=False))
+        frappe.clear_cache()
+        self.assertTrue(test_can_access_doctype("Purchase Receipt", should_access=True))
+
+    def test_farmaceutico_can_write_purchase_receipt(self):
+        """Farmacéutico puede escribir Purchase Receipt (QC)"""
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_has_permission("Purchase Receipt", "write", should_have=True))
+
+    def test_farmaceutico_cannot_create_purchase_receipt(self):
+        """Farmacéutico NO crea Purchase Receipt (recepción física es del auxiliar)"""
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_has_permission("Purchase Receipt", "create", should_have=False))
+
+    def test_farmaceutico_can_submit_purchase_receipt(self):
+        """Farmacéutico puede submitir Purchase Receipt tras QC"""
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_has_permission("Purchase Receipt", "submit", should_have=True))
+
+    def test_farmaceutico_can_create_purchase_order(self):
+        """Farmacéutico puede crear Purchase Order"""
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_has_permission("Purchase Order", "create", should_have=True))
+
+    def test_farmaceutico_can_write_price_list(self):
+        """Farmacéutico puede crear y modificar listas de precios"""
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_has_permission("Price List", "write", should_have=True))
+        self.assertTrue(test_has_permission("Price List", "create", should_have=True))
+
+    def test_farmaceutico_can_write_item_price(self):
+        """Farmacéutico puede crear y modificar precios por ítem"""
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_has_permission("Item Price", "write", should_have=True))
+        self.assertTrue(test_has_permission("Item Price", "create", should_have=True))
+
+    def test_farmaceutico_can_create_pos_closing_entry(self):
+        """Farmacéutico puede cerrar caja POS"""
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_has_permission("POS Closing Entry", "create", should_have=True))
+        self.assertTrue(test_has_permission("POS Closing Entry", "submit", should_have=True))
 
     def test_farmaceutico_cannot_access_stock_entry(self):
         """Farmacéutico NO puede acceder a Stock Entry"""
@@ -423,15 +469,46 @@ class TestAuxiliarRole(TestEpic8Story82RoleAuthorization):
         frappe.set_user(self.username)
         self.assertTrue(test_can_access_doctype("Item", should_access=True))
 
-    def test_auxiliar_cannot_write_item(self):
-        """Auxiliar NO puede escribir Item"""
+    def test_auxiliar_can_write_item(self):
+        """Auxiliar puede escribir Item existente (p. ej. imagen en recepción)"""
         frappe.set_user(self.username)
-        self.assertTrue(test_has_permission("Item", "write", should_have=False))
+        self.assertTrue(test_has_permission("Item", "write", should_have=True))
 
-    def test_auxiliar_cannot_access_purchase_receipt(self):
-        """Auxiliar NO puede acceder a Purchase Receipt"""
+    def test_auxiliar_cannot_create_item(self):
+        """Auxiliar NO puede crear Item (maestro lo define farmacéutico/bodega)"""
         frappe.set_user(self.username)
-        self.assertTrue(test_can_access_doctype("Purchase Receipt", should_access=False))
+        self.assertTrue(test_has_permission("Item", "create", should_have=False))
+
+    def test_auxiliar_can_read_purchase_receipt(self):
+        """Auxiliar puede leer Purchase Receipt"""
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_can_access_doctype("Purchase Receipt", should_access=True))
+
+    def test_auxiliar_can_create_purchase_receipt(self):
+        """Auxiliar puede crear Purchase Receipt (recepción borrador)"""
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_has_permission("Purchase Receipt", "create", should_have=True))
+
+    def test_auxiliar_cannot_submit_purchase_receipt(self):
+        """Auxiliar NO puede submitir Purchase Receipt (QC farmacéutico)"""
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_has_permission("Purchase Receipt", "submit", should_have=False))
+
+    def test_auxiliar_can_create_pos_closing_entry(self):
+        """Auxiliar puede crear y cerrar caja POS (POS Closing Entry)"""
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_has_permission("POS Closing Entry", "create", should_have=True))
+        self.assertTrue(test_has_permission("POS Closing Entry", "submit", should_have=True))
+
+    def test_auxiliar_can_read_purchase_order(self):
+        """Auxiliar puede leer Purchase Order para enlazar PR"""
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_can_access_doctype("Purchase Order", should_access=True))
 
     def test_auxiliar_cannot_access_stock_entry(self):
         """Auxiliar NO puede acceder a Stock Entry"""
@@ -463,15 +540,15 @@ class TestBodegueroRole(TestEpic8Story82RoleAuthorization):
         frappe.set_user(self.username)
         self.assertTrue(test_can_access_doctype("Purchase Receipt", should_access=True))
 
-    def test_bodeguero_can_write_purchase_receipt(self):
-        """Bodeguero puede escribir Purchase Receipt"""
+    def test_bodeguero_cannot_write_purchase_receipt(self):
+        """Bodeguero NO escribe Purchase Receipt (flujo auxiliar + QC farmacéutico)"""
         frappe.set_user(self.username)
-        self.assertTrue(test_has_permission("Purchase Receipt", "write", should_have=True))
+        self.assertTrue(test_has_permission("Purchase Receipt", "write", should_have=False))
 
-    def test_bodeguero_can_create_purchase_receipt(self):
-        """Bodeguero puede crear Purchase Receipt"""
+    def test_bodeguero_cannot_create_purchase_receipt(self):
+        """Bodeguero NO crea Purchase Receipt en perfil dedicado"""
         frappe.set_user(self.username)
-        self.assertTrue(test_has_permission("Purchase Receipt", "create", should_have=True))
+        self.assertTrue(test_has_permission("Purchase Receipt", "create", should_have=False))
 
     def test_bodeguero_can_read_stock_entry(self):
         """Bodeguero puede leer Stock Entry"""

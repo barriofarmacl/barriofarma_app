@@ -126,15 +126,16 @@ fixtures = ["Custom Field", "Client Script", "Report", "Property Setter"]
 # 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
 # }
 #
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+has_permission = {
+	"Purchase Receipt": "barriofarma_app.barriofarma_app.validations.purchase_receipt_permissions.has_permission",
+}
 
 # DocType Class
 # ---------------
 # Override standard doctype classes
 
 override_doctype_class = {
+	"Desktop Icon": "barriofarma_app.barriofarma_app.overrides.desktop_icon.DesktopIcon",
 	"Item": "barriofarma_app.barriofarma_app.overrides.item.Item",
 	"Purchase Receipt": "barriofarma_app.barriofarma_app.overrides.purchase_receipt.PurchaseReceipt",
 	"Stock Entry": "barriofarma_app.barriofarma_app.overrides.stock_entry.StockEntry",

@@ -71,8 +71,8 @@ MODULE_BASE_PERMISSIONS = {
     # Módulo: Buying (Compras)
     "Buying": {
         "Farmacéutico": ["R", "W", "C", "S"],
-        "Auxiliar": [],
-        "Bodeguero": ["R", "W", "C", "S"],  # Control total
+        "Auxiliar": ["R"],
+        "Bodeguero": ["R", "W", "C", "S"],
         "Administrativo": ["R"],
         "Contabilidad": ["R", "W", "S", "X"],  # Puede procesar facturas
         "Informática": ["R", "W", "C", "D", "S", "X"]
@@ -133,11 +133,19 @@ PERMISSIONS_MATRIX = {
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
     "Purchase Receipt": {
-        "Farmacéutico": [],
-        "Auxiliar": [],
-        "Bodeguero": ["R", "W", "C", "S"],
+        "Farmacéutico": ["R", "W", "S"],
+        "Auxiliar": ["R", "W", "C"],
+        "Bodeguero": ["R"],
         "Administrativo": ["R"],
         "Contabilidad": [],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Purchase Order": {
+        "Farmacéutico": ["R", "W", "C", "S"],
+        "Auxiliar": ["R"],
+        "Bodeguero": ["R", "W", "C", "S"],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
     "Stock Entry": {
@@ -165,9 +173,9 @@ PERMISSIONS_MATRIX = {
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
     "Item": {
-        "Farmacéutico": ["R", "W", "C"],  # Puede crear items
-        "Auxiliar": ["R"],
-        "Bodeguero": ["R", "W", "C"],  # Puede crear items
+        "Farmacéutico": ["R", "W", "C"],  # Maestro de producto / medicamento
+        "Auxiliar": ["R", "W"],  # Editar existentes (imagen, datos operativos); no crear ítems
+        "Bodeguero": ["R", "W", "C"],
         "Administrativo": ["R"],
         "Contabilidad": ["R"],
         "Informática": ["R", "W", "C", "D", "S", "X"]
@@ -228,12 +236,36 @@ PERMISSIONS_MATRIX = {
         "Contabilidad": ["R"],
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
+    "Price List": {
+        "Farmacéutico": ["R", "W", "C"],
+        "Auxiliar": ["R"],
+        "Bodeguero": ["R"],
+        "Administrativo": ["R", "W", "C"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Item Price": {
+        "Farmacéutico": ["R", "W", "C"],
+        "Auxiliar": ["R"],
+        "Bodeguero": ["R"],
+        "Administrativo": ["R", "W", "C"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
     "POS Opening Entry": {
         "Farmacéutico": ["R", "W", "C", "S"],  # Necesita crear y validar POS Opening Entry para usar el POS
         "Auxiliar": ["R", "W", "C", "S"],  # Necesita crear y validar POS Opening Entry para usar el POS
         "Bodeguero": [],
         "Administrativo": ["R"],
         "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "POS Closing Entry": {
+        "Farmacéutico": ["R", "W", "C", "S"],  # Cierre de caja POS
+        "Auxiliar": ["R", "W", "C", "S"],  # Cierre de caja POS (función principal en mostrador)
+        "Bodeguero": [],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R", "W", "C", "S"],
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
     "Purchase Invoice": {
@@ -346,6 +378,64 @@ def get_doctype_permissions(doctype, role):
 # FUNCIONES PRINCIPALES
 # ============================================================================
 
+def _build_perm_values(permissions, is_submittable):
+    """Construir dict de flags DocPerm desde lista R/W/C/D/S/X."""
+    return {
+        "read": "R" in permissions,
+        "write": "W" in permissions,
+        "create": "C" in permissions,
+        "delete": "D" in permissions,
+        "submit": "S" in permissions and is_submittable and "W" in permissions,
+        "cancel": "X" in permissions and is_submittable and "W" in permissions,
+        "amend": False,
+        "report": "R" in permissions,
+        "export": "R" in permissions,
+        "share": False,
+        "print": "R" in permissions,
+        "email": False,
+        "import": False,
+    }
+
+
+def _sync_custom_docperm(doctype, role, perm_values, permlevel=0):
+    """
+    Sincronizar Custom DocPerm cuando el DocType ya usa permisos custom.
+
+    En Frappe v16, si existen filas en Custom DocPerm para un DocType, esas filas
+    sustituyen a DocPerm estándar para permisos efectivos.
+    """
+    filters = {"parent": doctype, "role": role, "permlevel": permlevel}
+    custom_name = frappe.db.get_value("Custom DocPerm", filters)
+
+    if custom_name:
+        custom = frappe.get_doc("Custom DocPerm", custom_name)
+        for key, value in perm_values.items():
+            if hasattr(custom, "meta") and custom.meta.has_field(key):
+                setattr(custom, key, value)
+            elif hasattr(custom, key):
+                setattr(custom, key, value)
+        custom.save(ignore_permissions=True)
+        return True
+
+    if frappe.db.exists("Custom DocPerm", {"parent": doctype}):
+        if not any(perm_values.get(k) for k in ("read", "write", "create", "delete", "submit")):
+            return False
+        frappe.get_doc(
+            {
+                "doctype": "Custom DocPerm",
+                "parent": doctype,
+                "parenttype": "DocType",
+                "parentfield": "permissions",
+                "role": role,
+                "permlevel": permlevel,
+                **perm_values,
+            }
+        ).insert(ignore_permissions=True)
+        return True
+
+    return False
+
+
 def set_docperm(doctype, role, permissions, permlevel=0):
     """
     Configurar permisos para un DocType y rol específico
@@ -377,24 +467,8 @@ def set_docperm(doctype, role, permissions, permlevel=0):
         
         # Verificar si el DocType es submittable
         is_submittable = doc.is_submittable
-        
-        # Configurar valores de permisos
-        # Nota: Submit/Cancel/Amend requieren Write, y solo aplican si el DocType es submittable
-        perm_values = {
-            "read": "R" in permissions,
-            "write": "W" in permissions,
-            "create": "C" in permissions,
-            "delete": "D" in permissions,
-            "submit": "S" in permissions and is_submittable and "W" in permissions,  # Requiere Write y ser submittable
-            "cancel": "X" in permissions and is_submittable and "W" in permissions,  # Requiere Write y ser submittable
-            "amend": False,  # Por defecto no permitir modificar documentos enviados
-            "report": "R" in permissions,  # Si puede leer, puede ver reportes
-            "export": "R" in permissions,  # Si puede leer, puede exportar
-            "share": False,  # Por defecto no compartir
-            "print": "R" in permissions,  # Si puede leer, puede imprimir
-            "email": False,  # Por defecto no enviar por email
-            "import": False  # Por defecto no importar
-        }
+        perm_values = _build_perm_values(permissions, is_submittable)
+        _sync_custom_docperm(doctype, role, perm_values, permlevel)
         
         if existing_perm:
             # Actualizar permiso existente
