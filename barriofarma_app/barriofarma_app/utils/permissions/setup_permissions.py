@@ -43,8 +43,8 @@ logger = logging.getLogger(__name__)
 MODULE_BASE_PERMISSIONS = {
     # Módulo: Stock (Inventario)
     "Stock": {
-        "Farmacéutico": ["R"],  # Solo lectura por defecto
-        "Auxiliar": ["R"],
+        "Farmacéutico": [],
+        "Auxiliar": [],
         "Bodeguero": ["R", "W", "C", "S"],  # Control total
         "Administrativo": ["R"],
         "Contabilidad": ["R"],
@@ -61,8 +61,8 @@ MODULE_BASE_PERMISSIONS = {
     },
     # Módulo: Selling (Ventas)
     "Selling": {
-        "Farmacéutico": ["R", "W", "C", "S"],  # Puede vender
-        "Auxiliar": ["R", "W", "C", "S"],  # Puede vender
+        "Farmacéutico": [],
+        "Auxiliar": [],
         "Bodeguero": ["R"],
         "Administrativo": ["R"],
         "Contabilidad": ["R", "W", "S", "X"],  # Puede cancelar facturas
@@ -70,8 +70,8 @@ MODULE_BASE_PERMISSIONS = {
     },
     # Módulo: Buying (Compras)
     "Buying": {
-        "Farmacéutico": ["R", "W", "C", "S"],
-        "Auxiliar": ["R"],
+        "Farmacéutico": [],
+        "Auxiliar": [],
         "Bodeguero": ["R", "W", "C", "S"],
         "Administrativo": ["R"],
         "Contabilidad": ["R", "W", "S", "X"],  # Puede procesar facturas
@@ -97,8 +97,8 @@ MODULE_BASE_PERMISSIONS = {
     },
     # Módulo: CRM
     "CRM": {
-        "Farmacéutico": ["R", "W", "C"],
-        "Auxiliar": ["R", "W", "C"],
+        "Farmacéutico": [],
+        "Auxiliar": [],
         "Bodeguero": [],
         "Administrativo": ["R"],
         "Contabilidad": [],
@@ -275,7 +275,87 @@ PERMISSIONS_MATRIX = {
         "Administrativo": ["R"],
         "Contabilidad": ["R", "W", "S", "X"],  # Necesita Write para Submit/Cancel
         "Informática": ["R", "W", "C", "D", "S", "X"]
-    }
+    },
+    "Supplier": {
+        "Farmacéutico": ["R"],
+        "Auxiliar": ["R"],
+        "Bodeguero": ["R", "W", "C"],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Warehouse": {
+        "Farmacéutico": ["R"],
+        "Auxiliar": ["R"],
+        "Bodeguero": ["R", "W", "C"],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Batch": {
+        "Farmacéutico": ["R"],
+        "Auxiliar": ["R"],
+        "Bodeguero": ["R", "W", "C"],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Material Request": {
+        "Farmacéutico": [],
+        "Auxiliar": [],
+        "Bodeguero": ["R", "W", "C", "S"],
+        "Administrativo": ["R"],
+        "Contabilidad": [],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Request for Quotation": {
+        "Farmacéutico": [],
+        "Auxiliar": [],
+        "Bodeguero": ["R", "W", "C", "S"],
+        "Administrativo": ["R"],
+        "Contabilidad": [],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Supplier Quotation": {
+        "Farmacéutico": [],
+        "Auxiliar": [],
+        "Bodeguero": ["R", "W", "C", "S"],
+        "Administrativo": ["R"],
+        "Contabilidad": [],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Quotation": {
+        "Farmacéutico": [],
+        "Auxiliar": [],
+        "Bodeguero": ["R"],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Sales Order": {
+        "Farmacéutico": [],
+        "Auxiliar": [],
+        "Bodeguero": ["R"],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Company": {
+        "Farmacéutico": ["R"],
+        "Auxiliar": ["R"],
+        "Bodeguero": ["R"],
+        "Administrativo": ["R", "W", "C"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Letter Head": {
+        "Farmacéutico": ["R"],
+        "Auxiliar": ["R"],
+        "Bodeguero": [],
+        "Administrativo": ["R", "W", "C"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
 }
 
 
@@ -284,6 +364,10 @@ PERMISSIONS_MATRIX = {
 # ============================================================================
 # DocTypes que NO deben tener permisos configurados automáticamente
 # (por ejemplo, DocTypes del sistema, configuraciones, etc.)
+
+# Roles operativos UAT: solo DocTypes en PERMISSIONS_MATRIX (o base módulo explícito).
+# Evita que la estrategia extendida herede permisos genéricos de ERPNext por módulo.
+OPERATIONAL_WHITELIST_ROLES = frozenset({"Farmacéutico", "Auxiliar"})
 
 EXCLUDED_DOCTYPES = [
     "Role",
@@ -359,18 +443,21 @@ def get_doctype_permissions(doctype, role):
     Returns:
         Lista de permisos o None si no se deben configurar permisos
     """
-    # 1. Verificar permisos específicos (máxima prioridad)
-    if doctype in PERMISSIONS_MATRIX:
-        return PERMISSIONS_MATRIX[doctype].get(role, [])
-    
-    # 2. Verificar permisos base del módulo
+    # 1. Permisos específicos (máxima prioridad)
+    if doctype in PERMISSIONS_MATRIX and role in PERMISSIONS_MATRIX[doctype]:
+        return PERMISSIONS_MATRIX[doctype][role]
+
+    # 2. Permisos base del módulo (incluye [] explícito = sin acceso)
     module_name = get_doctype_module(doctype)
-    if module_name:
-        module_perms = get_module_base_permissions(module_name, role)
-        if module_perms:
-            return module_perms
-    
-    # 3. Sin permisos (no configurar - mantiene permisos estándar de ERPNext)
+    if module_name and module_name in MODULE_BASE_PERMISSIONS:
+        if role in MODULE_BASE_PERMISSIONS[module_name]:
+            return MODULE_BASE_PERMISSIONS[module_name][role]
+
+    # 3. Roles operativos: denegar por defecto (no heredar ERPNext estándar)
+    if role in OPERATIONAL_WHITELIST_ROLES:
+        return []
+
+    # 4. Otros roles: no tocar DocPerm estándar
     return None
 
 
@@ -436,6 +523,41 @@ def _sync_custom_docperm(doctype, role, perm_values, permlevel=0):
     return False
 
 
+def remove_docperm(doctype, role, permlevel=0):
+	"""
+	Elimina permisos del rol en el DocType.
+
+	Frappe no permite guardar DocPerm con todos los flags en 0; para denegar
+	acceso hay que quitar la fila (permiso efectivo = sin acceso vía ese rol).
+	"""
+	if not frappe.db.exists("DocType", doctype) or not frappe.db.exists("Role", role):
+		return False
+
+	try:
+		doc = frappe.get_doc("DocType", doctype)
+		before = len(doc.permissions)
+		doc.permissions = [
+			p
+			for p in doc.permissions
+			if not (p.role == role and p.permlevel == permlevel)
+		]
+		if len(doc.permissions) < before:
+			doc.save(ignore_permissions=True)
+
+		custom_name = frappe.db.get_value(
+			"Custom DocPerm", {"parent": doctype, "role": role, "permlevel": permlevel}
+		)
+		if custom_name:
+			frappe.delete_doc("Custom DocPerm", custom_name, ignore_permissions=True)
+
+		frappe.db.commit()
+		return True
+	except Exception as e:
+		logger.error(f"Error al quitar permiso {doctype}/{role}: {e}")
+		frappe.db.rollback()
+		return False
+
+
 def set_docperm(doctype, role, permissions, permlevel=0):
     """
     Configurar permisos para un DocType y rol específico
@@ -453,6 +575,9 @@ def set_docperm(doctype, role, permissions, permlevel=0):
     if not frappe.db.exists("Role", role):
         logger.warning(f"Rol '{role}' no existe, omitiendo configuración de permisos")
         return False
+
+    if not permissions:
+        return remove_docperm(doctype, role, permlevel)
     
     try:
         # Obtener el DocType
@@ -533,16 +658,16 @@ def setup_permissions_for_role(role_name, use_extended_strategy=True):
             permissions = get_doctype_permissions(doctype, role_name)
             
             if permissions is not None:
-                if permissions:  # Lista no vacía
+                if permissions:
                     if set_docperm(doctype, role_name, permissions):
                         configured += 1
-                        perms_str = ", ".join(permissions)
-                        logger.debug(f"  {doctype}: {perms_str}")
+                        logger.debug(f"  {doctype}: {', '.join(permissions)}")
                     else:
                         skipped += 1
+                elif remove_docperm(doctype, role_name):
+                    configured += 1
+                    logger.debug(f"  {doctype}: permiso eliminado (sin acceso)")
                 else:
-                    # Lista vacía = sin permisos (intencional)
-                    logger.debug(f"  {doctype}: Sin permisos (intencional)")
                     skipped += 1
             # Si permissions es None, no se configura (mantiene permisos estándar)
     else:

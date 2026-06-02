@@ -34,7 +34,13 @@ class DesktopIcon(FrappeDesktopIcon):
 
 		extra_icons = get_extra_desktop_icons()
 		if label in extra_icons:
+			if label == "Organization":
+				return True
 			return self._has_sidebar_content(bootinfo)
+
+		# Carpeta padre de Compras/Ventas/Almacén en ERPNext v16
+		if self.label == "ERPNext" and self.icon_type == "App":
+			return True
 
 		icon_module = self._get_icon_module()
 		if icon_module:

@@ -68,23 +68,40 @@ MODULE_TO_MINIMAL_ROLES = {
 # ============================================================================
 # Define qué módulos debe ver cada perfil y qué roles personalizados incluir
 
+# Roles que setup_user_from_profile puede quitar al re-aplicar un perfil
+MANAGED_STANDARD_ROLES = frozenset({
+    "Purchase User",
+    "Purchase Manager",
+    "Sales User",
+    "Sales Master Manager",
+    "Sales Manager",
+    "Stock User",
+    "Stock Manager",
+    "Accounts User",
+    "Accounts Manager",
+    "CRM User",
+    "System Manager",
+})
+
+PROTECTED_USER_ROLES = frozenset({"All", "Guest", "Desk User", "System User"})
+
 USER_PROFILES = {
     "Perfil Operativo": {
         "description": "Perfil para usuarios operativos (ej: Natalia Araya)",
-        "visible_modules": ["Buying", "Selling", "Stock", "CRM"],
+        "visible_modules": ["Buying", "Selling", "Stock"],
         "extra_modules": ["Setup"],
         "extra_desktop_icons": ["Organization"],
         "custom_roles": ["Farmacéutico"],
-        "standard_roles": ["Purchase User", "Sales User", "CRM User"],
+        "standard_roles": [],
         "use_minimal_roles": True,
     },
     "Perfil Farmacéutico": {
         "description": "Farmacéutico: PO, QC/submit PR, dispensación, POS y listas de precios (farmacia pequeña)",
-        "visible_modules": ["Buying", "Selling", "Stock", "CRM"],
+        "visible_modules": ["Buying", "Selling", "Stock"],
         "extra_modules": ["Setup"],
         "extra_desktop_icons": ["Organization"],
         "custom_roles": ["Farmacéutico"],
-        "standard_roles": ["Sales User", "Sales Master Manager", "CRM User"],
+        "standard_roles": [],
         "use_minimal_roles": True,
     },
     "Perfil Bodeguero": {
@@ -111,11 +128,11 @@ USER_PROFILES = {
     },
     "Perfil Auxiliar": {
         "description": "Auxiliar: recepción física PR borrador, POS y ventas; sin submit PR (QC farmacéutico)",
-        "visible_modules": ["Buying", "Selling", "Stock", "CRM"],
+        "visible_modules": ["Buying", "Selling", "Stock"],
         "extra_modules": ["Setup"],
         "extra_desktop_icons": ["Organization"],
         "custom_roles": ["Auxiliar"],
-        "standard_roles": ["Sales User", "Stock User", "CRM User"],
+        "standard_roles": [],
         "use_minimal_roles": True,
     },
 }
@@ -371,7 +388,7 @@ def setup_user_from_profile(email, profile_name, full_name=None, enabled=True, u
     
     # Agregar roles faltantes
     roles_to_add = target_roles - current_roles
-    roles_to_remove = current_roles - target_roles
+    roles_to_remove = (current_roles - target_roles) & MANAGED_STANDARD_ROLES
     
     print(f"\nRoles actuales: {len(current_roles)}")
     print(f"Roles objetivo: {len(target_roles)}")
@@ -390,7 +407,7 @@ def setup_user_from_profile(email, profile_name, full_name=None, enabled=True, u
         print(f"\nRemoviendo roles ({len(roles_to_remove)}):")
         for role_name in roles_to_remove:
             # No remover roles si están en otros perfiles o son críticos
-            if role_name in ["All", "Guest", "System User"]:
+            if role_name in PROTECTED_USER_ROLES:
                 print(f"  - {role_name} (protegido, no se remueve)")
                 continue
             

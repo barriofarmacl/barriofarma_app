@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_rename": 1,
- "creation": "2025-01-27 12:00:00.000000",
+ "creation": "2025-01-27 12:00:00",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -52,7 +52,7 @@
   {
    "fieldname": "duration",
    "fieldtype": "Data",
-   "label": "Duración"
+   "label": "Duraci\u00f3n"
   },
   {
    "fieldname": "quantity",
@@ -62,7 +62,7 @@
    "reqd": 1
   },
   {
-   "default": 0,
+   "default": "0",
    "fieldname": "dispensed_qty",
    "fieldtype": "Float",
    "label": "Cantidad Dispensada",
@@ -74,7 +74,7 @@
    "label": "Instrucciones"
   },
   {
-   "default": 0,
+   "default": "0",
    "fetch_from": "item.custom_requires_prescription_retention",
    "fieldname": "is_controlled",
    "fieldtype": "Check",
@@ -90,20 +90,22 @@
    "read_only": 1
   },
   {
-   "default": 0,
+   "default": "0",
    "fieldname": "requires_special_auth",
    "fieldtype": "Check",
-   "label": "Requiere Autorización Especial"
+   "label": "Requiere Autorizaci\u00f3n Especial"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
- "modified": "2025-01-27 12:00:00.000000",
+ "links": [],
+ "modified": "2026-06-02 15:42:07.932488",
  "modified_by": "Administrator",
  "module": "Barriofarma App",
  "name": "Receta Medica Item",
  "owner": "Administrator",
  "permissions": [],
+ "row_format": "Dynamic",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

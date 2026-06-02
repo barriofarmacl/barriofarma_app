@@ -49,6 +49,15 @@ OPTIONAL_DESKTOP_ICONS_TO_HIDE = {
 	"Subcontracting",
 }
 
+# Iconos técnicos / módulos no operativos en mostrador (perfiles farmacia).
+# No incluir "ERPNext": Buying/Selling/Stock son hijos de ese folder en v16.
+OPERATIONAL_DESKTOP_ICONS_TO_HIDE = {
+	"CRM",
+	"Framework",
+	"Automation",
+	"Email",
+}
+
 FOLDER_LABEL_TO_MODULE = {
 	"Accounting": "Accounts",
 }
@@ -77,6 +86,8 @@ def get_hidden_desktop_icons(user=None):
 	hidden |= set(ACCOUNTING_DESKTOP_ICONS)
 	hidden |= set(SETUP_DESKTOP_ICONS_TO_HIDE)
 	hidden |= set(OPTIONAL_DESKTOP_ICONS_TO_HIDE)
+	if get_profile_name_for_user(user):
+		hidden |= OPERATIONAL_DESKTOP_ICONS_TO_HIDE
 	if not policy.get("visible_accounts_desktop", False):
 		pass  # ACCOUNTING_DESKTOP_ICONS ya incluidos salvo perfil contable
 	if policy.get("visible_accounts_desktop"):
