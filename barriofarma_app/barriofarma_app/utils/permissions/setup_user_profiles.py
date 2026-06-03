@@ -68,6 +68,25 @@ MODULE_TO_MINIMAL_ROLES = {
 # ============================================================================
 # Define qué módulos debe ver cada perfil y qué roles personalizados incluir
 
+PROTECTED_USER_ROLES = frozenset({"All", "Guest", "Desk User", "System User"})
+
+# Roles estándar ERPNext para administración y contabilidad (pagos, plan de cuentas, facturas).
+ADMIN_ERPNEXT_STANDARD_ROLES = (
+    "Accounts Manager",
+    "Accounts User",
+    "Purchase Manager",
+    "Purchase User",
+    "Sales User",
+    "Stock User",
+)
+
+ADMIN_ERPNEXT_STANDARD_ROLES_CONTABILIDAD = (
+    "Accounts Manager",
+    "Accounts User",
+    "Purchase User",
+    "Sales User",
+)
+
 # Roles que setup_user_from_profile puede quitar al re-aplicar un perfil
 MANAGED_STANDARD_ROLES = frozenset({
     "Purchase User",
@@ -81,9 +100,7 @@ MANAGED_STANDARD_ROLES = frozenset({
     "Accounts Manager",
     "CRM User",
     "System Manager",
-})
-
-PROTECTED_USER_ROLES = frozenset({"All", "Guest", "Desk User", "System User"})
+}) | frozenset(ADMIN_ERPNEXT_STANDARD_ROLES)
 
 USER_PROFILES = {
     "Perfil Operativo": {
@@ -96,7 +113,7 @@ USER_PROFILES = {
         "use_minimal_roles": True,
     },
     "Perfil Farmacéutico": {
-        "description": "Farmacéutico: PO, QC/submit PR, dispensación, POS y listas de precios (farmacia pequeña)",
+        "description": "Farmacéutico: compras (PO, RFQ, cotizaciones, MR), maestros producto/precios, QC/submit PR, POS, reconciliación inventario",
         "visible_modules": ["Buying", "Selling", "Stock"],
         "extra_modules": ["Setup"],
         "extra_desktop_icons": ["Organization"],
@@ -112,22 +129,25 @@ USER_PROFILES = {
         "use_minimal_roles": True,
     },
     "Perfil Contabilidad": {
-        "description": "Perfil para personal de contabilidad",
+        "description": "Contabilidad: roles ERPNext Accounts Manager/User; pagos, asientos y plan de cuentas.",
         "visible_modules": ["Accounts", "Selling", "Buying"],
         "visible_accounts_desktop": True,
         "custom_roles": ["Contabilidad"],
-        "standard_roles": ["Accounts User", "Sales User", "Purchase User"],
-        "use_minimal_roles": True,
+        "standard_roles": list(ADMIN_ERPNEXT_STANDARD_ROLES_CONTABILIDAD),
+        "use_minimal_roles": False,
+        "permissions_via_erpnext_standard": True,
     },
     "Perfil Administrativo": {
-        "description": "Perfil para personal administrativo - acceso a contabilidad, compras, almacén y reportes de ventas (ej: Karla Carmona). Permite pagar órdenes de compra y llevar la contabilidad de la farmacia.",
-        "visible_modules": ["Selling", "Buying", "Stock", "Accounts", "CRM"],
-        "custom_roles": ["Administrativo", "Contabilidad"],  # Tiene ambos roles: administrativo y contabilidad
-        "standard_roles": ["Sales User", "Purchase User", "Stock User", "Accounts Manager", "Accounts User", "CRM User"],  # Accounts Manager para poder pagar órdenes de compra
-        "use_minimal_roles": False,  # Necesita Accounts Manager (no solo Accounts User) para pagar órdenes
+        "description": "Administración (Karla/Jimena): ERPNext Accounts Manager, compras, pagos OC, plan de cuentas, almacén y ventas.",
+        "visible_modules": ["Selling", "Buying", "Stock", "Accounts"],
+        "visible_accounts_desktop": True,
+        "custom_roles": ["Administrativo", "Contabilidad"],
+        "standard_roles": list(ADMIN_ERPNEXT_STANDARD_ROLES),
+        "use_minimal_roles": False,
+        "permissions_via_erpnext_standard": True,
     },
     "Perfil Auxiliar": {
-        "description": "Auxiliar: recepción física PR borrador, POS y ventas; sin submit PR (QC farmacéutico)",
+        "description": "Auxiliar: PR borrador, POS, Stock Entry, Reconciliación de inventarios, Shelf Movement, reportes de existencias; sin submit PR",
         "visible_modules": ["Buying", "Selling", "Stock"],
         "extra_modules": ["Setup"],
         "extra_desktop_icons": ["Organization"],

@@ -148,17 +148,65 @@ PERMISSIONS_MATRIX = {
         "Contabilidad": ["R"],
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
+    "Stock Entry Type": {
+        "Farmacéutico": ["R"],
+        "Auxiliar": ["R"],
+        "Bodeguero": ["R"],
+        "Administrativo": ["R"],
+        "Contabilidad": [],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Item Group": {
+        "Farmacéutico": ["R", "W", "C"],
+        "Auxiliar": ["R"],
+        "Bodeguero": ["R"],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Product Bundle": {
+        "Farmacéutico": ["R", "W", "C"],
+        "Auxiliar": ["R"],
+        "Bodeguero": ["R"],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Promotional Scheme": {
+        "Farmacéutico": ["R", "W", "C"],
+        "Auxiliar": [],
+        "Bodeguero": [],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R", "W", "C"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Pricing Rule": {
+        "Farmacéutico": ["R", "W", "C"],
+        "Auxiliar": [],
+        "Bodeguero": [],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R", "W", "C"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
     "Stock Entry": {
         "Farmacéutico": [],
-        "Auxiliar": [],
+        "Auxiliar": ["R", "W", "C", "S"],  # Traslado entre bodegas / recepción (Material Transfer, Receipt)
+        "Bodeguero": ["R", "W", "C", "S"],
+        "Administrativo": ["R"],
+        "Contabilidad": [],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Stock Reconciliation": {
+        "Farmacéutico": ["R", "W", "C", "S"],  # Carga inventario físico por estante
+        "Auxiliar": ["R", "W", "C", "S"],
         "Bodeguero": ["R", "W", "C", "S"],
         "Administrativo": ["R"],
         "Contabilidad": [],
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
     "Shelf": {
-        "Farmacéutico": [],
-        "Auxiliar": [],
+        "Farmacéutico": ["R"],  # PR: seleccionar estante destino (custom_to_shelf)
+        "Auxiliar": ["R"],  # PR borrador: estante destino en recepción física
         "Bodeguero": ["R", "W", "C"],
         "Administrativo": ["R"],
         "Contabilidad": [],
@@ -166,8 +214,8 @@ PERMISSIONS_MATRIX = {
     },
     "Shelf Movement": {
         "Farmacéutico": [],
-        "Auxiliar": [],
-        "Bodeguero": ["R", "W", "C"],
+        "Auxiliar": ["R", "W", "C", "S"],  # Movimiento entre estantes
+        "Bodeguero": ["R", "W", "C", "S"],
         "Administrativo": ["R"],
         "Contabilidad": [],
         "Informática": ["R", "W", "C", "D", "S", "X"]
@@ -268,16 +316,139 @@ PERMISSIONS_MATRIX = {
         "Contabilidad": ["R", "W", "C", "S"],
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
+    # Singles requeridos por POS (pos_controller.js: allow_negative_stock, invoice_type, invoice_fields)
+    "Stock Settings": {
+        "Farmacéutico": ["R"],
+        "Auxiliar": ["R"],
+        "Bodeguero": [],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "POS Settings": {
+        "Farmacéutico": ["R"],
+        "Auxiliar": ["R"],
+        "Bodeguero": [],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    # POS Invoice valida links contables (debit_to, cuentas de pago, write-off, cost center)
+    "Account": {
+        "Farmacéutico": ["R"],
+        "Auxiliar": ["R"],
+        "Bodeguero": [],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R", "W", "C"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Cost Center": {
+        "Farmacéutico": ["R"],
+        "Auxiliar": ["R"],
+        "Bodeguero": [],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R", "W", "C"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Mode of Payment": {
+        "Farmacéutico": ["R"],
+        "Auxiliar": ["R"],
+        "Bodeguero": [],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R", "W", "C"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "UOM": {
+        "Farmacéutico": ["R"],
+        "Auxiliar": ["R"],
+        "Bodeguero": ["R"],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    # Recibo de compra / PO leen configuración global de compras (purchase_receipt.js)
+    "Buying Settings": {
+        "Farmacéutico": ["R"],
+        "Auxiliar": ["R"],
+        "Bodeguero": ["R"],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Stock Ledger Entry": {
+        "Farmacéutico": ["R"],
+        "Auxiliar": ["R"],
+        "Bodeguero": ["R"],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Serial and Batch Bundle": {
+        "Farmacéutico": ["R"],
+        "Auxiliar": ["R", "W", "C"],
+        "Bodeguero": ["R", "W", "C"],
+        "Administrativo": ["R"],
+        "Contabilidad": [],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Delivery Note": {
+        "Farmacéutico": ["R"],
+        "Auxiliar": ["R"],
+        "Bodeguero": [],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Purchase Taxes and Charges Template": {
+        "Farmacéutico": ["R"],
+        "Auxiliar": ["R"],
+        "Bodeguero": ["R"],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
     "Purchase Invoice": {
-        "Farmacéutico": [],
+        "Farmacéutico": ["R"],  # Consulta facturas de compra (sin contabilizar)
         "Auxiliar": [],
         "Bodeguero": [],
         "Administrativo": ["R"],
         "Contabilidad": ["R", "W", "S", "X"],  # Necesita Write para Submit/Cancel
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
-    "Supplier": {
+    "Supplier Group": {
+        "Farmacéutico": ["R", "W", "C"],
+        "Auxiliar": ["R"],
+        "Bodeguero": ["R"],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Contact": {
+        "Farmacéutico": ["R", "W", "C"],
+        "Auxiliar": ["R", "W", "C"],
+        "Bodeguero": [],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Address": {
+        "Farmacéutico": ["R", "W", "C"],
+        "Auxiliar": ["R", "W", "C"],
+        "Bodeguero": [],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Terms and Conditions": {
         "Farmacéutico": ["R"],
+        "Auxiliar": ["R"],
+        "Bodeguero": ["R"],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Supplier": {
+        "Farmacéutico": ["R", "W", "C"],
         "Auxiliar": ["R"],
         "Bodeguero": ["R", "W", "C"],
         "Administrativo": ["R"],
@@ -301,7 +472,7 @@ PERMISSIONS_MATRIX = {
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
     "Material Request": {
-        "Farmacéutico": [],
+        "Farmacéutico": ["R", "W", "C", "S"],
         "Auxiliar": [],
         "Bodeguero": ["R", "W", "C", "S"],
         "Administrativo": ["R"],
@@ -309,7 +480,7 @@ PERMISSIONS_MATRIX = {
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
     "Request for Quotation": {
-        "Farmacéutico": [],
+        "Farmacéutico": ["R", "W", "C", "S"],
         "Auxiliar": [],
         "Bodeguero": ["R", "W", "C", "S"],
         "Administrativo": ["R"],
@@ -317,7 +488,7 @@ PERMISSIONS_MATRIX = {
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
     "Supplier Quotation": {
-        "Farmacéutico": [],
+        "Farmacéutico": ["R", "W", "C", "S"],
         "Auxiliar": [],
         "Bodeguero": ["R", "W", "C", "S"],
         "Administrativo": ["R"],
@@ -333,8 +504,8 @@ PERMISSIONS_MATRIX = {
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
     "Sales Order": {
-        "Farmacéutico": [],
-        "Auxiliar": [],
+        "Farmacéutico": ["R"],  # Tablero Ventas (tarjetas y reportes estándar)
+        "Auxiliar": ["R"],
         "Bodeguero": ["R"],
         "Administrativo": ["R"],
         "Contabilidad": ["R"],
@@ -368,6 +539,10 @@ PERMISSIONS_MATRIX = {
 # Roles operativos UAT: solo DocTypes en PERMISSIONS_MATRIX (o base módulo explícito).
 # Evita que la estrategia extendida herede permisos genéricos de ERPNext por módulo.
 OPERATIONAL_WHITELIST_ROLES = frozenset({"Farmacéutico", "Auxiliar"})
+
+# Perfiles administración/contabilidad: permisos vía roles estándar ERPNext (Accounts Manager, …).
+# No aplicar estrategia extendida ni matriz; Administrativo/Contabilidad son etiquetas de perfil/escritorio.
+ERPNEXT_STANDARD_PERMISSION_ROLES = frozenset({"Administrativo", "Contabilidad"})
 
 EXCLUDED_DOCTYPES = [
     "Role",
@@ -443,6 +618,9 @@ def get_doctype_permissions(doctype, role):
     Returns:
         Lista de permisos o None si no se deben configurar permisos
     """
+    if role in ERPNEXT_STANDARD_PERMISSION_ROLES:
+        return None
+
     # 1. Permisos específicos (máxima prioridad)
     if doctype in PERMISSIONS_MATRIX and role in PERMISSIONS_MATRIX[doctype]:
         return PERMISSIONS_MATRIX[doctype][role]
@@ -628,6 +806,13 @@ def setup_permissions_for_role(role_name, use_extended_strategy=True):
                               Si False, solo usa PERMISSIONS_MATRIX (compatibilidad hacia atrás)
     """
     logger.info(f"Configurando permisos para rol: {role_name}")
+
+    if role_name in ERPNEXT_STANDARD_PERMISSION_ROLES:
+        logger.info(
+            "  Rol %s: permisos ERPNext estándar (sin sobrescribir DocPerm)",
+            role_name,
+        )
+        return 0, 0
     
     configured = 0
     skipped = 0

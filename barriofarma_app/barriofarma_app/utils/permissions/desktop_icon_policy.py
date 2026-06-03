@@ -81,17 +81,26 @@ def get_desktop_icon_policy(user=None):
 
 
 def get_hidden_desktop_icons(user=None):
+	user = user or frappe.session.user
 	policy = get_desktop_icon_policy(user)
+	profile_name = get_profile_name_for_user(user)
+
 	hidden = set(policy.get("hidden_desktop_icons") or [])
-	hidden |= set(ACCOUNTING_DESKTOP_ICONS)
-	hidden |= set(SETUP_DESKTOP_ICONS_TO_HIDE)
-	hidden |= set(OPTIONAL_DESKTOP_ICONS_TO_HIDE)
-	if get_profile_name_for_user(user):
+	hidden |= SETUP_DESKTOP_ICONS_TO_HIDE
+	hidden |= OPTIONAL_DESKTOP_ICONS_TO_HIDE
+
+	if profile_name:
+		# Perfiles BarrioFarma mapeados (farmacia, bodega, admin, contabilidad)
 		hidden |= OPERATIONAL_DESKTOP_ICONS_TO_HIDE
-	if not policy.get("visible_accounts_desktop", False):
-		pass  # ACCOUNTING_DESKTOP_ICONS ya incluidos salvo perfil contable
-	if policy.get("visible_accounts_desktop"):
-		hidden -= ACCOUNTING_DESKTOP_ICONS
+		if not policy.get("visible_accounts_desktop", False):
+			hidden |= ACCOUNTING_DESKTOP_ICONS
+	else:
+		# System Manager, Administrator, etc.: no aplicar política farmacia.
+		# Solo ocultar Contabilidad si el usuario tiene Accounts en block_modules.
+		blocked = frappe.get_cached_doc("User", user).get_blocked_modules()
+		if "Accounts" in blocked:
+			hidden |= ACCOUNTING_DESKTOP_ICONS
+
 	return hidden
 
 

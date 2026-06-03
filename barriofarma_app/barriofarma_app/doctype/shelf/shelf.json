@@ -133,7 +133,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-30 04:32:30.534127",
+ "modified": "2026-06-03 14:26:32.191021",
  "modified_by": "Administrator",
  "module": "Barriofarma App",
  "name": "Shelf",
@@ -201,6 +201,20 @@
    "report": 1,
    "role": "Inform\u00e1tica",
    "write": 1
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auxiliar"
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Farmac\u00e9utico"
   }
  ],
  "row_format": "Dynamic",

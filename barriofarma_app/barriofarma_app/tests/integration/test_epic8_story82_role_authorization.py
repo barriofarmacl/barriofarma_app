@@ -412,6 +412,49 @@ class TestFarmaceuticoRole(TestEpic8Story82RoleAuthorization):
         self.assertTrue(test_has_permission("Item Price", "write", should_have=True))
         self.assertTrue(test_has_permission("Item Price", "create", should_have=True))
 
+    def test_farmaceutico_can_manage_products_and_pricing_masters(self):
+        """Farmacéutico: tablero Compras — sección Productos y Precios completa"""
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        for dt in (
+            "Product Bundle",
+            "Item Group",
+            "Promotional Scheme",
+            "Pricing Rule",
+        ):
+            self.assertTrue(
+                test_has_permission(dt, "read", should_have=True),
+                msg=f"read {dt}",
+            )
+            self.assertTrue(
+                test_has_permission(dt, "create", should_have=True),
+                msg=f"create {dt}",
+            )
+
+    def test_farmaceutico_can_use_buying_procurement_tools(self):
+        """Farmacéutico: solicitudes, cotizaciones y consulta factura de compra"""
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_has_permission("Material Request", "create", should_have=True))
+        self.assertTrue(test_has_permission("Request for Quotation", "create", should_have=True))
+        self.assertTrue(test_has_permission("Supplier Quotation", "create", should_have=True))
+        self.assertTrue(test_has_permission("Purchase Invoice", "read", should_have=True))
+        self.assertTrue(test_has_permission("Purchase Invoice", "write", should_have=False))
+
+    def test_farmaceutico_can_read_buying_dashboard_reports(self):
+        """Farmacéutico: reportes de gráficos del tablero Compras"""
+        from frappe.boot import get_allowed_report_names
+
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        allowed = get_allowed_report_names()
+        for report in (
+            "Purchase Order Trends",
+            "Purchase Order Analysis",
+            "Purchase Receipt Trends",
+        ):
+            self.assertIn(report, allowed, msg=report)
+
     def test_farmaceutico_can_create_pos_closing_entry(self):
         """Farmacéutico puede cerrar caja POS"""
         frappe.set_user(self.username)
@@ -424,10 +467,19 @@ class TestFarmaceuticoRole(TestEpic8Story82RoleAuthorization):
         frappe.set_user(self.username)
         self.assertTrue(test_can_access_doctype("Stock Entry", should_access=False))
 
-    def test_farmaceutico_cannot_access_shelf(self):
-        """Farmacéutico NO puede acceder a Shelf"""
+    def test_farmaceutico_can_operate_stock_reconciliation(self):
+        """Farmacéutico puede crear y validar Reconciliación de inventarios"""
         frappe.set_user(self.username)
-        self.assertTrue(test_can_access_doctype("Shelf", should_access=False))
+        frappe.clear_cache()
+        self.assertTrue(test_can_access_doctype("Stock Reconciliation", should_access=True))
+        self.assertTrue(test_has_permission("Stock Reconciliation", "create", should_have=True))
+        self.assertTrue(test_has_permission("Stock Reconciliation", "submit", should_have=True))
+
+    def test_farmaceutico_can_read_shelf(self):
+        """Farmacéutico puede leer Shelf (PR, reconciliación de inventario)"""
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_has_permission("Shelf", "read", should_have=True))
 
 
 class TestAuxiliarRole(TestEpic8Story82RoleAuthorization):
@@ -504,16 +556,66 @@ class TestAuxiliarRole(TestEpic8Story82RoleAuthorization):
         self.assertTrue(test_has_permission("POS Closing Entry", "create", should_have=True))
         self.assertTrue(test_has_permission("POS Closing Entry", "submit", should_have=True))
 
+    def test_auxiliar_can_read_pos_and_stock_settings(self):
+        """Auxiliar puede leer singles y maestros contables mínimos para POS."""
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_has_permission("Stock Settings", "read", should_have=True))
+        self.assertTrue(test_has_permission("POS Settings", "read", should_have=True))
+        self.assertTrue(test_has_permission("Account", "read", should_have=True))
+        self.assertTrue(test_has_permission("Cost Center", "read", should_have=True))
+        self.assertTrue(test_has_permission("Mode of Payment", "read", should_have=True))
+        self.assertTrue(test_has_permission("UOM", "read", should_have=True))
+        self.assertTrue(test_has_permission("Buying Settings", "read", should_have=True))
+
+    def test_auxiliar_can_read_shelf_for_purchase_receipt(self):
+        """Auxiliar puede leer Shelf para asignar estante en líneas de PR"""
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_has_permission("Shelf", "read", should_have=True))
+
     def test_auxiliar_can_read_purchase_order(self):
         """Auxiliar puede leer Purchase Order para enlazar PR"""
         frappe.set_user(self.username)
         frappe.clear_cache()
         self.assertTrue(test_can_access_doctype("Purchase Order", should_access=True))
 
-    def test_auxiliar_cannot_access_stock_entry(self):
-        """Auxiliar NO puede acceder a Stock Entry"""
+    def test_auxiliar_cannot_read_buying_dashboard_reports(self):
+        """Auxiliar no ve gráficos del tablero Compras (sin roles en reportes de tendencias)"""
+        from frappe.boot import get_allowed_report_names
+
         frappe.set_user(self.username)
-        self.assertTrue(test_can_access_doctype("Stock Entry", should_access=False))
+        frappe.clear_cache()
+        allowed = get_allowed_report_names()
+        for report in (
+            "Purchase Order Trends",
+            "Purchase Order Analysis",
+            "Purchase Receipt Trends",
+        ):
+            self.assertNotIn(report, allowed, msg=report)
+
+    def test_auxiliar_can_operate_stock_entry(self):
+        """Auxiliar puede trasladar stock entre bodegas (Stock Entry)"""
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_can_access_doctype("Stock Entry", should_access=True))
+        self.assertTrue(test_has_permission("Stock Entry", "create", should_have=True))
+        self.assertTrue(test_has_permission("Stock Entry", "submit", should_have=True))
+
+    def test_auxiliar_can_operate_shelf_movement(self):
+        """Auxiliar puede mover mercadería entre estantes"""
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_has_permission("Shelf Movement", "create", should_have=True))
+        self.assertTrue(test_has_permission("Shelf Movement", "submit", should_have=True))
+
+    def test_auxiliar_can_operate_stock_reconciliation(self):
+        """Auxiliar puede crear y validar Reconciliación de inventarios"""
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_can_access_doctype("Stock Reconciliation", should_access=True))
+        self.assertTrue(test_has_permission("Stock Reconciliation", "create", should_have=True))
+        self.assertTrue(test_has_permission("Stock Reconciliation", "submit", should_have=True))
 
 
 class TestBodegueroRole(TestEpic8Story82RoleAuthorization):
