@@ -8,7 +8,8 @@ Tablero ``Buying`` (Compras): gráficos tipo Report y workspace ``Purchase Order
 Los Dashboard Chart con ``chart_type=Report`` exigen el reporte en ``get_allowed_report_names()``.
 ERPNext asigna esos reportes a roles estándar (Purchase User, …); Farmacéutico no los trae.
 
-Solo Farmacéutico: Auxiliar no debe ver gráficos de compras (sigue sin roles en estos reportes).
+Farmacéutico (operación) e Informática (mantenedor plataforma): Auxiliar no debe ver
+gráficos de compras (sigue sin roles en estos reportes).
 """
 
 import frappe
@@ -24,14 +25,14 @@ BUYING_DASHBOARD_REPORTS = (
 	"Purchase Receipt Trends",  # Dashboard Chart ``Top Suppliers``
 )
 
-FARMACEUTICO_DASHBOARD_ROLE = ("Farmacéutico",)
+BUYING_DASHBOARD_ROLES = ("Farmacéutico", "Informática")
 
 
 def setup_buying_dashboard_reports():
-	"""Idempotente: reportes del tablero Compras solo para Farmacéutico."""
+	"""Idempotente: reportes del tablero Compras para Farmacéutico e Informática."""
 	all_added = []
 	for report_name in BUYING_DASHBOARD_REPORTS:
-		added = _ensure_report_roles(report_name, FARMACEUTICO_DASHBOARD_ROLE)
+		added = _ensure_report_roles(report_name, BUYING_DASHBOARD_ROLES)
 		if added:
 			all_added.append(f"{report_name}: {', '.join(added)}")
 

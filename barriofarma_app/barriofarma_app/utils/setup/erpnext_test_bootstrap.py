@@ -82,6 +82,26 @@ def _patched_make_shelf(self):
 	ensure_test_warehouse_shelves()
 
 
+def _patched_update_system_settings(self):
+	"""ERPNext test bootstrap fuerza Asia/Kolkata; BarrioFarma opera en Chile."""
+	system_settings = frappe.get_doc("System Settings")
+	system_settings.currency_precision = system_settings.float_precision = 2
+	system_settings.rounding_method = "Banker's Rounding"
+	system_settings.flags.ignore_permissions = True
+	system_settings.save()
+
+
+def _restore_barriofarma_site_locale_after_tests():
+	from barriofarma_app.barriofarma_app.utils.setup.setup_site_locale import (
+		ensure_barriofarma_site_locale,
+	)
+
+	try:
+		ensure_barriofarma_site_locale()
+	except Exception:
+		frappe.logger().exception("BarrioFarma: no se pudo restaurar locale tras test bootstrap")
+
+
 def patch_erpnext_bootstrap_for_barriofarma():
 	global _PATCHED, _BOOTSTRAPPED
 	if _PATCHED:
@@ -89,6 +109,7 @@ def patch_erpnext_bootstrap_for_barriofarma():
 
 	module = _load_erpnext_test_utils_module()
 	module.BootStrapTestData.make_shelf = _patched_make_shelf
+	module.BootStrapTestData.update_system_settings = _patched_update_system_settings
 	_PATCHED = True
 
 	if not _BOOTSTRAPPED and frappe.db and not frappe.db.exists("Company", "_Test Company"):
@@ -146,3 +167,4 @@ def before_tests():
 	"""Hook Frappe: ejecutar antes del preload de test records."""
 	patch_compat_preload_doctype_schema_guard()
 	patch_erpnext_bootstrap_for_barriofarma()
+	_restore_barriofarma_site_locale_after_tests()

@@ -18,25 +18,39 @@ SELLING_DASHBOARD_REPORTS = (
 	"Sales Order Trends",
 )
 
-OPERATIVE_ROLES = ("Farmacéutico", "Auxiliar")
+OPERATIVE_ROLES = ("Farmacéutico", "Auxiliar", "Informática")
 
 
 def _ensure_report_roles(report_name: str, roles: tuple[str, ...]) -> list[str]:
+	"""Añade roles en Report.roles sin guardar el Report (válido con developer_mode=0)."""
 	if not frappe.db.exists("Report", report_name):
 		return []
 
 	added = []
-	report = frappe.get_doc("Report", report_name)
-	existing = {row.role for row in report.roles}
+	existing = set(
+		frappe.get_all(
+			"Has Role",
+			filters={
+				"parent": report_name,
+				"parenttype": "Report",
+				"parentfield": "roles",
+			},
+			pluck="role",
+		)
+	)
 
 	for role in roles:
 		if role not in existing:
-			report.append("roles", {"role": role})
+			frappe.get_doc(
+				{
+					"doctype": "Has Role",
+					"parent": report_name,
+					"parenttype": "Report",
+					"parentfield": "roles",
+					"role": role,
+				}
+			).insert(ignore_permissions=True)
 			added.append(role)
-
-	if added:
-		report.flags.ignore_permissions = True
-		report.save(ignore_permissions=True)
 
 	return added
 

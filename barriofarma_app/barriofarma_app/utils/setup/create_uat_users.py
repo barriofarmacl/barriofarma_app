@@ -70,8 +70,8 @@ UAT_USERS = [
     },
     {
         "email": "eduardo.araya@barriofarma.cl",
-        "full_name": "Eduardo Araya - Administrador Sistema",
-        "roles": ["System Manager"],
+        "full_name": "Eduardo Araya - Informática",
+        "profile_name": "Perfil Informática",
         "username": "eduardo.araya",
         "password": "Admin2026!",
         "enabled": True,
@@ -298,7 +298,8 @@ def create_uat_user(user_config):
             "full_name": full_name,
             "enabled": enabled,
             "send_welcome_email": False,
-            "user_type": "System User"
+            "user_type": "System User",
+            "time_zone": "America/Santiago",
         })
         user.insert(ignore_permissions=True)
         # Actualizar username después de insertar si es necesario
@@ -616,11 +617,20 @@ def verify_uat_users_roles():
         # Obtener roles esperados de la configuración (buscar por username o email)
         user_config = next((u for u in UAT_USERS if u["username"] == user.name or u["email"] == user.email), None)
         if user_config:
-            expected_roles = user_config.get("roles", [])
-            if not expected_roles and "role" in user_config:
-                expected_roles = [user_config["role"]]
-            if isinstance(expected_roles, str):
-                expected_roles = [expected_roles]
+            profile_name = user_config.get("profile_name")
+            if profile_name:
+                from barriofarma_app.barriofarma_app.utils.permissions.setup_user_profiles import (
+                    USER_PROFILES,
+                )
+
+                profile = USER_PROFILES.get(profile_name, {})
+                expected_roles = profile.get("custom_roles", []) + profile.get("standard_roles", [])
+            else:
+                expected_roles = user_config.get("roles", [])
+                if not expected_roles and "role" in user_config:
+                    expected_roles = [user_config["role"]]
+                if isinstance(expected_roles, str):
+                    expected_roles = [expected_roles]
         else:
             expected_roles = []
         

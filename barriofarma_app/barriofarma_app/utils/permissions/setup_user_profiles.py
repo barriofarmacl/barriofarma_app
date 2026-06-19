@@ -100,6 +100,8 @@ MANAGED_STANDARD_ROLES = frozenset({
     "Accounts Manager",
     "CRM User",
     "System Manager",
+    "Dashboard Manager",
+    "Workspace Manager",
 }) | frozenset(ADMIN_ERPNEXT_STANDARD_ROLES)
 
 USER_PROFILES = {
@@ -154,6 +156,22 @@ USER_PROFILES = {
         "custom_roles": ["Auxiliar"],
         "standard_roles": [],
         "use_minimal_roles": True,
+    },
+    "Perfil Informática": {
+        "description": (
+            "Administrador plataforma BarrioFarma (Eduardo): KPIs Desk, workspaces públicos, "
+            "gestión de usuarios/perfiles; revisión operativa compras/ventas/stock/contabilidad."
+        ),
+        "visible_modules": ["Buying", "Selling", "Stock", "Accounts"],
+        "extra_modules": ["Setup"],
+        "extra_desktop_icons": ["Organization"],
+        "custom_roles": ["Informática"],
+        "standard_roles": [
+            "Dashboard Manager",
+            "Workspace Manager",
+            "System Manager",
+        ],
+        "use_minimal_roles": False,
     },
 }
 

@@ -41,6 +41,9 @@ def check_pos_page_access():
 			"Cost Center",
 			"Mode of Payment",
 			"UOM",
+			"Territory",
+			"Customer Group",
+			"Currency",
 		):
 			ok = frappe.has_permission(dt, "read")
 			print(email, dt, "read=", ok)

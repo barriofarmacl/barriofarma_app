@@ -1,0 +1,12 @@
+/* BarrioFarma — POS shelf field: same 2-column grid cell as ERPNext item details */
+
+.point-of-sale-app .item-details-container > .form-container > .barriofarma_shelf_info-control .control-input {
+	cursor: default;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.point-of-sale-app .item-details-container > .form-container > .barriofarma_shelf_info-control .control-input:focus {
+	box-shadow: none;
+}

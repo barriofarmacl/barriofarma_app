@@ -455,6 +455,12 @@ class TestFarmaceuticoRole(TestEpic8Story82RoleAuthorization):
         ):
             self.assertIn(report, allowed, msg=report)
 
+    def test_farmaceutico_can_read_bin_for_shortage_report(self):
+        """Farmacéutico: lectura Bin (Papelera) requerida por Item Shortage Report"""
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_has_permission("Bin", "read", should_have=True))
+
     def test_farmaceutico_can_create_pos_closing_entry(self):
         """Farmacéutico puede cerrar caja POS"""
         frappe.set_user(self.username)
@@ -567,6 +573,12 @@ class TestAuxiliarRole(TestEpic8Story82RoleAuthorization):
         self.assertTrue(test_has_permission("Mode of Payment", "read", should_have=True))
         self.assertTrue(test_has_permission("UOM", "read", should_have=True))
         self.assertTrue(test_has_permission("Buying Settings", "read", should_have=True))
+        self.assertTrue(test_has_permission("Territory", "read", should_have=True))
+        self.assertTrue(test_has_permission("Customer Group", "read", should_have=True))
+        self.assertTrue(test_has_permission("Currency", "read", should_have=True))
+        self.assertTrue(
+            test_has_permission("Sales Taxes and Charges Template", "read", should_have=True)
+        )
 
     def test_auxiliar_can_read_shelf_for_purchase_receipt(self):
         """Auxiliar puede leer Shelf para asignar estante en líneas de PR"""
@@ -801,6 +813,24 @@ class TestInformaticaRole(TestEpic8Story82RoleAuthorization):
                 self.assertTrue(test_has_permission(doctype, "write", should_have=True))
                 self.assertTrue(test_has_permission(doctype, "create", should_have=True))
                 self.assertTrue(test_has_permission(doctype, "delete", should_have=True))
+
+    def test_informatica_can_read_buying_dashboard_reports(self):
+        """Informática: reportes de gráficos del tablero Compras (mantenedor plataforma)"""
+        from barriofarma_app.barriofarma_app.utils.permissions.setup_buying_dashboard_access import (
+            setup_buying_dashboard_reports,
+        )
+        from frappe.boot import get_allowed_report_names
+
+        setup_buying_dashboard_reports()
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        allowed = get_allowed_report_names()
+        for report in (
+            "Purchase Order Trends",
+            "Purchase Order Analysis",
+            "Purchase Receipt Trends",
+        ):
+            self.assertIn(report, allowed, msg=report)
 
 
 class TestEdgeCases(TestEpic8Story82RoleAuthorization):

@@ -10,6 +10,15 @@ Story 8.1: Refinamiento de Gestión de Usuarios y Roles
 import frappe
 
 
+def after_install():
+    """Hook tras instalar la app en un sitio nuevo (QA/UAT/PROD/dev).
+
+    Asegura el locale del entorno desde el minuto cero para que un fresh install
+    no quede en el default Asia/Kolkata de Frappe.
+    """
+    setup_site_locale()
+
+
 def after_migrate():
     """
     Hook ejecutado después de cada migración
@@ -24,6 +33,49 @@ def after_migrate():
     setup_buying_dashboard_access()
     setup_stock_dashboard_access()
     setup_admin_accounting_access()
+    setup_barriofarma_dashboard_widgets()
+    setup_informatica_maintainer()
+    setup_site_locale()
+
+
+def setup_site_locale():
+    """Zona horaria America/Santiago (evita fechas POS/reportes desfasadas)."""
+    from barriofarma_app.barriofarma_app.utils.setup.setup_site_locale import (
+        ensure_barriofarma_site_locale,
+    )
+
+    try:
+        changed = ensure_barriofarma_site_locale()
+        if changed:
+            frappe.logger().info("BarrioFarma site locale: %s", "; ".join(changed))
+    except Exception as e:
+        frappe.logger().error("BarrioFarma site locale: %s", str(e))
+
+
+def setup_barriofarma_dashboard_widgets():
+    """Number Card / Dashboard Chart BF + embed Selling/Buying/Stock."""
+    from barriofarma_app.barriofarma_app.utils.dashboard.barriofarma_dashboard_widgets import (
+        setup_barriofarma_dashboard,
+    )
+
+    try:
+        setup_barriofarma_dashboard()
+    except Exception as e:
+        frappe.logger().error("BarrioFarma dashboard widgets: %s", str(e))
+
+
+def setup_informatica_maintainer():
+    """Rol mantenedor prod: eduardo.araya@barriofarma.cl."""
+    from barriofarma_app.barriofarma_app.utils.setup.setup_informatica_maintainer import (
+        ensure_informatica_maintainer_roles,
+    )
+
+    try:
+        added = ensure_informatica_maintainer_roles()
+        if added:
+            frappe.logger().info("Informática maintainer roles: %s", ", ".join(added))
+    except Exception as e:
+        frappe.logger().error("Informática maintainer setup: %s", str(e))
 
 
 def setup_custom_roles():
@@ -112,7 +164,7 @@ def setup_selling_dashboard_access():
 
 
 def setup_buying_dashboard_access():
-    """Gráficos del tablero Compras solo para Farmacéutico (no Auxiliar)."""
+    """Gráficos del tablero Compras para Farmacéutico e Informática (no Auxiliar)."""
     from barriofarma_app.barriofarma_app.utils.permissions.setup_buying_dashboard_access import (
         setup_buying_dashboard_reports,
     )

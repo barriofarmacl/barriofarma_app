@@ -15,7 +15,7 @@ from barriofarma_app.barriofarma_app.utils.permissions.setup_selling_dashboard_a
 	_ensure_report_roles,
 )
 
-OPERATIVE_ROLES = ("Farmacéutico", "Auxiliar")
+OPERATIVE_ROLES = ("Farmacéutico", "Auxiliar", "Informática")
 
 # Existencias y trazabilidad (farmacia)
 STOCK_INVENTORY_REPORTS = (
@@ -24,6 +24,7 @@ STOCK_INVENTORY_REPORTS = (
 	"Warehouse Wise Stock Balance",
 	"Batch Item Expiry Status",
 	"Batch-Wise Balance History",
+	"Item Shortage Report",  # ES: Reporte de productos con stock bajo
 )
 
 # Gráficos del tablero Stock estándar (tipo Report)

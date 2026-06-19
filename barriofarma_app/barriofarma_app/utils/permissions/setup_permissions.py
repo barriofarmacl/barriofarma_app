@@ -236,6 +236,22 @@ PERMISSIONS_MATRIX = {
         "Contabilidad": ["R"],
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
+    "Customer Group": {
+        "Farmacéutico": ["R"],
+        "Auxiliar": ["R"],
+        "Bodeguero": [],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Territory": {
+        "Farmacéutico": ["R"],
+        "Auxiliar": ["R"],
+        "Bodeguero": [],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
     "Patient": {
         "Farmacéutico": ["R", "W", "C"],
         "Auxiliar": ["R", "W", "C"],
@@ -289,6 +305,14 @@ PERMISSIONS_MATRIX = {
         "Auxiliar": ["R"],
         "Bodeguero": ["R"],
         "Administrativo": ["R", "W", "C"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Currency": {
+        "Farmacéutico": ["R"],
+        "Auxiliar": ["R"],
+        "Bodeguero": ["R"],
+        "Administrativo": ["R"],
         "Contabilidad": ["R"],
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
@@ -383,6 +407,14 @@ PERMISSIONS_MATRIX = {
         "Contabilidad": ["R"],
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
+    "Bin": {
+        "Farmacéutico": ["R"],
+        "Auxiliar": ["R"],
+        "Bodeguero": ["R"],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
     "Serial and Batch Bundle": {
         "Farmacéutico": ["R"],
         "Auxiliar": ["R", "W", "C"],
@@ -403,6 +435,14 @@ PERMISSIONS_MATRIX = {
         "Farmacéutico": ["R"],
         "Auxiliar": ["R"],
         "Bodeguero": ["R"],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"]
+    },
+    "Sales Taxes and Charges Template": {
+        "Farmacéutico": ["R"],
+        "Auxiliar": ["R"],
+        "Bodeguero": [],
         "Administrativo": ["R"],
         "Contabilidad": ["R"],
         "Informática": ["R", "W", "C", "D", "S", "X"]
@@ -662,43 +702,106 @@ def _build_perm_values(permissions, is_submittable):
     }
 
 
-def _sync_custom_docperm(doctype, role, perm_values, permlevel=0):
-    """
-    Sincronizar Custom DocPerm cuando el DocType ya usa permisos custom.
+def _ensure_custom_perm_bootstrap(doctype):
+	"""Bootstrap Custom DocPerm rows from standard DocPerm when needed (grant path)."""
+	frappe.permissions.setup_custom_perms(doctype)
 
-    En Frappe v16, si existen filas en Custom DocPerm para un DocType, esas filas
-    sustituyen a DocPerm estándar para permisos efectivos.
-    """
-    filters = {"parent": doctype, "role": role, "permlevel": permlevel}
-    custom_name = frappe.db.get_value("Custom DocPerm", filters)
 
-    if custom_name:
-        custom = frappe.get_doc("Custom DocPerm", custom_name)
-        for key, value in perm_values.items():
-            if hasattr(custom, "meta") and custom.meta.has_field(key):
-                setattr(custom, key, value)
-            elif hasattr(custom, key):
-                setattr(custom, key, value)
-        custom.save(ignore_permissions=True)
-        return True
+def _custom_docperm_filters(doctype, role, permlevel=0):
+	return {"parent": doctype, "role": role, "permlevel": permlevel, "if_owner": 0}
 
-    if frappe.db.exists("Custom DocPerm", {"parent": doctype}):
-        if not any(perm_values.get(k) for k in ("read", "write", "create", "delete", "submit")):
-            return False
-        frappe.get_doc(
-            {
-                "doctype": "Custom DocPerm",
-                "parent": doctype,
-                "parenttype": "DocType",
-                "parentfield": "permissions",
-                "role": role,
-                "permlevel": permlevel,
-                **perm_values,
-            }
-        ).insert(ignore_permissions=True)
-        return True
 
-    return False
+def _set_docperm_on_custom_doctype(doctype, role, perm_values, permlevel=0):
+	"""Legacy path: DocTypes with custom=1 may use DocType.save()."""
+	doc = frappe.get_doc("DocType", doctype)
+	existing_perm = None
+	for perm in doc.permissions:
+		if perm.role == role and perm.permlevel == permlevel:
+			existing_perm = perm
+			break
+
+	if existing_perm:
+		for key, value in perm_values.items():
+			setattr(existing_perm, key, value)
+	else:
+		doc.append(
+			"permissions",
+			{"role": role, "permlevel": permlevel, **perm_values},
+		)
+
+	doc.save(ignore_permissions=True)
+	frappe.db.commit()
+	return True
+
+
+def _remove_docperm_on_custom_doctype(doctype, role, permlevel=0):
+	"""Legacy path: remove DocPerm row on custom DocTypes via DocType.save()."""
+	doc = frappe.get_doc("DocType", doctype)
+	before = len(doc.permissions)
+	doc.permissions = [
+		p for p in doc.permissions if not (p.role == role and p.permlevel == permlevel)
+	]
+	if len(doc.permissions) < before:
+		doc.save(ignore_permissions=True)
+
+	custom_name = frappe.db.get_value("Custom DocPerm", _custom_docperm_filters(doctype, role, permlevel))
+	if custom_name:
+		frappe.delete_doc("Custom DocPerm", custom_name, ignore_permissions=True, force=True)
+
+	frappe.db.commit()
+	return True
+
+
+def _apply_custom_docperm(doctype, role, perm_values, permlevel=0):
+	"""Materialize perm_values in Custom DocPerm. No DocType.save on standard doctypes."""
+	if frappe.db.get_value("DocType", doctype, "custom"):
+		return _set_docperm_on_custom_doctype(doctype, role, perm_values, permlevel)
+
+	try:
+		_ensure_custom_perm_bootstrap(doctype)
+		custom_name = frappe.db.get_value("Custom DocPerm", _custom_docperm_filters(doctype, role, permlevel))
+		if custom_name:
+			custom = frappe.get_doc("Custom DocPerm", custom_name)
+			for key, value in perm_values.items():
+				setattr(custom, key, value)
+			custom.save(ignore_permissions=True)
+		else:
+			frappe.get_doc(
+				{
+					"doctype": "Custom DocPerm",
+					"parent": doctype,
+					"parenttype": "DocType",
+					"parentfield": "permissions",
+					"role": role,
+					"permlevel": permlevel,
+					"if_owner": 0,
+					**perm_values,
+				}
+			).insert(ignore_permissions=True)
+		frappe.db.commit()
+		return True
+	except Exception as e:
+		logger.error(f"Error al configurar Custom DocPerm para {doctype}/{role}: {e}")
+		frappe.db.rollback()
+		return False
+
+
+def _delete_custom_docperm_row(doctype, role, permlevel=0):
+	"""Delete Custom DocPerm row for role. Idempotent when row is missing."""
+	if frappe.db.get_value("DocType", doctype, "custom"):
+		return _remove_docperm_on_custom_doctype(doctype, role, permlevel)
+
+	try:
+		custom_name = frappe.db.get_value("Custom DocPerm", _custom_docperm_filters(doctype, role, permlevel))
+		if not custom_name:
+			return True
+		frappe.delete_doc("Custom DocPerm", custom_name, ignore_permissions=True, force=True)
+		frappe.db.commit()
+		return True
+	except Exception as e:
+		logger.error(f"Error al quitar Custom DocPerm {doctype}/{role}: {e}")
+		frappe.db.rollback()
+		return False
 
 
 def remove_docperm(doctype, role, permlevel=0):
@@ -712,24 +815,7 @@ def remove_docperm(doctype, role, permlevel=0):
 		return False
 
 	try:
-		doc = frappe.get_doc("DocType", doctype)
-		before = len(doc.permissions)
-		doc.permissions = [
-			p
-			for p in doc.permissions
-			if not (p.role == role and p.permlevel == permlevel)
-		]
-		if len(doc.permissions) < before:
-			doc.save(ignore_permissions=True)
-
-		custom_name = frappe.db.get_value(
-			"Custom DocPerm", {"parent": doctype, "role": role, "permlevel": permlevel}
-		)
-		if custom_name:
-			frappe.delete_doc("Custom DocPerm", custom_name, ignore_permissions=True)
-
-		frappe.db.commit()
-		return True
+		return _delete_custom_docperm_row(doctype, role, permlevel)
 	except Exception as e:
 		logger.error(f"Error al quitar permiso {doctype}/{role}: {e}")
 		frappe.db.rollback()
@@ -737,63 +823,34 @@ def remove_docperm(doctype, role, permlevel=0):
 
 
 def set_docperm(doctype, role, permissions, permlevel=0):
-    """
-    Configurar permisos para un DocType y rol específico
-    
-    Args:
-        doctype: Nombre del DocType
-        role: Nombre del rol
-        permissions: Lista de permisos ['R', 'W', 'C', 'D', 'S', 'X']
-        permlevel: Nivel de permiso (0 = nivel base)
-    """
-    if not frappe.db.exists("DocType", doctype):
-        logger.warning(f"DocType '{doctype}' no existe, omitiendo configuración de permisos")
-        return False
-    
-    if not frappe.db.exists("Role", role):
-        logger.warning(f"Rol '{role}' no existe, omitiendo configuración de permisos")
-        return False
+	"""
+	Configurar permisos para un DocType y rol específico
 
-    if not permissions:
-        return remove_docperm(doctype, role, permlevel)
-    
-    try:
-        # Obtener el DocType
-        doc = frappe.get_doc("DocType", doctype)
-        
-        # Buscar permiso existente para este rol y nivel
-        existing_perm = None
-        for perm in doc.permissions:
-            if perm.role == role and perm.permlevel == permlevel:
-                existing_perm = perm
-                break
-        
-        # Verificar si el DocType es submittable
-        is_submittable = doc.is_submittable
-        perm_values = _build_perm_values(permissions, is_submittable)
-        _sync_custom_docperm(doctype, role, perm_values, permlevel)
-        
-        if existing_perm:
-            # Actualizar permiso existente
-            for key, value in perm_values.items():
-                setattr(existing_perm, key, value)
-        else:
-            # Crear nuevo permiso
-            doc.append("permissions", {
-                "role": role,
-                "permlevel": permlevel,
-                **perm_values
-            })
-        
-        # Guardar el DocType
-        doc.save(ignore_permissions=True)
-        frappe.db.commit()
-        return True
-        
-    except Exception as e:
-        logger.error(f"Error al configurar permiso para {doctype}/{role}: {str(e)}")
-        frappe.db.rollback()
-        return False
+	Args:
+		doctype: Nombre del DocType
+		role: Nombre del rol
+		permissions: Lista de permisos ['R', 'W', 'C', 'D', 'S', 'X']
+		permlevel: Nivel de permiso (0 = nivel base)
+	"""
+	if not frappe.db.exists("DocType", doctype):
+		logger.warning(f"DocType '{doctype}' no existe, omitiendo configuración de permisos")
+		return False
+
+	if not frappe.db.exists("Role", role):
+		logger.warning(f"Rol '{role}' no existe, omitiendo configuración de permisos")
+		return False
+
+	if not permissions:
+		return _delete_custom_docperm_row(doctype, role, permlevel)
+
+	try:
+		is_submittable = frappe.db.get_value("DocType", doctype, "is_submittable")
+		perm_values = _build_perm_values(permissions, is_submittable)
+		return _apply_custom_docperm(doctype, role, perm_values, permlevel)
+	except Exception as e:
+		logger.error(f"Error al configurar permiso para {doctype}/{role}: {str(e)}")
+		frappe.db.rollback()
+		return False
 
 
 def setup_permissions_for_role(role_name, use_extended_strategy=True):
@@ -911,7 +968,8 @@ def setup_all_permissions(use_extended_strategy=True):
         total_skipped += skipped
     
     logger.info(f"Resumen: {total_configured} permisos configurados, {total_skipped} omitidos")
-    
+
+    frappe.clear_cache()
     frappe.db.commit()
 
 

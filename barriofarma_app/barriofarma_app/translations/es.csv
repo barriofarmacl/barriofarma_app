@@ -1,2 +1,3 @@
 Shelf,Estante,
-
+POS opening from a previous day,Apertura de caja de otro día,
+"This cash register was opened on {0}. To sell today, close the shift (POS Closing Entry) and open a new session.","Esta caja se abrió el {0}. Para vender hoy debe cerrar el turno (Cierre de POS) y abrir una nueva jornada.",

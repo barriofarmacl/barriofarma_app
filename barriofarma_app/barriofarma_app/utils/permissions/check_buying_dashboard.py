@@ -18,6 +18,7 @@ BUYING_REPORTS = (
 
 def check_buying_dashboard():
 	for email in (
+		"eduardo.araya@barriofarma.cl",
 		"daniela.araya@barriofarma.cl",
 		"natalia.araya@barriofarma.cl",
 	):

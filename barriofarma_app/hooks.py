@@ -10,9 +10,9 @@ app_license = "mit"
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/barriofarma_app/css/barriofarma_app.css"
+app_include_css = "/assets/barriofarma_app/css/barriofarma_pos.css?v=20260616c"
 app_include_js = [
-	"/assets/barriofarma_app/js/pos_shelf_info.js",
+	"/assets/barriofarma_app/js/pos_shelf_info.js?v=20260616c",
 	"/assets/barriofarma_app/js/barriofarma_number_card_clp.js",
 ]
 
@@ -30,6 +30,7 @@ app_include_js = [
 # include js in page
 page_js = {
 	"stock-balance": "public/js/stock_balance_move_item.js",
+	"point-of-sale": "public/js/pos_opening_entry_message.js",
 }
 
 # include js in doctype views
@@ -37,6 +38,7 @@ doctype_js = {
 	"Stock Reconciliation": "public/js/stock_reconciliation_shelf.js",
 	"Purchase Receipt": "public/js/purchase_receipt_shelf.js",
 	"Stock Entry": "public/js/stock_entry_shelf.js",
+	"User": "public/js/user_americas_timezone.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -74,7 +76,7 @@ doctype_js = {
 # ------------
 
 # before_install = "barriofarma_app.install.before_install"
-# after_install = "barriofarma_app.install.after_install"
+after_install = "barriofarma_app.barriofarma_app.install.after_install"
 
 # Story 8.1: Refinamiento de Gestión de Usuarios y Roles
 # Configurar roles y permisos personalizados después de cada migración
@@ -149,6 +151,14 @@ override_doctype_class = {
 # Hook on document methods and events
 
 doc_events = {
+	"User": {
+		"before_insert": [
+			"barriofarma_app.barriofarma_app.validations.user_timezone.apply_default_user_timezone",
+		],
+		"validate": [
+			"barriofarma_app.barriofarma_app.validations.user_timezone.validate_user_americas_timezone",
+		],
+	},
 	"POS Invoice": {
 		"validate": [
 			"barriofarma_app.barriofarma_app.validations.receta_medica_validation.validate_receta_medica_validity",
