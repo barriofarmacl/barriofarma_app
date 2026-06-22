@@ -443,7 +443,9 @@ class TestFarmaceuticoRole(TestEpic8Story82RoleAuthorization):
 
     def test_farmaceutico_can_read_buying_dashboard_reports(self):
         """Farmacéutico: reportes de gráficos del tablero Compras"""
-        from frappe.boot import get_allowed_report_names
+        from barriofarma_app.barriofarma_app.utils.permissions.frappe_v16_compat import (
+            get_allowed_report_names,
+        )
 
         frappe.set_user(self.username)
         frappe.clear_cache()
@@ -594,7 +596,9 @@ class TestAuxiliarRole(TestEpic8Story82RoleAuthorization):
 
     def test_auxiliar_cannot_read_buying_dashboard_reports(self):
         """Auxiliar no ve gráficos del tablero Compras (sin roles en reportes de tendencias)"""
-        from frappe.boot import get_allowed_report_names
+        from barriofarma_app.barriofarma_app.utils.permissions.frappe_v16_compat import (
+            get_allowed_report_names,
+        )
 
         frappe.set_user(self.username)
         frappe.clear_cache()
@@ -819,7 +823,9 @@ class TestInformaticaRole(TestEpic8Story82RoleAuthorization):
         from barriofarma_app.barriofarma_app.utils.permissions.setup_buying_dashboard_access import (
             setup_buying_dashboard_reports,
         )
-        from frappe.boot import get_allowed_report_names
+        from barriofarma_app.barriofarma_app.utils.permissions.frappe_v16_compat import (
+            get_allowed_report_names,
+        )
 
         setup_buying_dashboard_reports()
         frappe.set_user(self.username)

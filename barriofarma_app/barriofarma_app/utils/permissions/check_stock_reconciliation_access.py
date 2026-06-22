@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import frappe
-from frappe.boot import get_sidebar_items
-from frappe.desk.desktop import get_workspace_sidebar_items
+
+from barriofarma_app.barriofarma_app.utils.permissions.frappe_v16_compat import (
+	get_sidebar_items_for_user,
+)
 
 
 def check_stock_reconciliation_access():
@@ -18,8 +20,7 @@ def check_stock_reconciliation_access():
 			ok = frappe.has_permission("Stock Reconciliation", perm)
 			print(email, "Stock Reconciliation", perm, "=", ok)
 
-		ws = get_workspace_sidebar_items()
-		sidebar = get_sidebar_items([d.name for d in ws.get("pages")])
+		sidebar = get_sidebar_items_for_user()
 		links = [
 			i
 			for i in sidebar.get("stock", {}).get("items", [])

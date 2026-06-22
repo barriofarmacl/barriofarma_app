@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 import frappe
-from frappe.boot import get_sidebar_items
 from frappe.desk.desk_page import get
-from frappe.desk.desktop import get_workspace_sidebar_items
+
+from barriofarma_app.barriofarma_app.utils.permissions.frappe_v16_compat import (
+	get_sidebar_items_for_user,
+)
 
 
 def check_pos_page_access():
@@ -25,8 +27,7 @@ def check_pos_page_access():
 			print(email, "DENIED point-of-sale")
 			continue
 
-		ws = get_workspace_sidebar_items()
-		sidebar = get_sidebar_items([d.name for d in ws.get("pages")])
+		sidebar = get_sidebar_items_for_user()
 		pos_links = [
 			i
 			for i in sidebar.get("selling", {}).get("items", [])
