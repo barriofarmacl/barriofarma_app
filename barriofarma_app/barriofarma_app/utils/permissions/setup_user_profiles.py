@@ -150,7 +150,7 @@ USER_PROFILES = {
     },
     "Perfil Auxiliar": {
         "description": "Auxiliar: PR borrador, POS, Stock Entry, Reconciliación de inventarios, Shelf Movement, reportes de existencias; sin submit PR",
-        "visible_modules": ["Buying", "Selling", "Stock"],
+        "visible_modules": ["Selling", "Stock"],
         "extra_modules": ["Setup"],
         "extra_desktop_icons": ["Organization"],
         "custom_roles": ["Auxiliar"],

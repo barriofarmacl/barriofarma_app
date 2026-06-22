@@ -265,9 +265,14 @@ whitelisted_methods = {
 # Automatically update python controller files with type annotations for this app.
 # export_python_type_annotations = True
 
-# default_log_clearing_doctypes = {
-# 	"Logging DocType Name": 30  # days to retain logs
-# }
-
+boot_session = [
+	"barriofarma_app.barriofarma_app.utils.permissions.desktop_icons_v16.filter_boot_desktop_icons",
+]
 
 website_route_rules = [{'from_route': '/inicio/<path:app_path>', 'to_route': 'inicio'},]
+
+from barriofarma_app.barriofarma_app.utils.permissions.desktop_icons_v16 import (
+	register_desktop_icon_v16_patch,
+)
+
+register_desktop_icon_v16_patch()

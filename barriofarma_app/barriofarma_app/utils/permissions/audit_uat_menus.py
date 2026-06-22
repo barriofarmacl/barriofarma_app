@@ -1,10 +1,16 @@
 # -*- coding: utf-8 -*-
 import frappe
-from frappe.desk.doctype.desktop_icon.desktop_icon import get_desktop_icons, clear_desktop_icons_cache
 from frappe.boot import get_bootinfo
+
+from barriofarma_app.barriofarma_app.utils.permissions.desktop_icons_v16 import (
+	get_desktop_icons,
+	register_desktop_icon_v16_patch,
+)
+from frappe.desk.doctype.desktop_icon.desktop_icon import clear_desktop_icons_cache
 
 
 def audit_uat_menus():
+	register_desktop_icon_v16_patch()
 	for email in ["natalia.araya@barriofarma.cl", "daniela.araya@barriofarma.cl"]:
 		clear_desktop_icons_cache(email)
 		frappe.set_user(email)
