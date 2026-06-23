@@ -163,6 +163,7 @@ USER_PROFILES = {
             "gestión de usuarios/perfiles; revisión operativa compras/ventas/stock/contabilidad."
         ),
         "visible_modules": ["Buying", "Selling", "Stock", "Accounts"],
+        "visible_accounts_desktop": True,
         "extra_modules": ["Setup"],
         "extra_desktop_icons": ["Organization"],
         "custom_roles": ["Informática"],

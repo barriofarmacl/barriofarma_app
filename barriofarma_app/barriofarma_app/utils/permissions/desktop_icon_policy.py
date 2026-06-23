@@ -22,6 +22,7 @@ ROLE_TO_PROFILE = {
 	"Bodeguero": "Perfil Bodeguero",
 	"Administrativo": "Perfil Administrativo",
 	"Contabilidad": "Perfil Contabilidad",
+	"Informática": "Perfil Informática",
 }
 
 # Carpeta Contabilidad y workspaces hijos (module Accounts)
