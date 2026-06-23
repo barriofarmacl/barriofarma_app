@@ -17,6 +17,7 @@ def after_install():
     no quede en el default Asia/Kolkata de Frappe.
     """
     setup_site_locale()
+    apply_desktop_icon_v16_patch()
 
 
 def after_migrate():
@@ -36,6 +37,7 @@ def after_migrate():
     setup_barriofarma_dashboard_widgets()
     setup_informatica_maintainer()
     setup_site_locale()
+    apply_desktop_icon_v16_patch()
 
 
 def setup_site_locale():
@@ -50,6 +52,18 @@ def setup_site_locale():
             frappe.logger().info("BarrioFarma site locale: %s", "; ".join(changed))
     except Exception as e:
         frappe.logger().error("BarrioFarma site locale: %s", str(e))
+
+
+def apply_desktop_icon_v16_patch():
+    """Frappe v16: filtrar iconos Desk según desktop_icon_policy."""
+    from barriofarma_app.barriofarma_app.utils.permissions.desktop_icons_v16 import (
+        apply_desktop_icon_v16_patch as _apply,
+    )
+
+    try:
+        _apply()
+    except Exception as e:
+        frappe.logger().error("Desktop icon v16 patch: %s", str(e))
 
 
 def setup_barriofarma_dashboard_widgets():

@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 import frappe
-from frappe.boot import get_allowed_report_names
 from frappe.desk.doctype.dashboard.dashboard import get_permitted_charts, get_permitted_cards
+
+from barriofarma_app.barriofarma_app.utils.permissions.frappe_v16_compat import (
+	get_allowed_report_names,
+)
 from frappe.desk.desktop import get_desktop_page
 import json
 

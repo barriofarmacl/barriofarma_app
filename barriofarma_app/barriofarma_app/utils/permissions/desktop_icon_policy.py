@@ -22,6 +22,7 @@ ROLE_TO_PROFILE = {
 	"Bodeguero": "Perfil Bodeguero",
 	"Administrativo": "Perfil Administrativo",
 	"Contabilidad": "Perfil Contabilidad",
+	"Informática": "Perfil Informática",
 }
 
 # Carpeta Contabilidad y workspaces hijos (module Accounts)
@@ -56,6 +57,11 @@ OPERATIONAL_DESKTOP_ICONS_TO_HIDE = {
 	"Framework",
 	"Automation",
 	"Email",
+	"Manufacturing",
+	"Projects",
+	"Quality",
+	"Assets",
+	"Support",
 }
 
 FOLDER_LABEL_TO_MODULE = {
@@ -94,6 +100,8 @@ def get_hidden_desktop_icons(user=None):
 		hidden |= OPERATIONAL_DESKTOP_ICONS_TO_HIDE
 		if not policy.get("visible_accounts_desktop", False):
 			hidden |= ACCOUNTING_DESKTOP_ICONS
+		if profile_name == "Perfil Auxiliar":
+			hidden.add("Buying")
 	else:
 		# System Manager, Administrator, etc.: no aplicar política farmacia.
 		# Solo ocultar Contabilidad si el usuario tiene Accounts en block_modules.

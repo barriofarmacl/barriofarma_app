@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 """Verificación rápida de permisos Almacén/Compras para perfiles operativos."""
 import frappe
-from frappe.boot import get_allowed_report_names
 from frappe.desk.desk_page import get
+
+from barriofarma_app.barriofarma_app.utils.permissions.frappe_v16_compat import (
+	get_allowed_report_names,
+)
 
 
 STOCK_REPORTS = (
