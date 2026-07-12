@@ -28,6 +28,7 @@ Buenas prácticas de Frappe:
 import frappe
 from frappe import _
 import logging
+from frappe.utils import cint
 
 logger = logging.getLogger(__name__)
 
@@ -162,7 +163,8 @@ PERMISSIONS_MATRIX = {
         "Bodeguero": ["R"],
         "Administrativo": ["R"],
         "Contabilidad": ["R"],
-        "Informática": ["R", "W", "C", "D", "S", "X"]
+        "Informática": ["R", "W", "C", "D", "S", "X"],
+        "Vendedor Terreno": ["R"],
     },
     "Product Bundle": {
         "Farmacéutico": ["R", "W", "C"],
@@ -226,7 +228,8 @@ PERMISSIONS_MATRIX = {
         "Bodeguero": ["R", "W", "C"],
         "Administrativo": ["R"],
         "Contabilidad": ["R"],
-        "Informática": ["R", "W", "C", "D", "S", "X"]
+        "Informática": ["R", "W", "C", "D", "S", "X"],
+        "Vendedor Terreno": ["R"],
     },
     "Customer": {
         "Farmacéutico": ["R", "W", "C"],
@@ -234,7 +237,8 @@ PERMISSIONS_MATRIX = {
         "Bodeguero": [],
         "Administrativo": ["R"],
         "Contabilidad": ["R"],
-        "Informática": ["R", "W", "C", "D", "S", "X"]
+        "Informática": ["R", "W", "C", "D", "S", "X"],
+        "Vendedor Terreno": ["R", "W", "C"],
     },
     "Customer Group": {
         "Farmacéutico": ["R"],
@@ -306,7 +310,8 @@ PERMISSIONS_MATRIX = {
         "Bodeguero": ["R"],
         "Administrativo": ["R", "W", "C"],
         "Contabilidad": ["R"],
-        "Informática": ["R", "W", "C", "D", "S", "X"]
+        "Informática": ["R", "W", "C", "D", "S", "X"],
+        "Vendedor Terreno": ["R"],
     },
     "Currency": {
         "Farmacéutico": ["R"],
@@ -314,7 +319,8 @@ PERMISSIONS_MATRIX = {
         "Bodeguero": ["R"],
         "Administrativo": ["R"],
         "Contabilidad": ["R"],
-        "Informática": ["R", "W", "C", "D", "S", "X"]
+        "Informática": ["R", "W", "C", "D", "S", "X"],
+        "Vendedor Terreno": ["R"],
     },
     "Item Price": {
         "Farmacéutico": ["R", "W", "C"],
@@ -322,7 +328,8 @@ PERMISSIONS_MATRIX = {
         "Bodeguero": ["R"],
         "Administrativo": ["R", "W", "C"],
         "Contabilidad": ["R"],
-        "Informática": ["R", "W", "C", "D", "S", "X"]
+        "Informática": ["R", "W", "C", "D", "S", "X"],
+        "Vendedor Terreno": ["R"],
     },
     "POS Opening Entry": {
         "Farmacéutico": ["R", "W", "C", "S"],  # Necesita crear y validar POS Opening Entry para usar el POS
@@ -388,7 +395,8 @@ PERMISSIONS_MATRIX = {
         "Bodeguero": ["R"],
         "Administrativo": ["R"],
         "Contabilidad": ["R"],
-        "Informática": ["R", "W", "C", "D", "S", "X"]
+        "Informática": ["R", "W", "C", "D", "S", "X"],
+        "Vendedor Terreno": ["R"],
     },
     # Recibo de compra / PO leen configuración global de compras (purchase_receipt.js)
     "Buying Settings": {
@@ -413,7 +421,8 @@ PERMISSIONS_MATRIX = {
         "Bodeguero": ["R"],
         "Administrativo": ["R"],
         "Contabilidad": ["R"],
-        "Informática": ["R", "W", "C", "D", "S", "X"]
+        "Informática": ["R", "W", "C", "D", "S", "X"],
+        "Vendedor Terreno": ["R"],
     },
     "Serial and Batch Bundle": {
         "Farmacéutico": ["R"],
@@ -445,7 +454,8 @@ PERMISSIONS_MATRIX = {
         "Bodeguero": [],
         "Administrativo": ["R"],
         "Contabilidad": ["R"],
-        "Informática": ["R", "W", "C", "D", "S", "X"]
+        "Informática": ["R", "W", "C", "D", "S", "X"],
+        "Vendedor Terreno": ["R"],
     },
     "Purchase Invoice": {
         "Farmacéutico": ["R"],  # Consulta facturas de compra (sin contabilizar)
@@ -549,7 +559,17 @@ PERMISSIONS_MATRIX = {
         "Bodeguero": ["R"],
         "Administrativo": ["R"],
         "Contabilidad": ["R"],
-        "Informática": ["R", "W", "C", "D", "S", "X"]
+        "Informática": ["R", "W", "C", "D", "S", "X"],
+        "Vendedor Terreno": ["R", "C"],
+    },
+    "Sales Person": {
+        "Farmacéutico": ["R"],
+        "Auxiliar": ["R"],
+        "Bodeguero": [],
+        "Administrativo": ["R"],
+        "Contabilidad": ["R"],
+        "Informática": ["R", "W", "C", "D", "S", "X"],
+        "Vendedor Terreno": ["R"],
     },
     "Company": {
         "Farmacéutico": ["R"],
@@ -557,7 +577,8 @@ PERMISSIONS_MATRIX = {
         "Bodeguero": ["R"],
         "Administrativo": ["R", "W", "C"],
         "Contabilidad": ["R"],
-        "Informática": ["R", "W", "C", "D", "S", "X"]
+        "Informática": ["R", "W", "C", "D", "S", "X"],
+        "Vendedor Terreno": ["R"],
     },
     "Letter Head": {
         "Farmacéutico": ["R"],
@@ -578,7 +599,12 @@ PERMISSIONS_MATRIX = {
 
 # Roles operativos UAT: solo DocTypes en PERMISSIONS_MATRIX (o base módulo explícito).
 # Evita que la estrategia extendida herede permisos genéricos de ERPNext por módulo.
-OPERATIONAL_WHITELIST_ROLES = frozenset({"Farmacéutico", "Auxiliar"})
+OPERATIONAL_WHITELIST_ROLES = frozenset({"Farmacéutico", "Auxiliar", "Vendedor Terreno"})
+
+# Permisos con if_owner=1 por (doctype, role). Default if_owner=0 para el resto.
+PERMISSIONS_IF_OWNER = {
+    ("Sales Order", "Vendedor Terreno"): 1,
+}
 
 # Perfiles administración/contabilidad: permisos vía roles estándar ERPNext (Accounts Manager, …).
 # No aplicar estrategia extendida ni matriz; Administrativo/Contabilidad son etiquetas de perfil/escritorio.
@@ -707,8 +733,12 @@ def _ensure_custom_perm_bootstrap(doctype):
 	frappe.permissions.setup_custom_perms(doctype)
 
 
-def _custom_docperm_filters(doctype, role, permlevel=0):
-	return {"parent": doctype, "role": role, "permlevel": permlevel, "if_owner": 0}
+def _custom_docperm_filters(doctype, role, permlevel=0, if_owner=0):
+	return {"parent": doctype, "role": role, "permlevel": permlevel, "if_owner": cint(if_owner)}
+
+
+def _get_if_owner_for_role(doctype, role):
+	return PERMISSIONS_IF_OWNER.get((doctype, role), 0)
 
 
 def _set_docperm_on_custom_doctype(doctype, role, perm_values, permlevel=0):
@@ -734,7 +764,7 @@ def _set_docperm_on_custom_doctype(doctype, role, perm_values, permlevel=0):
 	return True
 
 
-def _remove_docperm_on_custom_doctype(doctype, role, permlevel=0):
+def _remove_docperm_on_custom_doctype(doctype, role, permlevel=0, if_owner=0):
 	"""Legacy path: remove DocPerm row on custom DocTypes via DocType.save()."""
 	doc = frappe.get_doc("DocType", doctype)
 	before = len(doc.permissions)
@@ -744,7 +774,9 @@ def _remove_docperm_on_custom_doctype(doctype, role, permlevel=0):
 	if len(doc.permissions) < before:
 		doc.save(ignore_permissions=True)
 
-	custom_name = frappe.db.get_value("Custom DocPerm", _custom_docperm_filters(doctype, role, permlevel))
+	custom_name = frappe.db.get_value(
+		"Custom DocPerm", _custom_docperm_filters(doctype, role, permlevel, if_owner)
+	)
 	if custom_name:
 		frappe.delete_doc("Custom DocPerm", custom_name, ignore_permissions=True, force=True)
 
@@ -752,14 +784,16 @@ def _remove_docperm_on_custom_doctype(doctype, role, permlevel=0):
 	return True
 
 
-def _apply_custom_docperm(doctype, role, perm_values, permlevel=0):
+def _apply_custom_docperm(doctype, role, perm_values, permlevel=0, if_owner=0):
 	"""Materialize perm_values in Custom DocPerm. No DocType.save on standard doctypes."""
 	if frappe.db.get_value("DocType", doctype, "custom"):
 		return _set_docperm_on_custom_doctype(doctype, role, perm_values, permlevel)
 
 	try:
 		_ensure_custom_perm_bootstrap(doctype)
-		custom_name = frappe.db.get_value("Custom DocPerm", _custom_docperm_filters(doctype, role, permlevel))
+		custom_name = frappe.db.get_value(
+			"Custom DocPerm", _custom_docperm_filters(doctype, role, permlevel, if_owner)
+		)
 		if custom_name:
 			custom = frappe.get_doc("Custom DocPerm", custom_name)
 			for key, value in perm_values.items():
@@ -774,7 +808,7 @@ def _apply_custom_docperm(doctype, role, perm_values, permlevel=0):
 					"parentfield": "permissions",
 					"role": role,
 					"permlevel": permlevel,
-					"if_owner": 0,
+					"if_owner": cint(if_owner),
 					**perm_values,
 				}
 			).insert(ignore_permissions=True)
@@ -786,13 +820,15 @@ def _apply_custom_docperm(doctype, role, perm_values, permlevel=0):
 		return False
 
 
-def _delete_custom_docperm_row(doctype, role, permlevel=0):
+def _delete_custom_docperm_row(doctype, role, permlevel=0, if_owner=0):
 	"""Delete Custom DocPerm row for role. Idempotent when row is missing."""
 	if frappe.db.get_value("DocType", doctype, "custom"):
-		return _remove_docperm_on_custom_doctype(doctype, role, permlevel)
+		return _remove_docperm_on_custom_doctype(doctype, role, permlevel, if_owner)
 
 	try:
-		custom_name = frappe.db.get_value("Custom DocPerm", _custom_docperm_filters(doctype, role, permlevel))
+		custom_name = frappe.db.get_value(
+			"Custom DocPerm", _custom_docperm_filters(doctype, role, permlevel, if_owner)
+		)
 		if not custom_name:
 			return True
 		frappe.delete_doc("Custom DocPerm", custom_name, ignore_permissions=True, force=True)
@@ -804,7 +840,7 @@ def _delete_custom_docperm_row(doctype, role, permlevel=0):
 		return False
 
 
-def remove_docperm(doctype, role, permlevel=0):
+def remove_docperm(doctype, role, permlevel=0, if_owner=None):
 	"""
 	Elimina permisos del rol en el DocType.
 
@@ -814,15 +850,18 @@ def remove_docperm(doctype, role, permlevel=0):
 	if not frappe.db.exists("DocType", doctype) or not frappe.db.exists("Role", role):
 		return False
 
+	if if_owner is None:
+		if_owner = _get_if_owner_for_role(doctype, role)
+
 	try:
-		return _delete_custom_docperm_row(doctype, role, permlevel)
+		return _delete_custom_docperm_row(doctype, role, permlevel, if_owner)
 	except Exception as e:
 		logger.error(f"Error al quitar permiso {doctype}/{role}: {e}")
 		frappe.db.rollback()
 		return False
 
 
-def set_docperm(doctype, role, permissions, permlevel=0):
+def set_docperm(doctype, role, permissions, permlevel=0, if_owner=None):
 	"""
 	Configurar permisos para un DocType y rol específico
 
@@ -831,6 +870,7 @@ def set_docperm(doctype, role, permissions, permlevel=0):
 		role: Nombre del rol
 		permissions: Lista de permisos ['R', 'W', 'C', 'D', 'S', 'X']
 		permlevel: Nivel de permiso (0 = nivel base)
+		if_owner: 1 para permisos restringidos al owner; None usa PERMISSIONS_IF_OWNER
 	"""
 	if not frappe.db.exists("DocType", doctype):
 		logger.warning(f"DocType '{doctype}' no existe, omitiendo configuración de permisos")
@@ -840,13 +880,22 @@ def set_docperm(doctype, role, permissions, permlevel=0):
 		logger.warning(f"Rol '{role}' no existe, omitiendo configuración de permisos")
 		return False
 
+	if if_owner is None:
+		if_owner = _get_if_owner_for_role(doctype, role)
+
 	if not permissions:
-		return _delete_custom_docperm_row(doctype, role, permlevel)
+		return _delete_custom_docperm_row(doctype, role, permlevel, if_owner)
 
 	try:
+		# Evitar filas duplicadas (if_owner=0 y if_owner=1) que amplían permisos por OR en Frappe.
+		if cint(if_owner):
+			_delete_custom_docperm_row(doctype, role, permlevel, if_owner=0)
+		else:
+			_delete_custom_docperm_row(doctype, role, permlevel, if_owner=1)
+
 		is_submittable = frappe.db.get_value("DocType", doctype, "is_submittable")
 		perm_values = _build_perm_values(permissions, is_submittable)
-		return _apply_custom_docperm(doctype, role, perm_values, permlevel)
+		return _apply_custom_docperm(doctype, role, perm_values, permlevel, if_owner)
 	except Exception as e:
 		logger.error(f"Error al configurar permiso para {doctype}/{role}: {str(e)}")
 		frappe.db.rollback()
@@ -900,13 +949,14 @@ def setup_permissions_for_role(role_name, use_extended_strategy=True):
             permissions = get_doctype_permissions(doctype, role_name)
             
             if permissions is not None:
+                if_owner = _get_if_owner_for_role(doctype, role_name)
                 if permissions:
-                    if set_docperm(doctype, role_name, permissions):
+                    if set_docperm(doctype, role_name, permissions, if_owner=if_owner):
                         configured += 1
                         logger.debug(f"  {doctype}: {', '.join(permissions)}")
                     else:
                         skipped += 1
-                elif remove_docperm(doctype, role_name):
+                elif remove_docperm(doctype, role_name, if_owner=if_owner):
                     configured += 1
                     logger.debug(f"  {doctype}: permiso eliminado (sin acceso)")
                 else:
@@ -917,8 +967,9 @@ def setup_permissions_for_role(role_name, use_extended_strategy=True):
         for doctype, roles_perms in PERMISSIONS_MATRIX.items():
             if role_name in roles_perms:
                 permissions = roles_perms[role_name]
+                if_owner = _get_if_owner_for_role(doctype, role_name)
                 if permissions:
-                    if set_docperm(doctype, role_name, permissions):
+                    if set_docperm(doctype, role_name, permissions, if_owner=if_owner):
                         configured += 1
                         perms_str = ", ".join(permissions)
                         logger.debug(f"  {doctype}: {perms_str}")
@@ -945,7 +996,8 @@ def setup_all_permissions(use_extended_strategy=True):
         "Bodeguero",
         "Administrativo",
         "Contabilidad",
-        "Informática"
+        "Informática",
+        "Vendedor Terreno",
     ]
     
     if use_extended_strategy:

@@ -48,6 +48,11 @@ def create_custom_roles():
             "name": "Informática",
             "desk_access": 1,
             "description": "Rol para personal de informática. Acceso técnico completo y configuración avanzada."
+        },
+        {
+            "name": "Vendedor Terreno",
+            "desk_access": 0,
+            "description": "Rol para vendedores en terreno. Acceso solo via SPA inicio/API REST (catalogo, carrito, Sales Order propias)."
         }
     ]
     
@@ -100,7 +105,8 @@ def verify_roles():
         "Bodeguero",
         "Administrativo",
         "Contabilidad",
-        "Informática"
+        "Informática",
+        "Vendedor Terreno"
     ]
     
     logger.info("=== Verificación de Roles Requeridos ===")
