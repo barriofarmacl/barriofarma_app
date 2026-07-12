@@ -9,12 +9,15 @@ import { Toaster } from 'sonner'
 import './index.css'
 import LoginPage from './pages/login-page';
 import HomePage from "./pages/home";
+import CatalogoPage from './pages/catalogo-page';
+import { RequireAuth } from './components/require-auth';
+import { AppShell } from './components/app-shell';
 
 function App() {
 	const getSiteName = () => {
-		// @ts-ignore
+		// @ts-expect-error Frappe injects boot data into the browser at runtime.
 		if (window.frappe?.boot?.versions?.frappe && (window.frappe.boot.versions.frappe.startsWith('15') || window.frappe.boot.versions.frappe.startsWith('16'))) {
-			// @ts-ignore
+			// @ts-expect-error Frappe injects boot data into the browser at runtime.
 			return window.frappe?.boot?.sitename ?? import.meta.env.VITE_SITE_NAME
 		}
 		return import.meta.env.VITE_SITE_NAME
@@ -32,6 +35,16 @@ function App() {
 		{
 			path: "/inicio/login",
 			element: <LoginPage />,
+		},
+		{
+			path: "/inicio/catalogo",
+			element: (
+				<RequireAuth>
+					<AppShell pageTitle="Catalogo terreno">
+						<CatalogoPage />
+					</AppShell>
+				</RequireAuth>
+			),
 		},
 	]);
 

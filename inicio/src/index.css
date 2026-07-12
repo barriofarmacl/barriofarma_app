@@ -1,3 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Source+Sans+3:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    /* BarrioFarma — farmacia de barrio (Capa 3) */
+    --background: 40 25% 97%;
+    --foreground: 24 10% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 24 10% 12%;
+
+    --primary: 270 52% 32%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 174 55% 36%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 40 18% 93%;
+    --muted-foreground: 25 8% 42%;
+
+    --accent: 174 45% 92%;
+    --accent-foreground: 174 55% 28%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 30 14% 88%;
+    --input: 30 14% 88%;
+    --ring: 270 52% 32%;
+
+    /* Marca oscura (header landing, footer, hero) */
+    --brand: 270 55% 26%;
+    --brand-foreground: 0 0% 100%;
+    --brand-muted: 270 35% 38%;
+    --brand-subtle: 270 45% 94%;
+
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Source Sans 3', system-ui, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 700;
+  }
+}
+
+@layer components {
+  .bf-section-muted {
+    @apply bg-muted;
+  }
+
+  .bf-surface-card {
+    @apply bg-card border border-border rounded-lg shadow-sm;
+  }
+
+  .bf-heading-section {
+    @apply text-3xl font-bold text-center text-primary;
+  }
+
+  .bf-text-muted {
+    @apply text-muted-foreground;
+  }
+}
