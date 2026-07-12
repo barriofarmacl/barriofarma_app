@@ -1,3 +1,5 @@
+// The dev proxy loads Bench runtime configuration outside the Vite source tree.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const common_site_config = require('../../../sites/common_site_config.json');
 const { webserver_port } = common_site_config;
 

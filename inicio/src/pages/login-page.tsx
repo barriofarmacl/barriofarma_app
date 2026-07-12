@@ -10,14 +10,21 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { getLoginErrorMessage } from '@/lib/auth-errors'
 import { normalizeLoginUsername, validateLoginEmail, validateLoginPassword } from '@/lib/login-validation'
+import { DESK_PATH, fetchPostLoginPath } from '@/lib/post-login-redirect'
 
 type FormValues = {
   email: string
   password: string
 }
 
-/** Destino tras login exitoso: Desk ERPNext/Frappe (backoffice). */
-const DESK_PATH = '/app'
+async function redirectAfterLogin() {
+  try {
+    const path = await fetchPostLoginPath()
+    window.location.assign(path)
+  } catch {
+    window.location.assign(DESK_PATH)
+  }
+}
 
 export default function LoginPage() {
   const { login, currentUser, isLoading: authLoading, updateCurrentUser } = useFrappeAuth()
@@ -36,7 +43,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (authLoading) return
     if (currentUser) {
-      window.location.assign(DESK_PATH)
+      void redirectAfterLogin()
     }
   }, [authLoading, currentUser])
 
@@ -56,7 +63,7 @@ export default function LoginPage() {
       })
       updateCurrentUser()
       toast.success('Sesion iniciada')
-      window.location.assign(DESK_PATH)
+      await redirectAfterLogin()
     } catch (e) {
       toast.error(getLoginErrorMessage(e))
     } finally {
@@ -66,18 +73,18 @@ export default function LoginPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Loader2 className="h-10 w-10 animate-spin text-purple-700" aria-label="Cargando" />
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" aria-label="Cargando" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center text-purple-700">Barriofarma</CardTitle>
-          <CardDescription className="text-center text-gray-600">Cerca de ti</CardDescription>
+          <CardTitle className="text-2xl font-bold text-center text-primary font-display">Barriofarma</CardTitle>
+          <CardDescription className="text-center">Cerca de ti</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <CardContent className="space-y-4">
@@ -120,7 +127,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((s) => !s)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
                   aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
                 >
                   {showPassword ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
@@ -134,11 +141,7 @@ export default function LoginPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button
-              type="submit"
-              className="w-full bg-purple-700 hover:bg-purple-800 text-white"
-              disabled={submitting}
-            >
+            <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
@@ -148,14 +151,14 @@ export default function LoginPage() {
                 'Iniciar sesion'
               )}
             </Button>
-            <div className="text-sm text-center text-gray-600">
+            <div className="text-sm text-center text-muted-foreground">
               ¿No recuerdas tu contrasena?{' '}
-              <a href="/login#forgot" className="text-purple-700 hover:underline">
+              <a href="/login#forgot" className="text-primary hover:underline">
                 Recuperar
               </a>
             </div>
             <div className="text-sm text-center">
-              <Link to="/inicio" className="text-gray-500 hover:text-purple-700">
+              <Link to="/inicio" className="text-muted-foreground hover:text-primary">
                 Volver al inicio
               </Link>
             </div>
