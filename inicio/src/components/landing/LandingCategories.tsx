@@ -6,14 +6,14 @@ export function LandingCategories() {
   return (
     <section
       id={SECTION_IDS.categorias}
-      className="py-16 bg-gray-50"
+      className="py-16 bf-section-muted"
       aria-labelledby="landing-cat-title"
     >
       <div className="container mx-auto px-4">
-        <h2 id="landing-cat-title" className="text-3xl font-bold text-center mb-4 text-purple-800">
+        <h2 id="landing-cat-title" className="bf-heading-section mb-4">
           Categorias informativas
         </h2>
-        <p className="text-center text-gray-600 max-w-2xl mx-auto mb-12">
+        <p className="text-center bf-text-muted max-w-2xl mx-auto mb-12">
           Referencia general de lineas que trabajamos en sucursal. Disponibilidad y marcas se confirman
           directamente en farmacia; esta web no es catalogo de venta.
         </p>
@@ -30,12 +30,10 @@ export function LandingCategories() {
                     height={64}
                   />
                 </div>
-                <CardTitle className="text-lg text-purple-800 text-center">{category.title}</CardTitle>
+                <CardTitle className="text-lg text-primary text-center">{category.title}</CardTitle>
               </CardHeader>
               <CardContent>
-                <CardDescription className="text-center text-gray-600">
-                  {category.description}
-                </CardDescription>
+                <CardDescription className="text-center">{category.description}</CardDescription>
               </CardContent>
             </Card>
           ))}
