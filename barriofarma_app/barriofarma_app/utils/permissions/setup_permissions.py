@@ -425,8 +425,8 @@ PERMISSIONS_MATRIX = {
         "Vendedor Terreno": ["R"],
     },
     "Serial and Batch Bundle": {
-        # Farmacéutico: W/C para Stock Reconciliation / trazabilidad lote+serie (whiteboard #78 PR1)
-        "Farmacéutico": ["R", "W", "C"],
+        # Farmacéutico: W/C/S — submit de SABB al confirmar PR/SR (whiteboard #78 PR4)
+        "Farmacéutico": ["R", "W", "C", "S"],
         "Auxiliar": ["R", "W", "C"],
         "Bodeguero": ["R", "W", "C"],
         "Administrativo": ["R"],

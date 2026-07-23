@@ -515,6 +515,7 @@ class TestFarmaceuticoRole(TestEpic8Story82RoleAuthorization):
         self.assertTrue(test_has_permission("Serial and Batch Bundle", "read", should_have=True))
         self.assertTrue(test_has_permission("Serial and Batch Bundle", "write", should_have=True))
         self.assertTrue(test_has_permission("Serial and Batch Bundle", "create", should_have=True))
+        self.assertTrue(test_has_permission("Serial and Batch Bundle", "submit", should_have=True))
 
     def test_farmaceutico_can_create_receta_retenida_item_with_required_fields(self):
         """Farm crea Item Receta Retenida con sanitario, lote, serie y shelf_life (whiteboard #78 PR2)"""
