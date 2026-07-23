@@ -120,7 +120,6 @@ class TestPoPrRecetaRetenidaRoles(unittest.TestCase):
 			has_batch_no=1,
 			has_expiry_date=1,
 			has_serial_no=0,
-			shelf_life_in_days=9999,
 		)
 		self.test_items.append(self.item.name)
 

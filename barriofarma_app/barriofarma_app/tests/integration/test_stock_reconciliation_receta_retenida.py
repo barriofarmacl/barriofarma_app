@@ -5,6 +5,8 @@
 """
 Stock Reconciliation con productos Venta con Receta Retenida (whiteboard #78 PR3).
 
+Perfil canónico RR: lote + caducidad, sin número de serie (SLA farmacia = trazabilidad por lote).
+
 Usa unittest.TestCase (no FrappeTestCase) para evitar preload de test records
 ERPNext / BootStrapTestData sobre _Test Company incompleto tras restore PROD.
 """
@@ -49,23 +51,8 @@ def _make_batch(item_code, batch_id=None, expiry_days=365):
 	return doc
 
 
-def _make_serial(item_code, serial_no=None, batch_no=None):
-	serial_no = serial_no or f"SN-{frappe.generate_hash(length=8)}"
-	payload = {
-		"doctype": "Serial No",
-		"serial_no": serial_no,
-		"item_code": item_code,
-	}
-	if batch_no:
-		payload["batch_no"] = batch_no
-	doc = frappe.get_doc(payload)
-	doc.insert(ignore_permissions=True)
-	frappe.db.commit()
-	return doc
-
-
 class TestStockReconciliationRecetaRetenida(unittest.TestCase):
-	"""Whiteboard #78 PR3."""
+	"""Whiteboard #78 PR3 — RR solo lote (sin serie)."""
 
 	@classmethod
 	def setUpClass(cls):
@@ -80,7 +67,6 @@ class TestStockReconciliationRecetaRetenida(unittest.TestCase):
 		self.test_warehouses = []
 		self.test_shelves = []
 		self.test_batches = []
-		self.test_serials = []
 		self.test_reconciliations = []
 
 		self.warehouse = create_test_warehouse(f"TEST-WH-SR-RR-{frappe.generate_hash(length=6)}")
@@ -101,12 +87,6 @@ class TestStockReconciliationRecetaRetenida(unittest.TestCase):
 					if doc.docstatus == 1:
 						doc.cancel()
 					frappe.delete_doc("Stock Reconciliation", name, force=True, ignore_permissions=True)
-			except Exception:
-				pass
-		for name in self.test_serials:
-			try:
-				if frappe.db.exists("Serial No", name):
-					frappe.delete_doc("Serial No", name, force=True, ignore_permissions=True)
 			except Exception:
 				pass
 		for name in self.test_batches:
@@ -145,9 +125,9 @@ class TestStockReconciliationRecetaRetenida(unittest.TestCase):
 			"has_expiry_date": 1,
 			"create_new_batch": 0,
 			"has_serial_no": 0,
-			"shelf_life_in_days": 9999,
 		}
 		defaults.update(kwargs)
+		defaults["has_serial_no"] = 0
 		defaults.setdefault("batch_number_series", "")
 		defaults.setdefault("serial_no_series", "")
 		item = create_test_item(**defaults)
@@ -156,9 +136,9 @@ class TestStockReconciliationRecetaRetenida(unittest.TestCase):
 			item.name,
 			{
 				"create_new_batch": cint(defaults.get("create_new_batch", 0)),
-				"has_serial_no": cint(defaults.get("has_serial_no", 0)),
+				"has_serial_no": 0,
 				"batch_number_series": defaults.get("batch_number_series") or "",
-				"serial_no_series": defaults.get("serial_no_series") or "",
+				"serial_no_series": "",
 			},
 		)
 		item.reload()
@@ -188,14 +168,14 @@ class TestStockReconciliationRecetaRetenida(unittest.TestCase):
 
 	def test_rr_batch_item_requires_batch_on_reconciliation(self):
 		"""Receta Retenida con lote y create_new_batch=0: SR sin batch_no falla."""
-		item = self._rr_item(has_batch_no=1, has_serial_no=0, create_new_batch=0)
+		item = self._rr_item(has_batch_no=1, create_new_batch=0)
 		doc = self._sr_doc(item.name, batch_no=None)
 		with self.assertRaises((frappe.ValidationError, frappe.MandatoryError)):
 			doc.insert(ignore_permissions=True)
 
 	def test_rr_batch_item_reconciles_when_batch_provided(self):
 		"""Con batch_no informado, SR de Receta Retenida submit OK."""
-		item = self._rr_item(has_batch_no=1, has_serial_no=0, create_new_batch=0)
+		item = self._rr_item(has_batch_no=1, create_new_batch=0)
 		batch = _make_batch(item.name)
 		self.test_batches.append(batch.name)
 
@@ -208,30 +188,6 @@ class TestStockReconciliationRecetaRetenida(unittest.TestCase):
 		doc.reload()
 		self.assertEqual(doc.docstatus, 1)
 		self.assertEqual(doc.items[0].batch_no, batch.name)
-
-	def test_rr_batch_and_serial_item_reconciles_with_explicit_values(self):
-		"""Receta Retenida lote+serie sin series: SR con valores explícitos submit OK."""
-		item = self._rr_item(has_batch_no=1, has_serial_no=1, create_new_batch=0)
-		batch = _make_batch(item.name)
-		self.test_batches.append(batch.name)
-		serial = _make_serial(item.name, batch_no=batch.name)
-		self.test_serials.append(serial.name)
-
-		doc = self._sr_doc(
-			item.name,
-			qty=1,
-			batch_no=batch.name,
-			serial_no=serial.name,
-		)
-		doc.insert(ignore_permissions=True)
-		doc.submit()
-		frappe.db.commit()
-		self.test_reconciliations.append(doc.name)
-
-		doc.reload()
-		self.assertEqual(doc.docstatus, 1)
-		self.assertEqual(doc.items[0].batch_no, batch.name)
-		self.assertTrue(doc.items[0].serial_no)
 
 	def test_venta_libre_still_reconciles_with_shelf(self):
 		"""Venta Libre sigue reconciliable (sin restricción nueva a Receta Retenida)."""

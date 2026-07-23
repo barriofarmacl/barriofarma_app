@@ -518,7 +518,7 @@ class TestFarmaceuticoRole(TestEpic8Story82RoleAuthorization):
         self.assertTrue(test_has_permission("Serial and Batch Bundle", "submit", should_have=True))
 
     def test_farmaceutico_can_create_receta_retenida_item_with_required_fields(self):
-        """Farm crea Item Receta Retenida con sanitario, lote, serie y shelf_life (whiteboard #78 PR2)"""
+        """Farm crea Item Receta Retenida canónico: sanitario + lote, sin serie (whiteboard #78 PR2)"""
         from barriofarma_app.barriofarma_app.utils.permissions.setup_permissions import (
             setup_permissions_for_role,
         )
@@ -545,8 +545,7 @@ class TestFarmaceuticoRole(TestEpic8Story82RoleAuthorization):
                 "custom_sanitary_registration": "ISP-TEST-9999",
                 "has_batch_no": 1,
                 "has_expiry_date": 1,
-                "has_serial_no": 1,
-                "shelf_life_in_days": 9999,
+                "has_serial_no": 0,
             }
         )
         item.insert()
@@ -558,8 +557,7 @@ class TestFarmaceuticoRole(TestEpic8Story82RoleAuthorization):
         self.assertEqual(item.custom_sanitary_registration, "ISP-TEST-9999")
         self.assertEqual(cint(item.has_batch_no), 1)
         self.assertEqual(cint(item.has_expiry_date), 1)
-        self.assertEqual(cint(item.has_serial_no), 1)
-        self.assertEqual(cint(item.shelf_life_in_days), 9999)
+        self.assertEqual(cint(item.has_serial_no), 0)
         self.assertEqual(cint(item.custom_prescription_storage_required), 1)
 
     def test_farmaceutico_receta_retenida_requires_sanitary_registration(self):
@@ -588,8 +586,7 @@ class TestFarmaceuticoRole(TestEpic8Story82RoleAuthorization):
                 "custom_sanitary_registration": "",
                 "has_batch_no": 1,
                 "has_expiry_date": 1,
-                "has_serial_no": 1,
-                "shelf_life_in_days": 9999,
+                "has_serial_no": 0,
             }
         )
         with self.assertRaises(frappe.ValidationError):
@@ -805,8 +802,7 @@ class TestAuxiliarRole(TestEpic8Story82RoleAuthorization):
                 "custom_sanitary_registration": "ISP-TEST-AUX",
                 "has_batch_no": 1,
                 "has_expiry_date": 1,
-                "has_serial_no": 1,
-                "shelf_life_in_days": 9999,
+                "has_serial_no": 0,
             }
         )
         with self.assertRaises(frappe.PermissionError):
