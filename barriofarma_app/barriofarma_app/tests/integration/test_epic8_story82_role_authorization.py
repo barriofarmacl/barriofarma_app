@@ -516,6 +516,84 @@ class TestFarmaceuticoRole(TestEpic8Story82RoleAuthorization):
         self.assertTrue(test_has_permission("Serial and Batch Bundle", "write", should_have=True))
         self.assertTrue(test_has_permission("Serial and Batch Bundle", "create", should_have=True))
 
+    def test_farmaceutico_can_create_receta_retenida_item_with_required_fields(self):
+        """Farm crea Item Receta Retenida con sanitario, lote, serie y shelf_life (whiteboard #78 PR2)"""
+        from barriofarma_app.barriofarma_app.utils.permissions.setup_permissions import (
+            setup_permissions_for_role,
+        )
+        from frappe.utils import cint
+
+        frappe.set_user("Administrator")
+        setup_permissions_for_role("Farmacéutico", use_extended_strategy=True)
+        frappe.clear_cache()
+
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_has_permission("Item", "create", should_have=True))
+
+        code = f"TEST-RR-FARM-{frappe.generate_hash(length=6)}"
+        item = frappe.get_doc(
+            {
+                "doctype": "Item",
+                "item_code": code,
+                "item_name": f"RR {code}",
+                "item_group": "Medicamentos de Prueba",
+                "stock_uom": "Unidad",
+                "is_stock_item": 1,
+                "custom_dispensing_type": "Venta con Receta Retenida",
+                "custom_sanitary_registration": "ISP-TEST-9999",
+                "has_batch_no": 1,
+                "has_expiry_date": 1,
+                "has_serial_no": 1,
+                "shelf_life_in_days": 9999,
+            }
+        )
+        item.insert()
+        frappe.db.commit()
+        self.test_items.append(item.name)
+
+        item.reload()
+        self.assertEqual(item.custom_dispensing_type, "Venta con Receta Retenida")
+        self.assertEqual(item.custom_sanitary_registration, "ISP-TEST-9999")
+        self.assertEqual(cint(item.has_batch_no), 1)
+        self.assertEqual(cint(item.has_expiry_date), 1)
+        self.assertEqual(cint(item.has_serial_no), 1)
+        self.assertEqual(cint(item.shelf_life_in_days), 9999)
+        self.assertEqual(cint(item.custom_prescription_storage_required), 1)
+
+    def test_farmaceutico_receta_retenida_requires_sanitary_registration(self):
+        """Sin registro sanitario, Farm no guarda Receta Retenida (whiteboard #78 PR2)"""
+        from barriofarma_app.barriofarma_app.utils.permissions.setup_permissions import (
+            setup_permissions_for_role,
+        )
+
+        frappe.set_user("Administrator")
+        setup_permissions_for_role("Farmacéutico", use_extended_strategy=True)
+        frappe.clear_cache()
+
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+
+        code = f"TEST-RR-NOSAN-{frappe.generate_hash(length=6)}"
+        item = frappe.get_doc(
+            {
+                "doctype": "Item",
+                "item_code": code,
+                "item_name": f"RR {code}",
+                "item_group": "Medicamentos de Prueba",
+                "stock_uom": "Unidad",
+                "is_stock_item": 1,
+                "custom_dispensing_type": "Venta con Receta Retenida",
+                "custom_sanitary_registration": "",
+                "has_batch_no": 1,
+                "has_expiry_date": 1,
+                "has_serial_no": 1,
+                "shelf_life_in_days": 9999,
+            }
+        )
+        with self.assertRaises(frappe.ValidationError):
+            item.insert()
+
     def test_farmaceutico_can_read_shelf(self):
         """Farmacéutico puede leer Shelf (PR, reconciliación de inventario)"""
         frappe.set_user(self.username)
@@ -698,6 +776,40 @@ class TestAuxiliarRole(TestEpic8Story82RoleAuthorization):
         self.assertTrue(test_has_permission("Serial and Batch Bundle", "read", should_have=True))
         self.assertTrue(test_has_permission("Serial and Batch Bundle", "write", should_have=True))
         self.assertTrue(test_has_permission("Serial and Batch Bundle", "create", should_have=True))
+
+    def test_auxiliar_cannot_create_receta_retenida_item(self):
+        """Auxiliar no puede crear Item (ACL + insert) — whiteboard #78 PR2"""
+        from barriofarma_app.barriofarma_app.utils.permissions.setup_permissions import (
+            setup_permissions_for_role,
+        )
+
+        frappe.set_user("Administrator")
+        setup_permissions_for_role("Auxiliar", use_extended_strategy=True)
+        frappe.clear_cache()
+
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_has_permission("Item", "create", should_have=False))
+
+        code = f"TEST-RR-AUX-{frappe.generate_hash(length=6)}"
+        item = frappe.get_doc(
+            {
+                "doctype": "Item",
+                "item_code": code,
+                "item_name": f"RR {code}",
+                "item_group": "Medicamentos de Prueba",
+                "stock_uom": "Unidad",
+                "is_stock_item": 1,
+                "custom_dispensing_type": "Venta con Receta Retenida",
+                "custom_sanitary_registration": "ISP-TEST-AUX",
+                "has_batch_no": 1,
+                "has_expiry_date": 1,
+                "has_serial_no": 1,
+                "shelf_life_in_days": 9999,
+            }
+        )
+        with self.assertRaises(frappe.PermissionError):
+            item.insert()
 
 
 class TestBodegueroRole(TestEpic8Story82RoleAuthorization):
