@@ -425,7 +425,8 @@ PERMISSIONS_MATRIX = {
         "Vendedor Terreno": ["R"],
     },
     "Serial and Batch Bundle": {
-        "Farmacéutico": ["R"],
+        # Farmacéutico: W/C para Stock Reconciliation / trazabilidad lote+serie (whiteboard #78 PR1)
+        "Farmacéutico": ["R", "W", "C"],
         "Auxiliar": ["R", "W", "C"],
         "Bodeguero": ["R", "W", "C"],
         "Administrativo": ["R"],
@@ -514,8 +515,9 @@ PERMISSIONS_MATRIX = {
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
     "Batch": {
-        "Farmacéutico": ["R"],
-        "Auxiliar": ["R"],
+        # Farm/Aux: create/write maestro de lote (whiteboard #78 PR1); Bodeguero mantiene R/W/C
+        "Farmacéutico": ["R", "W", "C"],
+        "Auxiliar": ["R", "W", "C"],
         "Bodeguero": ["R", "W", "C"],
         "Administrativo": ["R"],
         "Contabilidad": ["R"],

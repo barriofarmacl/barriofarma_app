@@ -483,6 +483,39 @@ class TestFarmaceuticoRole(TestEpic8Story82RoleAuthorization):
         self.assertTrue(test_has_permission("Stock Reconciliation", "create", should_have=True))
         self.assertTrue(test_has_permission("Stock Reconciliation", "submit", should_have=True))
 
+    def test_farmaceutico_can_create_batch(self):
+        """Farmacéutico puede crear y escribir Batch (whiteboard #78 PR1)"""
+        from barriofarma_app.barriofarma_app.utils.permissions.setup_permissions import (
+            setup_permissions_for_role,
+        )
+
+        frappe.set_user("Administrator")
+        setup_permissions_for_role("Farmacéutico", use_extended_strategy=True)
+        frappe.clear_cache()
+
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_can_access_doctype("Batch", should_access=True))
+        self.assertTrue(test_has_permission("Batch", "read", should_have=True))
+        self.assertTrue(test_has_permission("Batch", "write", should_have=True))
+        self.assertTrue(test_has_permission("Batch", "create", should_have=True))
+
+    def test_farmaceutico_can_create_serial_and_batch_bundle(self):
+        """Farmacéutico puede crear Serial and Batch Bundle (whiteboard #78 PR1)"""
+        from barriofarma_app.barriofarma_app.utils.permissions.setup_permissions import (
+            setup_permissions_for_role,
+        )
+
+        frappe.set_user("Administrator")
+        setup_permissions_for_role("Farmacéutico", use_extended_strategy=True)
+        frappe.clear_cache()
+
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_has_permission("Serial and Batch Bundle", "read", should_have=True))
+        self.assertTrue(test_has_permission("Serial and Batch Bundle", "write", should_have=True))
+        self.assertTrue(test_has_permission("Serial and Batch Bundle", "create", should_have=True))
+
     def test_farmaceutico_can_read_shelf(self):
         """Farmacéutico puede leer Shelf (PR, reconciliación de inventario)"""
         frappe.set_user(self.username)
@@ -632,6 +665,39 @@ class TestAuxiliarRole(TestEpic8Story82RoleAuthorization):
         self.assertTrue(test_can_access_doctype("Stock Reconciliation", should_access=True))
         self.assertTrue(test_has_permission("Stock Reconciliation", "create", should_have=True))
         self.assertTrue(test_has_permission("Stock Reconciliation", "submit", should_have=True))
+
+    def test_auxiliar_can_create_batch(self):
+        """Auxiliar puede crear y escribir Batch (whiteboard #78 PR1)"""
+        from barriofarma_app.barriofarma_app.utils.permissions.setup_permissions import (
+            setup_permissions_for_role,
+        )
+
+        frappe.set_user("Administrator")
+        setup_permissions_for_role("Auxiliar", use_extended_strategy=True)
+        frappe.clear_cache()
+
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_can_access_doctype("Batch", should_access=True))
+        self.assertTrue(test_has_permission("Batch", "read", should_have=True))
+        self.assertTrue(test_has_permission("Batch", "write", should_have=True))
+        self.assertTrue(test_has_permission("Batch", "create", should_have=True))
+
+    def test_auxiliar_can_create_serial_and_batch_bundle(self):
+        """Auxiliar puede crear Serial and Batch Bundle (whiteboard #78 PR1)"""
+        from barriofarma_app.barriofarma_app.utils.permissions.setup_permissions import (
+            setup_permissions_for_role,
+        )
+
+        frappe.set_user("Administrator")
+        setup_permissions_for_role("Auxiliar", use_extended_strategy=True)
+        frappe.clear_cache()
+
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_has_permission("Serial and Batch Bundle", "read", should_have=True))
+        self.assertTrue(test_has_permission("Serial and Batch Bundle", "write", should_have=True))
+        self.assertTrue(test_has_permission("Serial and Batch Bundle", "create", should_have=True))
 
 
 class TestBodegueroRole(TestEpic8Story82RoleAuthorization):

@@ -240,16 +240,18 @@ SPECIFIC_DOCTYPE_PERMISSIONS = {
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
     "Batch": {
-        "Farmacéutico": ["R"],
-        "Auxiliar": ["R"],
+        # Farm/Aux: create/write maestro de lote (whiteboard #78 PR1)
+        "Farmacéutico": ["R", "W", "C"],
+        "Auxiliar": ["R", "W", "C"],
         "Bodeguero": ["R", "W", "C"],
         "Administrativo": ["R"],
         "Contabilidad": [],
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
     "Serial No": {
-        "Farmacéutico": ["R"],
-        "Auxiliar": ["R"],
+        # Alineado a Batch para trazabilidad serie en Desk (whiteboard #78 PR1)
+        "Farmacéutico": ["R", "W", "C"],
+        "Auxiliar": ["R", "W", "C"],
         "Bodeguero": ["R", "W", "C"],
         "Administrativo": ["R"],
         "Contabilidad": [],
