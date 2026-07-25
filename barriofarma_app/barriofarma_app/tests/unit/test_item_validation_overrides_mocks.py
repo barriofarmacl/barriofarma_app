@@ -817,8 +817,9 @@ class TestValidateMethodIntegration(unittest.TestCase):
         mock_throw.assert_not_called()
 
     @patch('frappe.throw')
-    def test_psicotropico_venta_libre_falla_tras_sync_dispensing(self, mock_throw):
-        """Psicotrópico + Venta Libre: sync limpia retention y control_level falla"""
+    def test_psicotropico_venta_libre_falla_en_dispensing(self, mock_throw):
+        """Psicotrópico + Venta Libre: error claro en dispensing (no limpiar batch silencioso)"""
+        mock_throw.side_effect = Exception("stop")
         item = MockItem(
             custom_control_level="Psicotrópico",
             custom_dispensing_type="Venta Libre",
@@ -828,16 +829,12 @@ class TestValidateMethodIntegration(unittest.TestCase):
             custom_prescription_storage_required=0,
         )
 
-        self.Item.validate_dispensing_type_invariants(item)
-        self.assertEqual(item.get("custom_requires_prescription_retention"), 0)
+        with self.assertRaises(Exception):
+            self.Item.validate_dispensing_type_invariants(item)
 
-        self.Item.validate_control_level_invariants(item)
-        self.assertTrue(mock_throw.called)
-        messages = [str(c.args[0]) for c in mock_throw.call_args_list]
-        self.assertTrue(
-            any("receta retenida" in m for m in messages),
-            msg=f"Expected retention invariant error, got: {messages}",
-        )
+        mock_throw.assert_called_once()
+        self.assertIn("Venta con Receta Retenida", mock_throw.call_args[0][0])
+        self.assertEqual(item.get("has_batch_no"), 1)
 
 
 class TestEdgeCases(unittest.TestCase):

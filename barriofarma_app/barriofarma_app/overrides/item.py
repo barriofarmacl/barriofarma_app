@@ -179,6 +179,17 @@ class Item(ERPNextItem):
             return
         
         if dispensing_type == "Venta Libre":
+            control_level = self.get("custom_control_level")
+            if control_level in ("Psicotrópico", "Estupefaciente"):
+                frappe.throw(
+                    _(
+                        "Los medicamentos {0} requieren Tipo de Dispensación "
+                        "'Venta con Receta Retenida'. 'Venta Libre' no es compatible "
+                        "con este nivel de control."
+                    ).format(frappe.bold(control_level)),
+                    title=_("Invariante de Dispensación No Cumplida"),
+                )
+
             # Venta Libre: no requiere lote ni almacenamiento de receta
             if self.get("has_batch_no"):
                 # No lanzamos error, solo ajustamos automáticamente para cumplir invariante
