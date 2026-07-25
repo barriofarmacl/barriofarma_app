@@ -4,20 +4,20 @@ import { CONTACT, FOOTER_QUICK, SITE } from '@/lib/site-content'
 
 export function LandingFooter() {
   return (
-    <footer className="bg-purple-800 text-white py-8">
+    <footer className="bg-brand text-brand-foreground py-8">
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-3 gap-8">
           <div>
-            <h3 className="text-lg font-semibold mb-4">{SITE.brand}</h3>
-            <p className="text-gray-200">{SITE.tagline}</p>
-            <p className="text-gray-300 text-sm mt-3">Sin venta online. Atencion en sucursal.</p>
+            <h3 className="text-lg font-semibold mb-4 font-display">{SITE.brand}</h3>
+            <p className="text-brand-foreground/85">{SITE.tagline}</p>
+            <p className="text-brand-foreground/70 text-sm mt-3">Sin venta online. Atencion en sucursal.</p>
           </div>
           <div>
-            <h3 className="text-lg font-semibold mb-4">Enlaces</h3>
+            <h3 className="text-lg font-semibold mb-4 font-display">Enlaces</h3>
             <ul className="space-y-2">
               {FOOTER_QUICK.map((item) => (
                 <li key={item.href}>
-                  <a href={item.href} className="text-gray-200 hover:text-white">
+                  <a href={item.href} className="text-brand-foreground/85 hover:text-brand-foreground">
                     {item.label}
                   </a>
                 </li>
@@ -25,8 +25,8 @@ export function LandingFooter() {
             </ul>
           </div>
           <div>
-            <h3 className="text-lg font-semibold mb-4">Contacto</h3>
-            <div className="space-y-2 text-gray-200">
+            <h3 className="text-lg font-semibold mb-4 font-display">Contacto</h3>
+            <div className="space-y-2 text-brand-foreground/85">
               <p className="flex items-start">
                 <MapPin className="h-4 w-4 mr-2 mt-1 shrink-0" aria-hidden />
                 {CONTACT.addressShort}
@@ -37,7 +37,7 @@ export function LandingFooter() {
                   <span>{CONTACT.phoneDisplay}</span>
                 ) : (
                   <a
-                    className="hover:text-white underline"
+                    className="hover:text-brand-foreground underline"
                     href={`tel:${CONTACT.phoneDisplay.replace(/[^\d+]/g, '')}`}
                   >
                     {CONTACT.phoneDisplay}
@@ -46,14 +46,14 @@ export function LandingFooter() {
               </p>
               <p className="flex items-center">
                 <Mail className="h-4 w-4 mr-2 shrink-0" aria-hidden />
-                <a className="hover:text-white underline" href={`mailto:${CONTACT.email}`}>
+                <a className="hover:text-brand-foreground underline" href={`mailto:${CONTACT.email}`}>
                   {CONTACT.email}
                 </a>
               </p>
             </div>
           </div>
         </div>
-        <div className="border-t border-purple-700 mt-8 pt-8 text-center text-gray-200">
+        <div className="border-t border-brand-muted mt-8 pt-8 text-center text-brand-foreground/85">
           <p>&copy; {new Date().getFullYear()} {SITE.brand}. Todos los derechos reservados.</p>
         </div>
       </div>

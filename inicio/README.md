@@ -12,9 +12,15 @@
 
 No se usa **Frappe UI (Vue 3)** en esta SPA. Las guías y skills que lo prescriben (p. ej. `frappe-frontend-development`) aplican solo como **referencia de buenas prácticas** (proxy, auth, loading, build), no como mandato de migración: **no hay plan de pasar esta SPA a Vue**.
 
-Alcance actual acordado: **landing informativa** y **login** hacia el Desk (`/app`). Nuevas pantallas deben seguir el mismo patrón: **SDK + cookies**; evitar `fetch` ad hoc que ignore la sesión.
+Alcance actual acordado: **landing informativa**, **login** hacia el Desk (`/app`) o catalogo terreno (`/inicio/catalogo` segun rol), y **catalogo + carrito** para vendedores en terreno. Nuevas pantallas deben seguir el mismo patron: **SDK + cookies**; evitar `fetch` ad hoc que ignore la sesion.
 
-**Fecha de ratificación:** 2026-04-20 (decisión explícita del equipo).
+**Arquitectura frontend (ADR):** ver [adr_inicio_frontend_architecture.md](../../../../.cursor/docs/development/adr_inicio_frontend_architecture.md) (submodule methodology en monorepo dev).
+
+**Design tokens:** ver [docs/DESIGN_TOKENS.md](docs/DESIGN_TOKENS.md).
+
+**Feature catalogo:** `src/features/catalogo/` (api, hooks, context, components).
+
+**Fecha de ratificacion stack:** 2026-04-20 (React+shadcn+sdk). **Gate calidad brand:** 2026-07-11 (Architect).
 
 ---
 

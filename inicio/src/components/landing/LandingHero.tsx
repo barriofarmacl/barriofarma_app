@@ -7,7 +7,7 @@ export function LandingHero() {
   return (
     <section
       id={SECTION_IDS.hero}
-      className="bg-purple-700 text-white py-16"
+      className="bg-primary text-primary-foreground py-16"
       aria-labelledby="landing-hero-title"
     >
       <div className="container mx-auto px-4">
@@ -16,7 +16,7 @@ export function LandingHero() {
             <h1 id="landing-hero-title" className="text-4xl md:text-5xl font-bold mb-4">
               {HERO.title}
             </h1>
-            <p className="text-lg mb-6 text-purple-100">{HERO.subtitle}</p>
+            <p className="text-lg mb-6 text-primary-foreground/85">{HERO.subtitle}</p>
             <Button variant="secondary" size="lg" asChild>
               <a href={HERO.ctaHref} className="flex items-center">
                 {HERO.ctaLabel}
@@ -28,7 +28,7 @@ export function LandingHero() {
             <img
               src={assetBfSvg}
               alt={HERO.imageAlt}
-              className="rounded-lg w-full max-w-sm h-auto bg-white/10 p-8"
+              className="rounded-lg w-full max-w-sm h-auto bg-primary-foreground/10 p-8"
               width={320}
               height={320}
             />

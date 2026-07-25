@@ -7,15 +7,15 @@ export function LandingHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
-    <header className="border-b bg-purple-800 relative">
+    <header className="border-b border-brand-muted/40 bg-brand relative">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
-          <a href={`#${SECTION_IDS.hero}`} className="text-2xl font-bold text-white">
+          <a href={`#${SECTION_IDS.hero}`} className="text-2xl font-bold font-display text-brand-foreground">
             {SITE.brand}
           </a>
           <button
             type="button"
-            className="md:hidden text-white"
+            className="md:hidden text-brand-foreground"
             onClick={() => setIsMenuOpen((o) => !o)}
             aria-label={isMenuOpen ? 'Cerrar menu' : 'Abrir menu'}
             aria-expanded={isMenuOpen}
@@ -25,14 +25,14 @@ export function LandingHeader() {
           <nav
             className={`${
               isMenuOpen ? 'flex' : 'hidden'
-            } md:flex flex-col md:flex-row absolute md:relative top-full left-0 right-0 bg-purple-800 md:bg-transparent z-50 md:space-x-6 text-gray-100`}
+            } md:flex flex-col md:flex-row absolute md:relative top-full left-0 right-0 bg-brand md:bg-transparent z-50 md:space-x-6 text-brand-foreground/90`}
             aria-label="Principal"
           >
             {NAV_LINKS.map((item) => (
               <a
                 key={item.href}
                 href={item.href}
-                className="px-4 py-2 hover:bg-purple-700 md:hover:bg-transparent md:hover:text-white"
+                className="px-4 py-2 hover:bg-brand-muted md:hover:bg-transparent md:hover:text-brand-foreground"
                 onClick={() => setIsMenuOpen(false)}
               >
                 {item.label}
@@ -40,7 +40,7 @@ export function LandingHeader() {
             ))}
             <Link
               to="/inicio/login"
-              className="px-4 py-2 hover:bg-purple-700 md:hover:bg-transparent md:hover:text-white border-t border-purple-700 md:border-0"
+              className="px-4 py-2 hover:bg-brand-muted md:hover:bg-transparent md:hover:text-brand-foreground border-t border-brand-muted md:border-0"
               onClick={() => setIsMenuOpen(false)}
             >
               Acceso equipo
