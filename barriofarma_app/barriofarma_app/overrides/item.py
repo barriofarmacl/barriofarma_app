@@ -124,8 +124,9 @@ class Item(ERPNextItem):
         super().validate()
         
         # Validar invariantes del dominio farmacéutico
-        self.validate_control_level_invariants()
+        # Dispensing primero: proyecta retention/storage antes de control_level
         self.validate_dispensing_type_invariants()
+        self.validate_control_level_invariants()
         self.validate_sanitary_registration_required()
         self.validate_shelf_locations_invariants()
     
@@ -165,8 +166,11 @@ class Item(ERPNextItem):
     def validate_dispensing_type_invariants(self):
         """
         Valida las invariantes según el tipo de dispensación:
-        - Venta Libre: has_batch_no = 0, custom_prescription_storage_required = 0
-        - Venta con Receta Retenida: has_batch_no = 1, custom_prescription_storage_required = 1
+        - Venta Libre: has_batch_no = 0, storage = 0, retention = 0
+        - Venta con Receta Retenida: has_batch_no = 1, storage = 1, retention = 1
+
+        custom_dispensing_type es la fuente de verdad; storage/retention se proyectan
+        en validate (whiteboard #78 PR5).
         """
         dispensing_type = self.get("custom_dispensing_type")
         
@@ -182,6 +186,9 @@ class Item(ERPNextItem):
             
             if self.get("custom_prescription_storage_required"):
                 self.set("custom_prescription_storage_required", 0)
+
+            if self.get("custom_requires_prescription_retention"):
+                self.set("custom_requires_prescription_retention", 0)
             
             # Venta Libre siempre requiere vencimiento
             if not self.get("has_expiry_date"):
@@ -202,8 +209,10 @@ class Item(ERPNextItem):
                 )
             
             if not self.get("custom_prescription_storage_required"):
-                # No lanzamos error, solo ajustamos automáticamente para cumplir invariante
                 self.set("custom_prescription_storage_required", 1)
+
+            if not self.get("custom_requires_prescription_retention"):
+                self.set("custom_requires_prescription_retention", 1)
     
     def validate_sanitary_registration_required(self):
         """

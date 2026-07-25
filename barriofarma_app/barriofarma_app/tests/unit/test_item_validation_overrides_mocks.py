@@ -225,8 +225,10 @@ class TestDispensingTypeInvariants(unittest.TestCase):
     Tests para validate_dispensing_type_invariants()
     
     Invariantes:
-    - Venta Libre: has_batch_no = 0, custom_prescription_storage_required = 0, has_expiry_date = 1
-    - Venta con Receta Retenida: has_batch_no = 1, has_expiry_date = 1, custom_prescription_storage_required = 1
+    - Venta Libre: has_batch_no = 0, custom_prescription_storage_required = 0,
+      custom_requires_prescription_retention = 0, has_expiry_date = 1
+    - Venta con Receta Retenida: has_batch_no = 1, has_expiry_date = 1,
+      custom_prescription_storage_required = 1, custom_requires_prescription_retention = 1
     """
     
     def setUp(self):
@@ -279,6 +281,22 @@ class TestDispensingTypeInvariants(unittest.TestCase):
         # Verificar que se ajustó automáticamente
         self.assertEqual(item.get("custom_prescription_storage_required"), 0)
         mock_throw.assert_not_called()
+
+    @patch('frappe.throw')
+    def test_venta_libre_ajusta_retention_automaticamente(self, mock_throw):
+        """Venta Libre con custom_requires_prescription_retention=1 debe ajustarse a 0"""
+        item = MockItem(
+            custom_dispensing_type="Venta Libre",
+            has_batch_no=0,
+            has_expiry_date=1,
+            custom_prescription_storage_required=0,
+            custom_requires_prescription_retention=1,
+        )
+
+        self.Item.validate_dispensing_type_invariants(item)
+
+        self.assertEqual(item.get("custom_requires_prescription_retention"), 0)
+        mock_throw.assert_not_called()
     
     @patch('frappe.throw')
     def test_venta_libre_ajusta_has_expiry_date_automaticamente(self, mock_throw):
@@ -303,7 +321,8 @@ class TestDispensingTypeInvariants(unittest.TestCase):
             custom_dispensing_type="Venta Libre",
             has_batch_no=0,
             has_expiry_date=1,
-            custom_prescription_storage_required=0
+            custom_prescription_storage_required=0,
+            custom_requires_prescription_retention=0,
         )
         
         self.Item.validate_dispensing_type_invariants(item)
@@ -312,6 +331,7 @@ class TestDispensingTypeInvariants(unittest.TestCase):
         self.assertEqual(item.get("has_batch_no"), 0)
         self.assertEqual(item.get("has_expiry_date"), 1)
         self.assertEqual(item.get("custom_prescription_storage_required"), 0)
+        self.assertEqual(item.get("custom_requires_prescription_retention"), 0)
         mock_throw.assert_not_called()
     
     @patch('frappe.throw')
@@ -361,6 +381,22 @@ class TestDispensingTypeInvariants(unittest.TestCase):
         # Verificar que se ajustó automáticamente
         self.assertEqual(item.get("custom_prescription_storage_required"), 1)
         mock_throw.assert_not_called()
+
+    @patch('frappe.throw')
+    def test_receta_retenida_ajusta_retention_automaticamente(self, mock_throw):
+        """Venta con Receta Retenida sin custom_requires_prescription_retention debe ajustarse a 1"""
+        item = MockItem(
+            custom_dispensing_type="Venta con Receta Retenida",
+            has_batch_no=1,
+            has_expiry_date=1,
+            custom_prescription_storage_required=1,
+            custom_requires_prescription_retention=0,
+        )
+
+        self.Item.validate_dispensing_type_invariants(item)
+
+        self.assertEqual(item.get("custom_requires_prescription_retention"), 1)
+        mock_throw.assert_not_called()
     
     @patch('frappe.throw')
     def test_receta_retenida_correcta_no_modifica(self, mock_throw):
@@ -369,7 +405,8 @@ class TestDispensingTypeInvariants(unittest.TestCase):
             custom_dispensing_type="Venta con Receta Retenida",
             has_batch_no=1,
             has_expiry_date=1,
-            custom_prescription_storage_required=1
+            custom_prescription_storage_required=1,
+            custom_requires_prescription_retention=1,
         )
         
         self.Item.validate_dispensing_type_invariants(item)
@@ -378,6 +415,7 @@ class TestDispensingTypeInvariants(unittest.TestCase):
         self.assertEqual(item.get("has_batch_no"), 1)
         self.assertEqual(item.get("has_expiry_date"), 1)
         self.assertEqual(item.get("custom_prescription_storage_required"), 1)
+        self.assertEqual(item.get("custom_requires_prescription_retention"), 1)
         mock_throw.assert_not_called()
 
 
@@ -749,9 +787,9 @@ class TestValidateMethodIntegration(unittest.TestCase):
             custom_sanitary_registration="RS-12345"
         )
         
-        # Ejecutar todas las validaciones individualmente
-        self.Item.validate_control_level_invariants(item)
+        # Ejecutar en orden de validate(): dispensing antes de control_level
         self.Item.validate_dispensing_type_invariants(item)
+        self.Item.validate_control_level_invariants(item)
         self.Item.validate_sanitary_registration_required(item)
         self.Item.validate_shelf_locations_invariants(item)
         
@@ -770,13 +808,36 @@ class TestValidateMethodIntegration(unittest.TestCase):
             custom_sanitary_registration=None
         )
         
-        # Ejecutar todas las validaciones individualmente
-        self.Item.validate_control_level_invariants(item)
+        # Ejecutar en orden de validate(): dispensing antes de control_level
         self.Item.validate_dispensing_type_invariants(item)
+        self.Item.validate_control_level_invariants(item)
         self.Item.validate_sanitary_registration_required(item)
         self.Item.validate_shelf_locations_invariants(item)
         
         mock_throw.assert_not_called()
+
+    @patch('frappe.throw')
+    def test_psicotropico_venta_libre_falla_tras_sync_dispensing(self, mock_throw):
+        """Psicotrópico + Venta Libre: sync limpia retention y control_level falla"""
+        item = MockItem(
+            custom_control_level="Psicotrópico",
+            custom_dispensing_type="Venta Libre",
+            has_batch_no=1,
+            has_expiry_date=1,
+            custom_requires_prescription_retention=1,
+            custom_prescription_storage_required=0,
+        )
+
+        self.Item.validate_dispensing_type_invariants(item)
+        self.assertEqual(item.get("custom_requires_prescription_retention"), 0)
+
+        self.Item.validate_control_level_invariants(item)
+        self.assertTrue(mock_throw.called)
+        messages = [str(c.args[0]) for c in mock_throw.call_args_list]
+        self.assertTrue(
+            any("receta retenida" in m for m in messages),
+            msg=f"Expected retention invariant error, got: {messages}",
+        )
 
 
 class TestEdgeCases(unittest.TestCase):
