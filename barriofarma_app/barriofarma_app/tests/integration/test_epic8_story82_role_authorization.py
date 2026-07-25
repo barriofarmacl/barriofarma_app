@@ -559,6 +559,7 @@ class TestFarmaceuticoRole(TestEpic8Story82RoleAuthorization):
         self.assertEqual(cint(item.has_expiry_date), 1)
         self.assertEqual(cint(item.has_serial_no), 0)
         self.assertEqual(cint(item.custom_prescription_storage_required), 1)
+        self.assertEqual(cint(item.custom_requires_prescription_retention), 1)
 
     def test_farmaceutico_receta_retenida_requires_sanitary_registration(self):
         """Sin registro sanitario, Farm no guarda Receta Retenida (whiteboard #78 PR2)"""
