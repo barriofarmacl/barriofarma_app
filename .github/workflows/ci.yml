@@ -15,3 +15,23 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ripgrep
       - name: Ban pagosbf imports
         run: bash scripts/check_no_pagosbf_imports.sh
+
+  inicio-vitest:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: inicio
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: yarn
+          cache-dependency-path: inicio/yarn.lock
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      - name: Vitest
+        run: yarn test
+      - name: Build
+        run: yarn build
