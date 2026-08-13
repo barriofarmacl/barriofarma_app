@@ -9,8 +9,8 @@
  "field_order": [
   "naming_series",
   "doctor_section",
-  "doctor",
   "doctor_name",
+  "doctor",
   "doctor_license",
   "doctor_specialty",
   "col_break1",
@@ -40,39 +40,38 @@
    "options": "RX-.YY.-.MM.-.#####"
   },
   {
+   "collapsible": 1,
    "fieldname": "doctor_section",
    "fieldtype": "Section Break",
-   "label": "Informaci\u00f3n del M\u00e9dico"
+   "label": "Referencia del M\u00e9dico (opcional)"
+  },
+  {
+   "fieldname": "doctor_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Nombre del M\u00e9dico"
   },
   {
    "fieldname": "doctor",
    "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "M\u00e9dico",
-   "options": "Doctor",
-   "reqd": 1
-  },
-  {
-   "fetch_from": "doctor.doctor_name",
-   "fieldname": "doctor_name",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Nombre del M\u00e9dico",
-   "reqd": 1
+   "label": "M\u00e9dico (link ERPNext)",
+   "options": "Doctor"
   },
   {
    "fetch_from": "doctor.license_number",
    "fieldname": "doctor_license",
    "fieldtype": "Data",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "N\u00famero de Licencia M\u00e9dica",
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fetch_from": "doctor.specialty",
    "fieldname": "doctor_specialty",
    "fieldtype": "Data",
-   "label": "Especialidad"
+   "hidden": 1,
+   "label": "Especialidad",
+   "read_only": 1
   },
   {
    "fieldname": "col_break1",

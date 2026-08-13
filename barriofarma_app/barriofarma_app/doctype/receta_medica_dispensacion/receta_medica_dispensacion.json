@@ -7,19 +7,28 @@
  "engine": "InnoDB",
  "field_order": [
   "sales_invoice",
+  "pos_invoice",
   "date",
   "dispensed_by",
   "notes"
  ],
  "fields": [
   {
-   "fieldname": "sales_invoice",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Factura",
-   "options": "Sales Invoice",
-   "reqd": 1
-  },
+		"fieldname": "sales_invoice",
+		"fieldtype": "Link",
+		"in_list_view": 1,
+		"label": "Sales Invoice",
+		"options": "Sales Invoice",
+		"reqd": 0
+	},
+	{
+		"fieldname": "pos_invoice",
+		"fieldtype": "Link",
+		"in_list_view": 1,
+		"label": "POS Invoice",
+		"options": "POS Invoice",
+		"reqd": 0
+	},
   {
    "fieldname": "date",
    "fieldtype": "Date",

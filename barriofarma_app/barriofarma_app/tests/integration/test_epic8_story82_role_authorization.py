@@ -761,7 +761,7 @@ class TestAuxiliarRole(TestEpic8Story82RoleAuthorization):
         self.assertTrue(test_has_permission("Batch", "create", should_have=True))
 
     def test_auxiliar_can_create_serial_and_batch_bundle(self):
-        """Auxiliar puede crear Serial and Batch Bundle (whiteboard #78 PR1)"""
+        """Auxiliar puede crear y submitir Serial and Batch Bundle (Stock Entry con lote)"""
         from barriofarma_app.barriofarma_app.utils.permissions.setup_permissions import (
             setup_permissions_for_role,
         )
@@ -775,6 +775,7 @@ class TestAuxiliarRole(TestEpic8Story82RoleAuthorization):
         self.assertTrue(test_has_permission("Serial and Batch Bundle", "read", should_have=True))
         self.assertTrue(test_has_permission("Serial and Batch Bundle", "write", should_have=True))
         self.assertTrue(test_has_permission("Serial and Batch Bundle", "create", should_have=True))
+        self.assertTrue(test_has_permission("Serial and Batch Bundle", "submit", should_have=True))
 
     def test_auxiliar_cannot_create_receta_retenida_item(self):
         """Auxiliar no puede crear Item (ACL + insert) — whiteboard #78 PR2"""

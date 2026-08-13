@@ -13,6 +13,15 @@ from barriofarma_app.barriofarma_app.utils.domain.receta_medica_items import (
 	get_receta_medica_items,
 	add_receta_medica_items_to_invoice,
 )
+from barriofarma_app.barriofarma_app.utils.domain.receta_medica_dispensing import (
+	get_receta_medica_pos_summary,
+)
+
+
+@frappe.whitelist()
+def get_receta_medica_pos_summary_api(receta_name):
+	"""Resumen de receta para panel del POS (medicamentos + saldos)."""
+	return get_receta_medica_pos_summary(receta_name)
 
 
 @frappe.whitelist()

@@ -140,8 +140,38 @@ class TestRecetaMedicaValidation(unittest.TestCase):
 		mock_get_doc.return_value = mock_receta
 		update_receta_medica_dispensation(self.invoice)
 		self.assertEqual(mock_receta.dispensation_count, 1)
+		append_args = mock_receta.append.call_args[0][1]
+		self.assertEqual(append_args.get("sales_invoice"), "SINV-001")
+		self.assertNotIn("pos_invoice", append_args)
 		self.assertGreaterEqual(mock_receta.save.call_count, 1)
 		mock_commit.assert_called()
+
+	@patch('frappe.log_error')
+	@patch('frappe.db.exists', return_value=True)
+	@patch('frappe.get_doc')
+	@patch('frappe.session')
+	@patch('frappe.db.commit')
+	def test_update_receta_medica_dispensation_pos_invoice(self, mock_commit, mock_session, mock_get_doc, mock_db_exists, mock_log_error):
+		mock_session.user = 'test_user'
+		pos_invoice = MagicMock()
+		pos_invoice.custom_receta_medica = "RX-001"
+		pos_invoice.posting_date = today()
+		pos_invoice.name = "ACC-PSINV-2026-00099"
+		pos_invoice.doctype = "POS Invoice"
+		mock_receta = MagicMock()
+		mock_receta.dispensation_count = 0
+		mock_receta.max_dispensations = 1
+		mock_receta.status = "Nueva"
+		mock_receta.related_sales_invoices = []
+		mock_receta.get = lambda key, default=None: getattr(mock_receta, key, default)
+		mock_receta.append = MagicMock()
+		mock_receta.save = MagicMock()
+		mock_receta.update_status = MagicMock()
+		mock_get_doc.return_value = mock_receta
+		update_receta_medica_dispensation(pos_invoice)
+		append_args = mock_receta.append.call_args[0][1]
+		self.assertEqual(append_args.get("pos_invoice"), "ACC-PSINV-2026-00099")
+		self.assertNotIn("sales_invoice", append_args)
 
 	@patch('frappe.log_error')
 	@patch('frappe.db.exists', return_value=False)

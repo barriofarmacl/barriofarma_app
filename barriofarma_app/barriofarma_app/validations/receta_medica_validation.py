@@ -8,9 +8,10 @@ Validacion de vigencia de Receta Medica para ventas (Story 5.2).
 
 import frappe
 from frappe import _
-from frappe.utils import getdate, today
+from frappe.utils import getdate, today, flt
 
 from barriofarma_app.barriofarma_app.utils.domain.receta_medica_items import validate_all_receta_medica_items_included
+from barriofarma_app.barriofarma_app.utils.domain.receta_medica_dispensing import apply_invoice_qty_to_receta_items
 
 RECETA_MEDICA_DT = "Receta Medica"
 RECETA_MEDICA_DISPENSACION_DT = "Receta Medica Dispensacion"
@@ -107,15 +108,21 @@ def update_receta_medica_dispensation(doc, method=None):
 	try:
 		receta = frappe.get_doc(RECETA_MEDICA_DT, receta_name)
 		receta.dispensation_count = (receta.get("dispensation_count") or 0) + 1
+		apply_invoice_qty_to_receta_items(receta, doc)
 		receta.update_status()
 
-		receta.append("related_sales_invoices", {
+		dispensacion_row = {
 			"doctype": RECETA_MEDICA_DISPENSACION_DT,
-			"sales_invoice": doc.name,
 			"date": doc.posting_date or today(),
 			"dispensed_by": frappe.session.user,
-			"notes": f"Dispensacion desde {doc.doctype} {doc.name}"
-		})
+			"notes": f"Dispensacion desde {doc.doctype} {doc.name}",
+		}
+		if doc.doctype == "POS Invoice":
+			dispensacion_row["pos_invoice"] = doc.name
+		else:
+			dispensacion_row["sales_invoice"] = doc.name
+
+		receta.append("related_sales_invoices", dispensacion_row)
 
 		receta.save(ignore_permissions=True)
 		frappe.db.commit()
