@@ -9,7 +9,7 @@ DocType Receta Medica para gestionar recetas medicas segun el modelo DDD (lengua
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import getdate
+from frappe.utils import flt, getdate
 
 
 class RecetaMedica(Document):
@@ -21,7 +21,6 @@ class RecetaMedica(Document):
 		"""
 		Valida las invariantes del agregado Receta Medica segun el modelo DDD.
 		"""
-		self.validate_doctor_license()
 		self.validate_patient_required()
 		self.validate_items_required()
 		self.validate_temporal_validity()
@@ -29,16 +28,6 @@ class RecetaMedica(Document):
 		self.validate_item_quantities()
 		self.validate_expired_receta()
 		self.update_status()
-
-	def validate_doctor_license(self):
-		"""
-		Invariante: Una receta debe estar asociada a un medico con licencia valida.
-		"""
-		if not self.get("doctor_license") or not self.get("doctor_license").strip():
-			frappe.throw(
-				_("El numero de licencia medica (doctor_license) es obligatorio"),
-				title=_("Licencia Medica Requerida")
-			)
 
 	def validate_patient_required(self):
 		"""
@@ -192,21 +181,25 @@ class RecetaMedica(Document):
 
 	def update_status(self):
 		"""
-		Actualiza el estado de la receta automaticamente segun las dispensaciones.
+		Actualiza el estado segun visitas (dispensation_count) y cantidades por item.
 		"""
-		if not self.get("items"):
+		if self.get("status") == "Vencida":
 			return
 
-		total_items = len(self.items)
-		total_dispensed = sum(1 for item in self.items if (item.get("dispensed_qty") or 0) > 0)
-		total_completed = sum(
-			1 for item in self.items
-			if (item.get("dispensed_qty") or 0) >= (item.get("quantity") or 0) and (item.get("quantity") or 0) > 0
-		)
+		max_dispensations = int(self.get("max_dispensations") or 1)
+		dispensation_count = int(self.get("dispensation_count") or 0)
+		items = self.get("items") or []
 
-		if total_completed == total_items and total_items > 0:
+		items_with_qty = [row for row in items if flt(row.get("quantity")) > 0]
+		all_item_qty_complete = bool(items_with_qty) and all(
+			flt(row.get("dispensed_qty")) >= flt(row.get("quantity")) for row in items_with_qty
+		)
+		any_item_dispensed = any(flt(row.get("dispensed_qty")) > 0 for row in items)
+		visits_complete = dispensation_count >= max_dispensations
+
+		if visits_complete or all_item_qty_complete:
 			self.status = "Completada"
-		elif total_dispensed > 0 and total_completed < total_items:
+		elif dispensation_count > 0 or any_item_dispensed:
 			self.status = "Parcialmente Dispensada"
-		elif total_dispensed == 0 and self.get("status") != "Vencida":
+		else:
 			self.status = "Nueva"

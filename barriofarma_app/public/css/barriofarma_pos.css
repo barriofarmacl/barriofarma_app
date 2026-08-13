@@ -1,4 +1,160 @@
-/* BarrioFarma — POS shelf field: same 2-column grid cell as ERPNext item details */
+/* BarrioFarma — POS receta retenida + campos en carrito */
+
+.point-of-sale-app .item-wrapper > .bf-pos-receta-badge {
+	position: absolute;
+	top: var(--margin-sm, 8px);
+	left: var(--margin-sm, 8px);
+	z-index: 2;
+	margin: 0;
+	max-width: calc(100% - 3.5rem);
+	padding: 0.12rem 0.4rem;
+	font-size: 9px;
+	line-height: 1.25;
+	text-align: left;
+	pointer-events: none;
+}
+
+.point-of-sale-app .cart-item-wrapper .item-image .bf-pos-receta-badge {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 1;
+	margin: 0;
+	padding: 0.05rem 0.25rem;
+	font-size: 7px;
+	line-height: 1.2;
+	max-width: 100%;
+	pointer-events: none;
+}
+
+.point-of-sale-app .cart-item-wrapper .item-image {
+	position: relative;
+}
+
+.point-of-sale-app .cart-item-wrapper .item-name .bf-pos-receta-badge {
+	display: inline-block;
+	margin-left: 0.35rem;
+	vertical-align: middle;
+	font-size: 9px;
+	padding: 0.08rem 0.35rem;
+}
+
+.point-of-sale-app .item-wrapper .bf-pos-receta-badge,
+.point-of-sale-app .cart-item-wrapper .bf-pos-receta-badge {
+	border-radius: 999px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	color: #9a3412;
+	background: #ffedd5;
+	border: 1px solid #fdba74;
+}
+
+.point-of-sale-app .customer-cart-container .bf-receta-mount {
+	margin-top: 0.75rem;
+	padding-top: 0.75rem;
+	border-top: 1px dashed var(--border-color, #d1d5db);
+	display: block !important;
+	flex-shrink: 0;
+}
+
+.point-of-sale-app .customer-cart-container .bf-receta-fields-label {
+	font-size: var(--text-xs, 11px);
+	font-weight: 700;
+	text-transform: uppercase;
+	color: var(--text-muted, #6c757d);
+	margin-bottom: 0.5rem;
+	letter-spacing: 0.04em;
+}
+
+.point-of-sale-app .customer-cart-container .bf-receta-banner {
+	margin-bottom: 0.5rem;
+	padding: 0.5rem 0.65rem;
+	border-radius: 6px;
+	font-size: 12px;
+	line-height: 1.35;
+	color: #9a3412;
+	background: #fff7ed;
+	border: 1px solid #fdba74;
+}
+
+.point-of-sale-app .customer-cart-container .bf-receta-field + .bf-receta-field {
+	margin-top: 0.35rem;
+}
+
+.point-of-sale-app .customer-cart-container .bf-receta-field .control-label {
+	font-size: var(--text-sm, 12px);
+	font-weight: 600;
+}
+
+.point-of-sale-app .customer-cart-container .bf-receta-summary {
+	margin-top: 0.65rem;
+	padding: 0.55rem 0.6rem;
+	border-radius: 6px;
+	background: var(--control-bg, #f3f4f6);
+	border: 1px solid var(--border-color, #d1d5db);
+	font-size: 11px;
+	line-height: 1.35;
+}
+
+.point-of-sale-app .customer-cart-container .bf-receta-summary-meta {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.35rem 0.75rem;
+	margin-bottom: 0.5rem;
+}
+
+.point-of-sale-app .customer-cart-container .bf-receta-meta-label {
+	font-weight: 600;
+	color: var(--text-muted, #6c757d);
+}
+
+.point-of-sale-app .customer-cart-container .bf-receta-summary-table-wrap {
+	overflow-x: auto;
+}
+
+.point-of-sale-app .customer-cart-container .bf-receta-summary-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 10px;
+}
+
+.point-of-sale-app .customer-cart-container .bf-receta-summary-table th,
+.point-of-sale-app .customer-cart-container .bf-receta-summary-table td {
+	padding: 0.2rem 0.25rem;
+	border-bottom: 1px solid var(--border-color, #e5e7eb);
+	vertical-align: top;
+}
+
+.point-of-sale-app .customer-cart-container .bf-receta-summary-table th {
+	font-weight: 700;
+	color: var(--text-muted, #6c757d);
+	text-transform: uppercase;
+	font-size: 9px;
+	letter-spacing: 0.03em;
+}
+
+.point-of-sale-app .customer-cart-container .bf-receta-item-code {
+	display: block;
+	font-weight: 600;
+	font-size: 9px;
+	color: var(--text-color, #171717);
+}
+
+.point-of-sale-app .customer-cart-container .bf-receta-item-name {
+	max-width: 9rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.point-of-sale-app .customer-cart-container .bf-receta-summary-table .text-right {
+	text-align: right;
+	white-space: nowrap;
+}
+
+.point-of-sale-app .payment-container .addl-fields {
+	margin-bottom: 0.5rem;
+}
 
 .point-of-sale-app .item-details-container > .form-container > .barriofarma_shelf_info-control .control-input {
 	cursor: default;

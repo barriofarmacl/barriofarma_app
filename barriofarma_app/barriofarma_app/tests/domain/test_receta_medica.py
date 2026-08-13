@@ -123,8 +123,8 @@ class TestRecetaMedicaDDD(FrappeTestCase):
         defaults = {
             "doctype": "Receta Medica",
             "doctor": kwargs.get("doctor"),
-            "doctor_name": kwargs.get("doctor_name", "Dr. Test"),
-            "doctor_license": kwargs.get("doctor_license", "TEST-LIC-12345"),
+            "doctor_name": kwargs.get("doctor_name"),
+            "doctor_license": kwargs.get("doctor_license"),
             "patient": kwargs.get("patient"),
             "patient_name": kwargs.get("patient_name"),
             "prescription_date": kwargs.get("prescription_date", today()),
@@ -170,12 +170,51 @@ class TestRecetaMedicaDDD(FrappeTestCase):
         
         self.assertIn("al menos un medicamento", str(cm.exception).lower() or "items required" in str(cm.exception).lower())
 
+    def test_receta_medica_sin_datos_medico(self):
+        """
+        Alcance operativo: receta valida sin medico link, licencia ni nombre.
+        Validado con farmaceutico (UAT gate #80, 2026-08-12).
+        """
+        patient = self.create_test_patient_helper()
+        item = create_test_item(
+            item_code="TEST-MED-SIN-MEDICO",
+            item_name="Medicamento Test Sin Medico",
+            custom_dispensing_type="Venta con Receta Retenida",
+            has_batch_no=1,
+            has_expiry_date=1,
+            custom_prescription_storage_required=1,
+            custom_sanitary_registration="TEST-REG-NOMD",
+            custom_active_principle="Principio Activo Test",
+            custom_concentration="500mg",
+        )
+        self.test_items.append(item.name)
+
+        receta = self.create_test_receta_medica(
+            patient=patient.name,
+            patient_name=patient.patient_name,
+            doctor=None,
+            doctor_name=None,
+            doctor_license=None,
+            items=[
+                {
+                    "item": item.name,
+                    "item_name": item.item_name,
+                    "quantity": 10,
+                    "dosage": "1 tableta",
+                    "frequency": "cada 8 horas",
+                }
+            ],
+        )
+
+        self.assertTrue(receta.name)
+        self.assertFalse(receta.doctor)
+        self.assertFalse(receta.doctor_name)
+        self.assertFalse(receta.doctor_license)
+
     def test_invariante_doctor_requiere_licencia_valida(self):
         """
-        Invariante: Una receta debe estar asociada a un médico con licencia válida
-        Nota: Como doctor_license tiene fetch_from, se auto-completa desde el doctor.
-        La validación se hace al nivel del Doctor, no de la Prescription.
-        Este test valida que un doctor sin licencia no puede ser creado.
+        Doctor ERPNext sigue exigiendo licencia al crear el maestro Doctor.
+        La Receta Medica ya no exige medico ni licencia.
         """
         # Intentar crear doctor sin licencia
         with self.assertRaises(frappe.ValidationError) as cm:
@@ -188,8 +227,7 @@ class TestRecetaMedicaDDD(FrappeTestCase):
         
         self.assertIn("licencia", str(cm.exception).lower())
         
-        # Verificar que con un doctor válido, la receta se crea correctamente
-        doctor = self.create_test_doctor_helper()
+        # Receta sin medico: solo paciente + items
         patient = self.create_test_patient_helper()
         item = create_test_item(
             item_code="TEST-MED-LIC",
@@ -205,11 +243,9 @@ class TestRecetaMedicaDDD(FrappeTestCase):
         self.test_items.append(item.name)
         
         receta = self.create_test_receta_medica(
-            doctor=doctor.name,
-            doctor_name=doctor.doctor_name,
-            doctor_license=doctor.license_number,
             patient=patient.name,
             patient_name=patient.patient_name,
+            doctor_name="Dr. Referencia Opcional",
             items=[{
                 "item": item.name,
                 "item_name": item.item_name,
@@ -219,8 +255,8 @@ class TestRecetaMedicaDDD(FrappeTestCase):
             }]
         )
         
-        # Verificar que la receta se creó correctamente con la licencia del doctor
-        self.assertEqual(receta.doctor_license, doctor.license_number)
+        self.assertEqual(receta.doctor_name, "Dr. Referencia Opcional")
+        self.assertFalse(receta.doctor)
 
     def test_invariante_paciente_obligatorio(self):
         """

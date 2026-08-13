@@ -38,6 +38,7 @@ def after_migrate():
     setup_informatica_maintainer()
     setup_site_locale()
     apply_desktop_icon_v16_patch()
+    setup_pos_receta_invoice_fields()
 
 
 def setup_site_locale():
@@ -218,6 +219,22 @@ def setup_admin_accounting_access():
             frappe.logger().info("Story 8.1: perfiles administrativos: %s", ", ".join(ok))
     except Exception as e:
         frappe.logger().error("Story 8.1: Error perfiles admin: %s", str(e))
+
+
+def setup_pos_receta_invoice_fields():
+    """POS Settings: Paciente + Receta Medica visibles en caja (flujo mostrador)."""
+    from barriofarma_app.barriofarma_app.utils.setup.setup_pos_receta_invoice_fields import (
+        ensure_pos_receta_invoice_fields,
+    )
+
+    try:
+        added = ensure_pos_receta_invoice_fields()
+        if added:
+            frappe.logger().info(
+                "POS receta fields en POS Settings: %s", ", ".join(added)
+            )
+    except Exception as e:
+        frappe.logger().error("POS receta invoice fields setup: %s", str(e))
 
 
 def before_tests():

@@ -10,9 +10,9 @@ app_license = "mit"
 # ------------------
 
 # include js, css files in header of desk.html
-app_include_css = "/assets/barriofarma_app/css/barriofarma_pos.css?v=20260616c"
+app_include_css = "/assets/barriofarma_app/css/barriofarma_pos.css?v=20260813h"
 app_include_js = [
-	"/assets/barriofarma_app/js/pos_shelf_info.js?v=20260616c",
+	"/assets/barriofarma_app/js/pos_shelf_info.js?v=20260813c",
 	"/assets/barriofarma_app/js/barriofarma_number_card_clp.js",
 ]
 
@@ -30,7 +30,11 @@ app_include_js = [
 # include js in page
 page_js = {
 	"stock-balance": "public/js/stock_balance_move_item.js",
-	"point-of-sale": "public/js/pos_opening_entry_message.js",
+	"point-of-sale": [
+		"public/js/pos_opening_entry_message.js",
+		"public/js/pos_invoice_receta.js",
+		"public/js/pos_receta_fields.js",
+	],
 }
 
 # include js in doctype views
@@ -39,6 +43,7 @@ doctype_js = {
 	"Purchase Receipt": "public/js/purchase_receipt_shelf.js",
 	"Stock Entry": "public/js/stock_entry_shelf.js",
 	"User": "public/js/user_americas_timezone.js",
+	"POS Invoice": "public/js/pos_invoice_receta.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -194,7 +199,8 @@ before_tests = "barriofarma_app.barriofarma_app.install.before_tests"
 # Overriding Methods
 # ------------------------------
 override_whitelisted_methods = {
-	"erpnext.stock.doctype.purchase_receipt.purchase_receipt.make_purchase_invoice": "barriofarma_app.barriofarma_app.overrides.purchase_receipt.make_purchase_invoice"
+	"erpnext.stock.doctype.purchase_receipt.purchase_receipt.make_purchase_invoice": "barriofarma_app.barriofarma_app.overrides.purchase_receipt.make_purchase_invoice",
+	"erpnext.selling.page.point_of_sale.point_of_sale.get_items": "barriofarma_app.barriofarma_app.api.pos_items.get_items",
 }
 
 # API Whitelist

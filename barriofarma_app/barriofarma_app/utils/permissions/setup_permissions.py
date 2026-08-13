@@ -246,7 +246,8 @@ PERMISSIONS_MATRIX = {
         "Bodeguero": [],
         "Administrativo": ["R"],
         "Contabilidad": ["R"],
-        "Informática": ["R", "W", "C", "D", "S", "X"]
+        "Informática": ["R", "W", "C", "D", "S", "X"],
+        "Vendedor Terreno": ["R"],
     },
     "Territory": {
         "Farmacéutico": ["R"],
@@ -254,7 +255,8 @@ PERMISSIONS_MATRIX = {
         "Bodeguero": [],
         "Administrativo": ["R"],
         "Contabilidad": ["R"],
-        "Informática": ["R", "W", "C", "D", "S", "X"]
+        "Informática": ["R", "W", "C", "D", "S", "X"],
+        "Vendedor Terreno": ["R"],
     },
     "Patient": {
         "Farmacéutico": ["R", "W", "C"],
@@ -425,10 +427,10 @@ PERMISSIONS_MATRIX = {
         "Vendedor Terreno": ["R"],
     },
     "Serial and Batch Bundle": {
-        # Farmacéutico: W/C/S — submit de SABB al confirmar PR/SR (whiteboard #78 PR4)
+        # ERPNext crea y submit SABB al confirmar movimientos con lote (Stock Entry, PR, etc.)
         "Farmacéutico": ["R", "W", "C", "S"],
-        "Auxiliar": ["R", "W", "C"],
-        "Bodeguero": ["R", "W", "C"],
+        "Auxiliar": ["R", "W", "C", "S"],
+        "Bodeguero": ["R", "W", "C", "S"],
         "Administrativo": ["R"],
         "Contabilidad": [],
         "Informática": ["R", "W", "C", "D", "S", "X"]
