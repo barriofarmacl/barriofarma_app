@@ -133,6 +133,7 @@ USER_PROFILES = {
     "Perfil Contabilidad": {
         "description": "Contabilidad: roles ERPNext Accounts Manager/User; pagos, asientos y plan de cuentas.",
         "visible_modules": ["Accounts", "Selling", "Buying"],
+        "hidden_desktop_icons": ["Stock"],
         "visible_accounts_desktop": True,
         "custom_roles": ["Contabilidad"],
         "standard_roles": list(ADMIN_ERPNEXT_STANDARD_ROLES_CONTABILIDAD),
