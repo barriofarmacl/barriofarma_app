@@ -102,6 +102,8 @@ def get_hidden_desktop_icons(user=None):
 			hidden |= ACCOUNTING_DESKTOP_ICONS
 		if profile_name == "Perfil Auxiliar":
 			hidden.add("Buying")
+		if profile_name == "Perfil Contabilidad":
+			hidden.add("Stock")
 	else:
 		# System Manager, Administrator, etc.: no aplicar política farmacia.
 		# Solo ocultar Contabilidad si el usuario tiene Accounts en block_modules.

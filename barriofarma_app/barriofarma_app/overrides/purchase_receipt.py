@@ -846,6 +846,7 @@ class PurchaseReceipt(ERPNextPurchaseReceipt):
             # pero registrar el error para debugging
 
 
+@frappe.whitelist()
 def make_purchase_invoice(source_name, target_doc=None, args=None):
     """
     Override de make_purchase_invoice para excluir items rechazados/cuarentena

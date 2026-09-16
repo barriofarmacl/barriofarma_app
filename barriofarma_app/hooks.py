@@ -280,5 +280,9 @@ website_route_rules = [{'from_route': '/inicio/<path:app_path>', 'to_route': 'in
 from barriofarma_app.barriofarma_app.utils.permissions.desktop_icons_v16 import (
 	register_desktop_icon_v16_patch,
 )
+from barriofarma_app.barriofarma_app.utils.setup.wkhtmltopdf_local_host import (
+	patch_pdfkit_from_string,
+)
 
 register_desktop_icon_v16_patch()
+patch_pdfkit_from_string()
