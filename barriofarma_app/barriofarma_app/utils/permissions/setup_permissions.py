@@ -324,10 +324,14 @@ PERMISSIONS_MATRIX = {
         "Informática": ["R", "W", "C", "D", "S", "X"],
         "Vendedor Terreno": ["R"],
     },
+    # Precio de compra = Farmaceutico, precio de venta = Administracion (whiteboard #89).
+    # La division por lista buying/selling la impone validations/item_price_ownership.py:
+    # DocPerm es por DocType y no puede distinguir filas.
     "Item Price": {
         "Farmacéutico": ["R", "W", "C"],
         "Auxiliar": ["R"],
         "Bodeguero": ["R"],
+        # Fila inerte (ver Supplier): el create real llega via Purchase Master Manager.
         "Administrativo": ["R", "W", "C"],
         "Contabilidad": ["R"],
         "Informática": ["R", "W", "C", "D", "S", "X"],
@@ -503,7 +507,10 @@ PERMISSIONS_MATRIX = {
     "Supplier": {
         "Farmacéutico": ["R", "W", "C"],
         "Auxiliar": ["R"],
-        "Bodeguero": ["R", "W", "C"],
+        # El Bodeguero prepara y despacha; no administra maestros de proveedor (whiteboard #89).
+        "Bodeguero": ["R"],
+        # Fila inerte: Administrativo esta en ERPNEXT_STANDARD_PERMISSION_ROLES y el motor
+        # corta antes de leerla. Su create real llega via rol Purchase Master Manager.
         "Administrativo": ["R"],
         "Contabilidad": ["R"],
         "Informática": ["R", "W", "C", "D", "S", "X"]

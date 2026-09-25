@@ -178,7 +178,22 @@ doc_events = {
 			"barriofarma_app.barriofarma_app.validations.receta_medica_validation.update_receta_medica_dispensation",
 			"barriofarma_app.barriofarma_app.utils.domain.control_level_audit.detect_and_log_control_level_changes_doc_event",
 		],
-	}
+	},
+	# Precio de compra = Farmaceutico, precio de venta = Administracion (whiteboard #89).
+	# Item Price es un unico DocType: la division por lista buying/selling no es expresable con DocPerm.
+	"Item Price": {
+		"validate": [
+			"barriofarma_app.barriofarma_app.validations.item_price_ownership.validate_item_price_ownership",
+		],
+		"on_trash": [
+			"barriofarma_app.barriofarma_app.validations.item_price_ownership.validate_item_price_ownership",
+		],
+	},
+	"Item": {
+		"validate": [
+			"barriofarma_app.barriofarma_app.validations.item_price_ownership.validate_item_standard_rate_owner",
+		],
+	},
 }
 
 # Scheduled Tasks

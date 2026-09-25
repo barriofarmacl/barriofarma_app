@@ -75,6 +75,9 @@ ADMIN_ERPNEXT_STANDARD_ROLES = (
     "Accounts Manager",
     "Accounts User",
     "Purchase Manager",
+    # Portador de maestros de tesoreria (whiteboard #89): Supplier, Item Price y Price List.
+    # Acotado a 6 DocTypes de compra; no otorga create sobre Item (catalogo = Farmaceutico).
+    "Purchase Master Manager",
     "Purchase User",
     "Sales User",
     "Stock User",
