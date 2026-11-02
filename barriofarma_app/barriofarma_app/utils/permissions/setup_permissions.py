@@ -266,6 +266,15 @@ PERMISSIONS_MATRIX = {
         "Contabilidad": [],
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
+    "Turno Atencion": {
+        "Kiosco Turnos": ["R", "C"],
+        "Farmacéutico": ["R", "W", "C"],
+        "Auxiliar": ["R", "W", "C"],
+        "Bodeguero": ["R"],
+        "Administrativo": ["R"],
+        "Contabilidad": [],
+        "Informática": ["R", "W", "C", "D", "S", "X"],
+    },
     "Doctor": {
         "Farmacéutico": ["R", "W", "C"],
         "Auxiliar": [],

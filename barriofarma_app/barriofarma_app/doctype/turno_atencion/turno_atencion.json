@@ -1,0 +1,105 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:TRN-{fecha}-{numero}",
+ "creation": "2026-09-03 00:00:00",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "numero",
+  "fecha",
+  "estado",
+  "col_break1",
+  "emitido_en",
+  "llamado_en",
+  "cerrado_en",
+  "llamado_por"
+ ],
+ "fields": [
+  {
+   "fieldname": "numero",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "N\u00famero",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "fecha",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Fecha",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "default": "Esperando",
+   "fieldname": "estado",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Estado",
+   "options": "Esperando\nLlamado\nAtendido\nAusente",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "col_break1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "emitido_en",
+   "fieldtype": "Datetime",
+   "label": "Emitido en",
+   "read_only": 1
+  },
+  {
+   "fieldname": "llamado_en",
+   "fieldtype": "Datetime",
+   "label": "Llamado en",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cerrado_en",
+   "fieldtype": "Datetime",
+   "label": "Cerrado en",
+   "read_only": 1
+  },
+  {
+   "fieldname": "llamado_por",
+   "fieldtype": "Link",
+   "label": "Llamado por",
+   "options": "User",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "is_submittable": 0,
+ "links": [],
+ "modified": "2026-09-03 00:00:00",
+ "modified_by": "Administrator",
+ "module": "Barriofarma App",
+ "name": "Turno Atencion",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "numero",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 0
+}

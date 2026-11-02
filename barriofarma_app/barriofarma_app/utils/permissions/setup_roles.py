@@ -14,6 +14,7 @@ Buenas prácticas de Frappe:
 
 import frappe
 from frappe import _
+from frappe.utils import cint
 import logging
 
 logger = logging.getLogger(__name__)
@@ -53,6 +54,11 @@ def create_custom_roles():
             "name": "Vendedor Terreno",
             "desk_access": 0,
             "description": "Rol para vendedores en terreno. Acceso solo via SPA inicio/API REST (catalogo, carrito, Sales Order propias)."
+        },
+        {
+            "name": "Kiosco Turnos",
+            "desk_access": 0,
+            "description": "Rol del kiosco de turnos (whiteboard #90). Solo emite turnos desde la SPA; sin desk, sin write y sin acceso a documentos del negocio."
         }
     ]
     
@@ -63,6 +69,18 @@ def create_custom_roles():
         
         if frappe.db.exists("Role", role_name):
             logger.debug(f"Rol '{role_name}' ya existe, omitiendo creación")
+            # El kiosco vive en una tablet desatendida: desk_access=0 es invariante
+            # del rol, no un default de creación. Si alguien lo reabrió a mano,
+            # se vuelve a cerrar en cada migrate.
+            expected_desk = role_data.get("desk_access", 1)
+            current_desk = frappe.db.get_value("Role", role_name, "desk_access")
+            if cint(current_desk) != cint(expected_desk):
+                frappe.db.set_value("Role", role_name, "desk_access", expected_desk)
+                logger.info(
+                    "Rol '%s': desk_access realineado a %s",
+                    role_name,
+                    expected_desk,
+                )
             continue
         
         try:
@@ -106,7 +124,8 @@ def verify_roles():
         "Administrativo",
         "Contabilidad",
         "Informática",
-        "Vendedor Terreno"
+        "Vendedor Terreno",
+        "Kiosco Turnos"
     ]
     
     logger.info("=== Verificación de Roles Requeridos ===")

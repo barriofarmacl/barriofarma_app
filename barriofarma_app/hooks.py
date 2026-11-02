@@ -34,6 +34,7 @@ page_js = {
 		"public/js/pos_opening_entry_message.js",
 		"public/js/pos_invoice_receta.js",
 		"public/js/pos_receta_fields.js",
+		"public/js/pos_turnos_v3.js",
 	],
 }
 
@@ -290,7 +291,11 @@ boot_session = [
 	"barriofarma_app.barriofarma_app.utils.permissions.desktop_icons_v16.filter_boot_desktop_icons",
 ]
 
-website_route_rules = [{'from_route': '/inicio/<path:app_path>', 'to_route': 'inicio'},]
+website_route_rules = [
+	{"from_route": "/inicio/<path:app_path>", "to_route": "inicio"},
+	{"from_route": "/turno", "to_route": "inicio"},
+	{"from_route": "/pantalla", "to_route": "inicio"},
+]
 
 from barriofarma_app.barriofarma_app.utils.permissions.desktop_icons_v16 import (
 	register_desktop_icon_v16_patch,
