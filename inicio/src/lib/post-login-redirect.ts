@@ -1,3 +1,5 @@
+import { isCatalogoTerrenoEnabled } from './inicio-features'
+
 export const DESK_PATH = '/app'
 export const CATALOGO_PATH = '/inicio/catalogo'
 export const TURNO_KIOSCO_PATH = '/turno'
@@ -13,7 +15,9 @@ type FrappeMethodResponse = {
 
 /** Normaliza la ruta devuelta por el backend (solo rutas internas conocidas). */
 export function normalizePostLoginPath(path: unknown): string {
-  if (path === CATALOGO_PATH) return CATALOGO_PATH
+  if (path === CATALOGO_PATH) {
+    return isCatalogoTerrenoEnabled() ? CATALOGO_PATH : DESK_PATH
+  }
   if (path === TURNO_KIOSCO_PATH) return TURNO_KIOSCO_PATH
   return DESK_PATH
 }

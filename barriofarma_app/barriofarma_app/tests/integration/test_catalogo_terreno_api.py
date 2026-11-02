@@ -297,6 +297,14 @@ class TestCatalogoTerrenoApi(FrappeTestCase):
 		frappe.set_user(user)
 		self.assertEqual(get_post_login_path(), "/inicio/catalogo")
 
+	def test_post_login_path_vendedor_terreno_when_catalogo_disabled(self):
+		"""UAT farmacia: catalogo apagado por site_config -> /app (no /inicio/catalogo)."""
+		frappe.conf.inicio_catalogo_terreno_enabled = 0
+		self.addCleanup(lambda: frappe.conf.pop("inicio_catalogo_terreno_enabled", None))
+		user = self._create_vendedor("vendedor_cat_uat_off")
+		frappe.set_user(user)
+		self.assertEqual(get_post_login_path(), "/app")
+
 	def test_post_login_path_desk_user_to_app(self):
 		"""Usuario con rol de desk_access sigue yendo a /app."""
 		user = create_test_user_with_role("auxiliar_redirect", "Auxiliar")
