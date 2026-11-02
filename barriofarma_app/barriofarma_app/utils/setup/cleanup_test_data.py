@@ -10,6 +10,26 @@ Ejecutar con: bench --site [sitename] console < cleanup_test_data.py
 import frappe
 
 
+def cleanup_erpnext_fixture_companies():
+	"""Elimina companies de ERPNext test_records.json; conserva Barriofarma."""
+	from barriofarma_app.barriofarma_app.utils.setup.test_site_company_guard import (
+		cleanup_non_production_companies,
+		get_non_production_companies,
+	)
+
+	names = get_non_production_companies()
+	if not names:
+		print("No hay companies ERPNext fixture para eliminar.")
+		return []
+	deleted = cleanup_non_production_companies()
+	for name in deleted:
+		print(f"  OK Company: {name}")
+	remaining = get_non_production_companies()
+	if remaining:
+		print(f"  Pendientes ({len(remaining)}): {remaining}")
+	return deleted
+
+
 def cleanup_test_data():
     """
     Limpiar todos los datos de prueba residuales, incluyendo:

@@ -112,7 +112,12 @@ def patch_erpnext_bootstrap_for_barriofarma():
 	module.BootStrapTestData.update_system_settings = _patched_update_system_settings
 	_PATCHED = True
 
-	if not _BOOTSTRAPPED and frappe.db and not frappe.db.exists("Company", "_Test Company"):
+	if (
+		not _BOOTSTRAPPED
+		and frappe.db
+		and not frappe.db.exists("Company", "_Test Company")
+		and not frappe.db.exists("Company", "Barriofarma")
+	):
 		module.BootStrapTestData()
 		_BOOTSTRAPPED = True
 	elif not _BOOTSTRAPPED and frappe.db:
@@ -121,50 +126,14 @@ def patch_erpnext_bootstrap_for_barriofarma():
 		_BOOTSTRAPPED = True
 
 
-def patch_compat_preload_doctype_schema_guard():
-	"""Evita que compat_preload confunda {doctype}.json (schema) con test records (Frappe v16)."""
-	import json
-	import os
-	import re
-
-	import frappe.deprecation_dumpster as dd
-	from frappe.tests.utils import make_test_records
-
-	if getattr(dd.compat_preload_test_records_upfront, "_barriofarma_guard", False):
-		return
-
-	_original = dd.compat_preload_test_records_upfront
-
-	def _safe_compat_preload(candidates):
-		for module, path, filename in candidates:
-			if hasattr(module, "test_dependencies"):
-				for doctype in module.test_dependencies:
-					make_test_records(doctype, commit=True)
-			if hasattr(module, "EXTRA_TEST_RECORD_DEPENDENCIES"):
-				for doctype in module.EXTRA_TEST_RECORD_DEPENDENCIES:
-					make_test_records(doctype, commit=True)
-
-			if os.path.basename(os.path.dirname(path)) != "doctype":
-				continue
-
-			test_record_filename = re.sub("^test_", "", filename).replace(".py", ".json")
-			test_record_file_path = os.path.join(path, test_record_filename)
-			if not os.path.exists(test_record_file_path):
-				continue
-
-			with open(test_record_file_path) as f:
-				doc = json.load(f)
-			if doc.get("doctype") == "DocType":
-				continue
-
-			make_test_records(doc["name"], commit=True)
-
-	_safe_compat_preload._barriofarma_guard = True
-	dd.compat_preload_test_records_upfront = _safe_compat_preload
-
-
 def before_tests():
 	"""Hook Frappe: ejecutar antes del preload de test records."""
-	patch_compat_preload_doctype_schema_guard()
-	patch_erpnext_bootstrap_for_barriofarma()
+	from barriofarma_app.barriofarma_app.utils.setup.test_site_company_guard import (
+		apply_test_site_guards,
+		is_barriofarma_operational_site,
+	)
+
+	apply_test_site_guards()
+	if not is_barriofarma_operational_site():
+		patch_erpnext_bootstrap_for_barriofarma()
 	_restore_barriofarma_site_locale_after_tests()
