@@ -34,6 +34,9 @@ page_js = {
 		"public/js/pos_opening_entry_message.js",
 		"public/js/pos_invoice_receta.js",
 		"public/js/pos_receta_fields.js",
+		"public/js/pos_payment_numpad.js",
+		"public/js/pos_payment_numpad_patch.js",
+		"public/js/pos_past_order_filter.js",
 		"public/js/pos_turnos_v3.js",
 	],
 }
@@ -217,6 +220,7 @@ before_tests = "barriofarma_app.barriofarma_app.install.before_tests"
 override_whitelisted_methods = {
 	"erpnext.stock.doctype.purchase_receipt.purchase_receipt.make_purchase_invoice": "barriofarma_app.barriofarma_app.overrides.purchase_receipt.make_purchase_invoice",
 	"erpnext.selling.page.point_of_sale.point_of_sale.get_items": "barriofarma_app.barriofarma_app.api.pos_items.get_items",
+	"erpnext.selling.page.point_of_sale.point_of_sale.get_past_order_list": "barriofarma_app.barriofarma_app.api.pos_past_orders.get_past_order_list",
 }
 
 # API Whitelist
