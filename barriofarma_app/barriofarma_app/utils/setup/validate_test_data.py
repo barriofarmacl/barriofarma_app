@@ -129,14 +129,25 @@ def check_test_companies():
     Verifica si existen companies de prueba en la base de datos
     Retorna lista de companies encontradas (excepto Barriofarma que es la real)
     """
-    test_companies = frappe.db.sql("""
+    from barriofarma_app.barriofarma_app.utils.setup.test_site_company_guard import (
+        PRODUCTION_COMPANIES,
+    )
+
+    allowed = tuple(PRODUCTION_COMPANIES)
+    placeholders = ", ".join(["%s"] * len(allowed)) if allowed else "%s"
+    params = allowed if allowed else ("",)
+
+    test_companies = frappe.db.sql(
+        f"""
         SELECT name, abbr, default_currency, country, creation
         FROM `tabCompany`
-        WHERE (name LIKE '_Test%' OR name LIKE 'TEST-%' OR name LIKE '%Test Company%')
-          AND name != 'Barriofarma'
+        WHERE name NOT IN ({placeholders})
         ORDER BY creation DESC
-    """, as_dict=True)
-    
+        """,
+        params,
+        as_dict=True,
+    )
+
     return test_companies
 
 
@@ -670,17 +681,20 @@ def cleanup_all_test_data():
         print("\n✅ No hay Purchase Invoices de prueba para limpiar")
     
     # 14. Limpiar companies (al final porque otros docs pueden depender)
+    from barriofarma_app.barriofarma_app.utils.setup.test_site_company_guard import (
+        cleanup_non_production_companies,
+    )
+
     test_companies = check_test_companies()
     if test_companies:
         print(f"\n🗑️  Limpiando {len(test_companies)} companies de prueba...")
-        for company in test_companies:
-            try:
-                frappe.delete_doc("Company", company.name, force=1, ignore_permissions=True)
-                print(f"   ✓ Eliminado: {company.name}")
-            except Exception as e:
-                print(f"   ✗ Error al eliminar {company.name}: {str(e)}")
-        frappe.db.commit()
-        print(f"✅ {len(test_companies)} companies eliminadas.")
+        deleted = cleanup_non_production_companies()
+        for name in deleted:
+            print(f"   ✓ Eliminado: {name}")
+        failed = [c.name for c in test_companies if c.name not in deleted]
+        for name in failed:
+            print(f"   ✗ No eliminado: {name}")
+        print(f"✅ {len(deleted)} companies eliminadas.")
     else:
         print("\n✅ No hay companies de prueba para limpiar")
     
