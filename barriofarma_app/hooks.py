@@ -37,6 +37,7 @@ page_js = {
 		"public/js/pos_payment_numpad.js",
 		"public/js/pos_payment_numpad_patch.js",
 		"public/js/pos_past_order_filter.js",
+		"public/js/pos_turnos_v3.js",
 	],
 }
 
@@ -292,9 +293,14 @@ whitelisted_methods = {
 
 boot_session = [
 	"barriofarma_app.barriofarma_app.utils.permissions.desktop_icons_v16.filter_boot_desktop_icons",
+	"barriofarma_app.barriofarma_app.utils.desk.apps_screen_brand.apply_apps_screen_brand",
 ]
 
-website_route_rules = [{'from_route': '/inicio/<path:app_path>', 'to_route': 'inicio'},]
+website_route_rules = [
+	{"from_route": "/inicio/<path:app_path>", "to_route": "inicio"},
+	{"from_route": "/turno", "to_route": "inicio"},
+	{"from_route": "/pantalla", "to_route": "inicio"},
+]
 
 from barriofarma_app.barriofarma_app.utils.permissions.desktop_icons_v16 import (
 	register_desktop_icon_v16_patch,

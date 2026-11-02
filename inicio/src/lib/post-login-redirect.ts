@@ -1,5 +1,6 @@
 export const DESK_PATH = '/app'
 export const CATALOGO_PATH = '/inicio/catalogo'
+export const TURNO_KIOSCO_PATH = '/turno'
 
 export const POST_LOGIN_PATH_API =
   'barriofarma_app.barriofarma_app.api.catalogo_terreno.get_post_login_path'
@@ -13,6 +14,7 @@ type FrappeMethodResponse = {
 /** Normaliza la ruta devuelta por el backend (solo rutas internas conocidas). */
 export function normalizePostLoginPath(path: unknown): string {
   if (path === CATALOGO_PATH) return CATALOGO_PATH
+  if (path === TURNO_KIOSCO_PATH) return TURNO_KIOSCO_PATH
   return DESK_PATH
 }
 

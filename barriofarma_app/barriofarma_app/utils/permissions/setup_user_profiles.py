@@ -118,7 +118,7 @@ USER_PROFILES = {
         "use_minimal_roles": True,
     },
     "Perfil Farmacéutico": {
-        "description": "Farmacéutico: compras (PO, RFQ, cotizaciones, MR), maestros producto/precios, QC/submit PR, POS, reconciliación inventario",
+        "description": "Farmacéutico: compras (PO, RFQ, cotizaciones), maestros producto/precios, QC/submit PR, POS, reconciliación inventario",
         "visible_modules": ["Buying", "Selling", "Stock"],
         "extra_modules": ["Setup"],
         "extra_desktop_icons": ["Organization"],

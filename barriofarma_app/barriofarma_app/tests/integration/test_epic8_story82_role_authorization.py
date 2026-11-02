@@ -413,14 +413,12 @@ class TestFarmaceuticoRole(TestEpic8Story82RoleAuthorization):
         self.assertTrue(test_has_permission("Item Price", "create", should_have=True))
 
     def test_farmaceutico_can_manage_products_and_pricing_masters(self):
-        """Farmacéutico: tablero Compras — sección Productos y Precios completa"""
+        """Farmacéutico: maestros de catálogo; sin esquemas promocionales ni reglas de precio (16.53)"""
         frappe.set_user(self.username)
         frappe.clear_cache()
         for dt in (
             "Product Bundle",
             "Item Group",
-            "Promotional Scheme",
-            "Pricing Rule",
         ):
             self.assertTrue(
                 test_has_permission(dt, "read", should_have=True),
@@ -430,12 +428,32 @@ class TestFarmaceuticoRole(TestEpic8Story82RoleAuthorization):
                 test_has_permission(dt, "create", should_have=True),
                 msg=f"create {dt}",
             )
+        for dt in ("Promotional Scheme", "Pricing Rule"):
+            self.assertTrue(
+                test_has_permission(dt, "read", should_have=False),
+                msg=f"read {dt}",
+            )
+            self.assertTrue(
+                test_has_permission(dt, "create", should_have=False),
+                msg=f"create {dt}",
+            )
 
-    def test_farmaceutico_can_use_buying_procurement_tools(self):
-        """Farmacéutico: solicitudes, cotizaciones y consulta factura de compra"""
+    def test_farmaceutico_cannot_access_terreno_and_promo_desk_doctypes(self):
+        """Regresión 16.53 / freeze #80: Farmacéutico sin SO, Sales Person ni MR en Desk."""
         frappe.set_user(self.username)
         frappe.clear_cache()
-        self.assertTrue(test_has_permission("Material Request", "create", should_have=True))
+        for dt in ("Sales Order", "Sales Person"):
+            self.assertTrue(
+                test_has_permission(dt, "read", should_have=False),
+                msg=f"read {dt}",
+            )
+
+    def test_farmaceutico_can_use_buying_procurement_tools(self):
+        """Farmacéutico: cotizaciones y consulta factura de compra; sin Solicitud de Materiales"""
+        frappe.set_user(self.username)
+        frappe.clear_cache()
+        self.assertTrue(test_has_permission("Material Request", "read", should_have=False))
+        self.assertTrue(test_has_permission("Material Request", "create", should_have=False))
         self.assertTrue(test_has_permission("Request for Quotation", "create", should_have=True))
         self.assertTrue(test_has_permission("Supplier Quotation", "create", should_have=True))
         self.assertTrue(test_has_permission("Purchase Invoice", "read", should_have=True))

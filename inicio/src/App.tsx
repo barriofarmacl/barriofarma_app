@@ -2,6 +2,7 @@
 import * as React from "react";
 import {
 	createBrowserRouter,
+	Navigate,
 	RouterProvider,
 } from "react-router-dom";
 import { FrappeProvider } from 'frappe-react-sdk'
@@ -10,6 +11,8 @@ import './index.css'
 import LoginPage from './pages/login-page';
 import HomePage from "./pages/home";
 import CatalogoPage from './pages/catalogo-page';
+import TurnoKioscoPage from './pages/turno-kiosco-page';
+import TurnoPantallaPage from './pages/turno-pantalla-page';
 import { RequireAuth } from './components/require-auth';
 import { AppShell } from './components/app-shell';
 
@@ -20,7 +23,18 @@ function App() {
 			// @ts-expect-error Frappe injects boot data into the browser at runtime.
 			return window.frappe?.boot?.sitename ?? import.meta.env.VITE_SITE_NAME
 		}
-		return import.meta.env.VITE_SITE_NAME
+		// @ts-expect-error Frappe injects boot data into the browser at runtime.
+		return window.frappe?.boot?.sitename ?? import.meta.env.VITE_SITE_NAME
+	}
+
+	const getSocketPort = () => {
+		// @ts-expect-error Frappe injects boot data into the browser at runtime.
+		const fromBoot = window.frappe?.boot?.socketio_port
+		if (fromBoot != null && String(fromBoot).trim() !== '') {
+			return String(fromBoot)
+		}
+		const fromEnv = import.meta.env.VITE_SOCKET_PORT
+		return fromEnv ? String(fromEnv) : undefined
 	}
 
 	const router = createBrowserRouter([
@@ -46,13 +60,34 @@ function App() {
 				</RequireAuth>
 			),
 		},
+		{
+			path: "/turno",
+			element: (
+				<RequireAuth>
+					<TurnoKioscoPage />
+				</RequireAuth>
+			),
+		},
+		{
+			path: "/pantalla",
+			element: <TurnoPantallaPage />,
+		},
+		{
+			path: "/inicio/turno",
+			element: <Navigate to="/turno" replace />,
+		},
+		{
+			path: "/inicio/pantalla",
+			element: <Navigate to="/pantalla" replace />,
+		},
 	]);
 
 	return (
 		<div className="App">
 			<FrappeProvider
-				socketPort={import.meta.env.VITE_SOCKET_PORT}
+				socketPort={getSocketPort()}
 				siteName={getSiteName()}
+				enableSocket
 			>
 				<RouterProvider router={router} />
 				<Toaster richColors closeButton position="top-center" />
