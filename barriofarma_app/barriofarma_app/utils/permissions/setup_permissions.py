@@ -175,7 +175,7 @@ PERMISSIONS_MATRIX = {
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
     "Promotional Scheme": {
-        "Farmacéutico": ["R", "W", "C"],
+        "Farmacéutico": [],
         "Auxiliar": [],
         "Bodeguero": [],
         "Administrativo": ["R"],
@@ -183,7 +183,7 @@ PERMISSIONS_MATRIX = {
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
     "Pricing Rule": {
-        "Farmacéutico": ["R", "W", "C"],
+        "Farmacéutico": [],
         "Auxiliar": [],
         "Bodeguero": [],
         "Administrativo": ["R"],
@@ -533,7 +533,7 @@ PERMISSIONS_MATRIX = {
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
     "Material Request": {
-        "Farmacéutico": ["R", "W", "C", "S"],
+        "Farmacéutico": [],
         "Auxiliar": [],
         "Bodeguero": ["R", "W", "C", "S"],
         "Administrativo": ["R"],
@@ -565,7 +565,7 @@ PERMISSIONS_MATRIX = {
         "Informática": ["R", "W", "C", "D", "S", "X"]
     },
     "Sales Order": {
-        "Farmacéutico": ["R"],  # Tablero Ventas (tarjetas y reportes estándar)
+        "Farmacéutico": [],  # Pedido de terreno no se opera desde este rol
         "Auxiliar": ["R"],
         "Bodeguero": ["R"],
         "Administrativo": ["R"],
@@ -574,7 +574,7 @@ PERMISSIONS_MATRIX = {
         "Vendedor Terreno": ["R", "C"],
     },
     "Sales Person": {
-        "Farmacéutico": ["R"],
+        "Farmacéutico": [],
         "Auxiliar": ["R"],
         "Bodeguero": [],
         "Administrativo": ["R"],

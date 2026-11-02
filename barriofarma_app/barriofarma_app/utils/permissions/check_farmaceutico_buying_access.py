@@ -13,12 +13,9 @@ PRODUCTS_PRICING = (
 	"Price List",
 	"Product Bundle",
 	"Item Group",
-	"Promotional Scheme",
-	"Pricing Rule",
 )
 
 BUYING_TOOLS = (
-	"Material Request",
 	"Purchase Order",
 	"Purchase Invoice",
 	"Request for Quotation",
