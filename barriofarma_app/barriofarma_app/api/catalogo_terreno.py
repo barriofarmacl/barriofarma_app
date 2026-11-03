@@ -15,6 +15,7 @@ from frappe.utils import add_days, cint, flt, nowdate, parse_json
 from erpnext.accounts.party import get_party_details
 
 from barriofarma_app.barriofarma_app.test_setup import get_test_company
+from barriofarma_app.barriofarma_app.utils.inicio.inicio_features import catalogo_terreno_enabled
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,11 @@ POST_LOGIN_DESK_PATH = "/app"
 
 
 def _ensure_catalogo_access():
+	if not catalogo_terreno_enabled():
+		frappe.throw(
+			_("El catalogo de terreno no esta habilitado en este sitio"),
+			frappe.PermissionError,
+		)
 	if frappe.session.user in (None, "Guest"):
 		frappe.throw(_("Inicie sesion para continuar"), frappe.AuthenticationError)
 
@@ -287,7 +293,7 @@ def _resolve_post_login_path_for_user(user: str | None = None) -> str:
 		if frappe.db.exists("Role", role)
 	)
 
-	if has_vendedor_terreno and not has_desk_access:
+	if has_vendedor_terreno and not has_desk_access and catalogo_terreno_enabled():
 		return POST_LOGIN_CATALOGO_PATH
 	return POST_LOGIN_DESK_PATH
 

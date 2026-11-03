@@ -10,11 +10,12 @@ import { Toaster } from 'sonner'
 import './index.css'
 import LoginPage from './pages/login-page';
 import HomePage from "./pages/home";
-import CatalogoPage from './pages/catalogo-page';
 import TurnoKioscoPage from './pages/turno-kiosco-page';
 import TurnoPantallaPage from './pages/turno-pantalla-page';
 import { RequireAuth } from './components/require-auth';
 import { AppShell } from './components/app-shell';
+import { isCatalogoTerrenoEnabled } from './lib/inicio-features';
+import CatalogoPage from './pages/catalogo-page';
 
 function App() {
 	const getSiteName = () => {
@@ -37,7 +38,7 @@ function App() {
 		return fromEnv ? String(fromEnv) : undefined
 	}
 
-	const router = createBrowserRouter([
+	const routes = [
 		{
 			path: "/",
 			element: <HomePage />,
@@ -50,7 +51,10 @@ function App() {
 			path: "/inicio/login",
 			element: <LoginPage />,
 		},
-		{
+	];
+
+	if (isCatalogoTerrenoEnabled()) {
+		routes.push({
 			path: "/inicio/catalogo",
 			element: (
 				<RequireAuth>
@@ -59,7 +63,11 @@ function App() {
 					</AppShell>
 				</RequireAuth>
 			),
-		},
+		});
+	}
+
+	const router = createBrowserRouter([
+		...routes,
 		{
 			path: "/turno",
 			element: (

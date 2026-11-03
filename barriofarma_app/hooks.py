@@ -294,6 +294,7 @@ whitelisted_methods = {
 boot_session = [
 	"barriofarma_app.barriofarma_app.utils.permissions.desktop_icons_v16.filter_boot_desktop_icons",
 	"barriofarma_app.barriofarma_app.utils.desk.apps_screen_brand.apply_apps_screen_brand",
+	"barriofarma_app.barriofarma_app.utils.inicio.inicio_features.inject_inicio_boot_session",
 ]
 
 website_route_rules = [
