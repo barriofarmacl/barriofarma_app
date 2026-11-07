@@ -10,6 +10,7 @@ from barriofarma_app.barriofarma_app.utils.desk.apps_screen_brand import (
 	APPS_SCREEN_LOGO,
 	APPS_SCREEN_TITLE,
 	apply_apps_screen_brand,
+	apply_public_brand,
 )
 
 
@@ -42,3 +43,17 @@ class TestAppsScreenBrand(unittest.TestCase):
 		bootinfo = {}
 		apply_apps_screen_brand(bootinfo)
 		self.assertEqual(bootinfo, {})
+
+	def test_login_usa_el_isotipo_barriofarma(self):
+		brand = apply_public_brand({})
+		self.assertEqual(brand["logo"], APPS_SCREEN_LOGO)
+		self.assertEqual(brand["favicon"], APPS_SCREEN_LOGO)
+		self.assertEqual(brand["splash_image"], APPS_SCREEN_LOGO)
+
+	def test_splash_y_favicon_usan_el_isotipo_barriofarma(self):
+		import frappe
+
+		context = frappe.get_hooks("website_context")
+		for key in ("splash_image", "favicon"):
+			values = context.get(key) or []
+			self.assertEqual(values[-1], APPS_SCREEN_LOGO)

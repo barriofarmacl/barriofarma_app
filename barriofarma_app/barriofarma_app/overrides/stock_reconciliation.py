@@ -10,6 +10,9 @@ Issue #58 / UAT 2.0: conciliación de inventario como entrada de stock real por 
 
 from barriofarma_app.barriofarma_app.utils.shelf_movement_submit import insert_and_submit_shelf_movement
 from barriofarma_app.barriofarma_app.utils.shelf_validations import validate_inbound_shelf_line
+from barriofarma_app.barriofarma_app.utils.stock_reconciliation_negative_ledger import (
+	enforce_negative_ledger_on_submit,
+)
 import frappe
 from frappe import _
 from frappe.utils import flt
@@ -46,6 +49,7 @@ class StockReconciliation(ERPNextStockReconciliation):
 	def validate(self):
 		super().validate()
 		self.validate_shelf_required()
+		enforce_negative_ledger_on_submit(self)
 
 	def on_submit(self):
 		super().on_submit()

@@ -6,6 +6,13 @@ app_email = "eduardo.araya@barriofarma.cl"
 app_license = "mit"
 # required_apps = []
 
+# Splash (F5) y favicon de la pestaña. ERPNext publica los suyos en
+# website_context; esta app va despues en installed_apps y queda el ultimo valor.
+website_context = {
+	"favicon": "/assets/barriofarma_app/images/bf-apps-icon.svg",
+	"splash_image": "/assets/barriofarma_app/images/bf-apps-icon.svg",
+}
+
 # Includes in <head>
 # ------------------
 
@@ -295,6 +302,10 @@ boot_session = [
 	"barriofarma_app.barriofarma_app.utils.permissions.desktop_icons_v16.filter_boot_desktop_icons",
 	"barriofarma_app.barriofarma_app.utils.desk.apps_screen_brand.apply_apps_screen_brand",
 	"barriofarma_app.barriofarma_app.utils.inicio.inicio_features.inject_inicio_boot_session",
+]
+
+update_website_context = [
+	"barriofarma_app.barriofarma_app.utils.desk.apps_screen_brand.apply_public_brand",
 ]
 
 website_route_rules = [
