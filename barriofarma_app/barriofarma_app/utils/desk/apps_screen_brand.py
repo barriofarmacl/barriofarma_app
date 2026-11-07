@@ -18,3 +18,16 @@ def apply_apps_screen_brand(bootinfo):
 			continue
 		app["app_title"] = APPS_SCREEN_TITLE
 		app["app_logo_url"] = APPS_SCREEN_LOGO
+
+
+def apply_public_brand(context):
+	"""update_website_context: login y paginas publicas usan el isotipo BF.
+
+	get_app_logo() elige el logo de ERPNext cuando hay exactamente dos
+	app_logo_url (Frappe y ERPNext). Este hook corre despues y lo reemplaza.
+	"""
+	return {
+		"logo": APPS_SCREEN_LOGO,
+		"favicon": APPS_SCREEN_LOGO,
+		"splash_image": APPS_SCREEN_LOGO,
+	}
