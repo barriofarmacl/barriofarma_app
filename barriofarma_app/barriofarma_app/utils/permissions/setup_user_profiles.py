@@ -107,6 +107,37 @@ MANAGED_STANDARD_ROLES = frozenset({
     "Workspace Manager",
 }) | frozenset(ADMIN_ERPNEXT_STANDARD_ROLES)
 
+# Nombres del perfil que no coinciden con Module Def.
+MODULE_NAME_MAPPING = {
+    "Buying": "Buying",
+    "Selling": "Selling",
+    "Stock": "Stock",
+    "CRM": "CRM",
+    "Tools": "Desk",
+    "Accounts": "Accounts",
+    "Setup": "Setup",
+    "HR": "HR",
+    "Manufacturing": "Manufacturing",
+    "Projects": "Projects",
+}
+
+# Visibles en todos los perfiles. Los de negocio que no estén en visible_modules se bloquean.
+BASE_MODULES = frozenset({
+    "Desk",
+    "Workflow",
+    "Customize",
+    "Automation",
+    "Email",
+    "Contacts",
+    "Communications",
+    "Print",
+    "Social",
+    "Portal",
+    "Geo",
+    "EDI",
+    "Barriofarma App",
+})
+
 USER_PROFILES = {
     "Perfil Operativo": {
         "description": "Perfil para usuarios operativos (ej: Natalia Araya)",
@@ -305,64 +336,52 @@ def find_matching_profile(user_profile):
     return best_match
 
 
-def create_or_update_module_profile(profile_name, modules, roles):
+def profile_module_sets(profile_config, all_module_names):
+    """Devuelve (permitidos, bloqueados) para un perfil.
+
+    Module Profile persiste la lista bloqueada en block_modules. No tiene child table roles.
     """
-    Crea o actualiza un Module Profile en Frappe para controlar visibilidad de módulos.
-    
-    Args:
-        profile_name: Nombre del Module Profile
-        modules: Lista de nombres de módulos a incluir
-        roles: Lista de roles que deben tener acceso a este Module Profile
-        
-    Returns:
-        Module Profile document creado o actualizado
+    known = set(all_module_names)
+    allowed = set()
+    for source in ("visible_modules", "extra_modules"):
+        for module in profile_config.get(source) or []:
+            mapped_name = MODULE_NAME_MAPPING.get(module, module)
+            if mapped_name in known:
+                allowed.add(mapped_name)
+    allowed.update(BASE_MODULES & known)
+    return allowed, known - allowed
+
+
+def create_or_update_module_profile(profile_name, blocked_modules):
+    """Crea o actualiza un Module Profile con los módulos que el perfil oculta.
+
+    Al guardar el User con module_profile, Frappe copia block_modules al usuario.
     """
     frappe.set_user("Administrator")
-    
-    # Verificar si Module Profile existe
+
     if frappe.db.exists("Module Profile", profile_name):
         module_profile = frappe.get_doc("Module Profile", profile_name)
         logger.info(f"Module Profile '{profile_name}' existe, actualizando...")
     else:
         module_profile = frappe.get_doc({
             "doctype": "Module Profile",
-            "module_profile_name": profile_name
+            "module_profile_name": profile_name,
         })
         module_profile.insert(ignore_permissions=True)
         logger.info(f"Module Profile '{profile_name}' creado")
-    
-    # Actualizar módulos (si Module Profile tiene campo modules)
-    # Nota: La estructura exacta depende de cómo esté definido Module Profile
-    # Por ahora, nos enfocamos en asignar roles al Module Profile
-    
-    # Asignar roles al Module Profile
-    current_roles = set([
-        r.role for r in frappe.get_all("Has Role",
-            filters={"parent": module_profile.name, "parenttype": "Module Profile"},
-            fields=["role"]
-        )
-    ])
-    
-    target_roles = set(roles)
-    roles_to_add = target_roles - current_roles
-    roles_to_remove = current_roles - target_roles
-    
-    if roles_to_add:
-        for role_name in roles_to_add:
-            if frappe.db.exists("Role", role_name):
-                module_profile.append("roles", {"role": role_name})
-                logger.debug(f"  + Rol '{role_name}' agregado al Module Profile")
-    
-    if roles_to_remove:
-        module_profile.roles = [r for r in module_profile.roles if r.role not in roles_to_remove]
-        for role_name in roles_to_remove:
-            logger.debug(f"  - Rol '{role_name}' removido del Module Profile")
-    
-    if roles_to_add or roles_to_remove:
+
+    current = {row.module for row in (module_profile.get("block_modules") or [])}
+    target = set(blocked_modules)
+    if current != target:
+        module_profile.set("block_modules", [])
+        for module_name in sorted(target):
+            module_profile.append("block_modules", {"module": module_name})
         module_profile.save(ignore_permissions=True)
         frappe.db.commit()
-        logger.info(f"Module Profile '{profile_name}' actualizado con {len(target_roles)} roles")
-    
+        logger.info(
+            f"Module Profile '{profile_name}' actualizado con {len(target)} módulos bloqueados"
+        )
+
     return module_profile
 
 
@@ -465,112 +484,53 @@ def setup_user_from_profile(email, profile_name, full_name=None, enabled=True, u
     else:
         print("\nNo se requieren cambios en roles")
     
-    # Configurar módulos permitidos/bloqueados
+    # Module Profile es la fuente de block_modules. Frappe los copia al User al guardar.
     print("\n" + "-" * 70)
     print("CONFIGURANDO MÓDULOS PERMITIDOS:")
     print("-" * 70)
-    
-    try:
-        # Obtener todos los módulos disponibles
-        all_modules = frappe.get_all("Module Def",
-            fields=["name"],
-            filters={"app_name": ["in", ["erpnext", "frappe", "barriofarma_app"]]}
-        )
-        all_module_names = set([m["name"] for m in all_modules])
-        
-        # Módulos que deben estar visibles según el perfil
-        # Mapear nombres de módulos del perfil a nombres reales
-        module_name_mapping = {
-            "Buying": "Buying",
-            "Selling": "Selling",
-            "Stock": "Stock",
-            "CRM": "CRM",
-            "Tools": "Desk",  # Tools se mapea a Desk en Frappe
-            "Accounts": "Accounts",
-            "Setup": "Setup",
-            "HR": "HR",
-            "Manufacturing": "Manufacturing",
-            "Projects": "Projects"
-        }
-        
-        # Módulos base que suelen requerirse para Desk / comunicación / app BarrioFarma.
-        # No incluir aquí módulos de negocio opcionales (Calidad, Integraciones, etc.):
-        # si van en base_modules, quedan visibles para todos los perfiles aunque no estén
-        # en visible_modules. Esos deben bloquearse salvo que un perfil los liste explícitamente.
-        base_modules = {
-            "Desk",           # Herramientas base (mapeado desde Tools)
-            "Workflow",       # Flujos de Trabajo
-            "Customize",      # Personalizar
-            "Automation",     # Automatización
-            "Email",          # Correo electrónico
-            "Contacts",       # Contactos
-            "Communications", # Comunicaciones
-            "Print",          # Impresión
-            "Social",
-            "Portal",
-            "Geo",
-            "EDI",
-            "Barriofarma App"  # Barriofarma App (nombre real en la BD)
-        }
-        
-        # Módulos permitidos = módulos del perfil + módulos base
-        allowed_modules = set()
-        for module in profile_config["visible_modules"]:
-            mapped_name = module_name_mapping.get(module, module)
-            if mapped_name in all_module_names:
-                allowed_modules.add(mapped_name)
 
-        for module in profile_config.get("extra_modules", []):
-            mapped_name = module_name_mapping.get(module, module)
-            if mapped_name in all_module_names:
-                allowed_modules.add(mapped_name)
-        
-        # Agregar módulos base
-        allowed_modules.update(base_modules & all_module_names)
-        
-        # Módulos a bloquear = todos los demás
-        modules_to_block = all_module_names - allowed_modules
-        
-        # Configurar block_modules en el usuario
-        user.block_modules = []
-        for module_name in sorted(modules_to_block):
-            user.append("block_modules", {"module": module_name})
-        
-        user.save(ignore_permissions=True)
-        frappe.db.commit()
-        
+    module_profile_name = None
+    try:
+        all_modules = frappe.get_all(
+            "Module Def",
+            fields=["name"],
+            filters={"app_name": ["in", ["erpnext", "frappe", "barriofarma_app"]]},
+        )
+        all_module_names = {m["name"] for m in all_modules}
+        allowed_modules, modules_to_block = profile_module_sets(profile_config, all_module_names)
+
         print(f"✓ Módulos permitidos: {len(allowed_modules)}")
         print(f"  {', '.join(sorted(allowed_modules))}")
         print(f"✓ Módulos bloqueados: {len(modules_to_block)}")
         if modules_to_block:
-            print(f"  {', '.join(sorted(list(modules_to_block))[:10])}")
+            print(f"  {', '.join(sorted(modules_to_block)[:10])}")
             if len(modules_to_block) > 10:
                 print(f"  ... y {len(modules_to_block) - 10} más")
-        
+
+        if use_module_profile:
+            print("\n" + "-" * 70)
+            print("CONFIGURANDO MODULE PROFILE:")
+            print("-" * 70)
+            module_profile_name = f"Module Profile - {profile_name}"
+            module_profile = create_or_update_module_profile(
+                module_profile_name,
+                modules_to_block,
+            )
+            user.module_profile = module_profile.name
+            print(f"✓ Module Profile '{module_profile_name}' configurado")
+        else:
+            user.module_profile = None
+            user.set("block_modules", [])
+            for module_name in sorted(modules_to_block):
+                user.append("block_modules", {"module": module_name})
+
+        user.save(ignore_permissions=True)
+        frappe.db.commit()
     except Exception as e:
         logger.warning(f"Error al configurar módulos: {str(e)}")
         print(f"⚠ No se pudo configurar módulos: {str(e)}")
         import traceback
         traceback.print_exc()
-    
-    # Configurar Module Profile si está habilitado (opcional, para referencia)
-    if use_module_profile:
-        print("\n" + "-" * 70)
-        print("CONFIGURANDO MODULE PROFILE (referencia):")
-        print("-" * 70)
-        
-        try:
-            # Crear/actualizar Module Profile para este perfil
-            module_profile_name = f"Module Profile - {profile_name}"
-            module_profile = create_or_update_module_profile(
-                profile_name=module_profile_name,
-                modules=profile_config["visible_modules"],
-                roles=profile_config["standard_roles"] + profile_config["custom_roles"]
-            )
-            print(f"✓ Module Profile '{module_profile_name}' configurado")
-        except Exception as e:
-            logger.warning(f"Error al configurar Module Profile: {str(e)}")
-            print(f"⚠ No se pudo configurar Module Profile: {str(e)}")
     
     # Verificar permisos
     print("\n" + "-" * 70)
