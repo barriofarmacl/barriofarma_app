@@ -4572,7 +4572,7 @@
   "docstatus": 0,
   "doctype": "Report",
   "filters": [],
-  "is_standard": "No",
+  "is_standard": "Yes",
   "javascript": null,
   "json": "",
   "letter_head": null,
