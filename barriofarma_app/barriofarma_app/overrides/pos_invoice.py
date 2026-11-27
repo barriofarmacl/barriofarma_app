@@ -10,6 +10,7 @@ Override del DocType POS Invoice para:
 import frappe
 from frappe import _
 from erpnext.accounts.doctype.pos_invoice.pos_invoice import POSInvoice as ERPNextPOSInvoice
+from barriofarma_app.barriofarma_app.utils.pos_incoming_rate import copy_pos_warehouse_incoming_rate
 from barriofarma_app.barriofarma_app.utils.shelf_movement_submit import insert_and_submit_shelf_movement
 from datetime import datetime
 
@@ -156,6 +157,10 @@ class POSInvoice(ERPNextPOSInvoice):
 		write_off_cost_center: DF.Link | None
 		write_off_outstanding_amount_automatically: DF.Check
 	# end: auto-generated types
+
+	def validate(self):
+		super().validate()
+		copy_pos_warehouse_incoming_rate(self)
 
 	def on_submit(self):
 		"""
